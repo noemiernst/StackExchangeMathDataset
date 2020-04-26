@@ -49,12 +49,10 @@ def process_question_tags(questions, database):
 def process_question_text(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionsText", df)
-    log("../output/statistics.log", "# questions: " + str(len(df)))
 
 def process_answer_body(answers, database):
     df = pd.DataFrame({"AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswersText", df)
-    log("../output/statistics.log", "# answers: " + str(len(df)))
 
 def process_common_attributes(posts, elem):
     # common attributes between questions and answers
@@ -131,6 +129,10 @@ def posts_processing(directory, database):
             except Exception as e:
                 pass
             # print("Exception: %s" % e)
+
+    log("../output/statistics.log", "# posts: " + str(len(questions["QuestionId"])+len(answers["AnswerId"])))
+    log("../output/statistics.log", "# questions: " + str(len(questions["QuestionId"])))
+    log("../output/statistics.log", "# answers: " + str(len(answers["AnswerId"])))
 
     process_question_text(questions, database)
     process_question_tags(questions, database)

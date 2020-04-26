@@ -8,7 +8,7 @@ import time
 from helper import log
 
 def processing_main(dir_name, database_name):
-    log("../output/statistics.log", "*************************************")
+    log("../output/statistics.log", "#################################################")
     log("../output/statistics.log", "# formula_retrieval.py")
     log("../output/statistics.log", "# input: " + dir_name)
     log("../output/statistics.log", "# output: "+ database_name)
@@ -31,7 +31,7 @@ def processing_main(dir_name, database_name):
     log("../output/statistics.log", "# -------------------------")
     log("../output/statistics.log", "# total execution time: "+ str(int((time_formulas-start)/60)) +"min " + str(int((time_formulas-start)%60)) + "sec")
     log("../output/statistics.log", "# max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    log("../output/statistics.log", "*************************************")
+    log("../output/statistics.log", "#################################################")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -111,6 +111,8 @@ def comments_formula_processing(database, starting_formula_index):
 
 def formula_processing(database):
     index, error_count_posts = posts_formula_processing(database, starting_formula_index=1)
-    log("../output/statistics.log", "# " + str(error_count_posts) + " errors in parsing posts")
-    index, error_count_comments = comments_formula_processing(database, starting_formula_index=index)
-    log("../output/statistics.log", "# " + str(error_count_comments) + " errors in parsing comments")
+    log("../output/statistics.log", "# " + str(index) + " formulas parsed from posts")
+    log("../output/statistics.log", "# " + str(error_count_posts) + " errors in parsing post formulas")
+    index2, error_count_comments = comments_formula_processing(database, starting_formula_index=index)
+    log("../output/statistics.log", "# " + str(index2 - index) + " formulas parsed from comments")
+    log("../output/statistics.log", "# " + str(error_count_comments) + " errors in parsing comment formulas")
