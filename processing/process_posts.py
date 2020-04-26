@@ -9,7 +9,7 @@ from processing.helper import write_table
 def process_question_tags(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
 
-    # rewrite this for database!!!
+    # rewrite this for output!!!
     '''
     tags_set = []
     question_tags = {}
@@ -109,4 +109,3 @@ def posts_processing(directory, database):
     process_answer_body(answers, database)
     process_question_tags(questions, database)
 
-    return questions, answers

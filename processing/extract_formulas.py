@@ -5,6 +5,7 @@ except ImportError:
 import sqlite3
 import pandas as pd
 from processing.helper import write_table
+from processing.helper import log
 
 def formula_extr(text):
     formulas = []
@@ -41,8 +42,14 @@ def formula_extr(text):
 
 # operatoren: z.B. &amp, &lt, &gt
 
-def posts_formula_processing(database, questions, answers, starting_formula_index):
+def posts_formula_processing(database, starting_formula_index):
+    DB = sqlite3.connect(database)
+    questions = pd.read_sql('select * from "QuestionsText"', DB)
+    answers = pd.read_sql('select * from "AnswersText"', DB)
+    DB.close()
+
     Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+    error_count = 0
 
     # question processing (title and body)
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
@@ -60,6 +67,8 @@ def posts_formula_processing(database, questions, answers, starting_formula_inde
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
                 starting_formula_index += 1
+        else:
+            error_count += 1
 
     # answer processing (body)
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
@@ -70,13 +79,20 @@ def posts_formula_processing(database, questions, answers, starting_formula_inde
                 Formulas["PostId"].append(int(answer))
                 Formulas["Body"].append(formula)
                 starting_formula_index += 1
+        else:
+            error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Posts', df)
-    return starting_formula_index
+    return starting_formula_index, error_count
 
-def comments_formula_processing(database, comments, starting_formula_index):
+def comments_formula_processing(database, starting_formula_index):
+    DB = sqlite3.connect(database)
+    comments = pd.read_sql('select * from "Comments"', DB)
+    DB.close()
+
     Formulas = {"FormulaId": [], "CommentId": [], "Body":[]}
+    error_count = 0
 
     for comment, body in zip(comments["CommentId"], comments["Text"]):
         formulas, error = formula_extr(body)
@@ -86,11 +102,15 @@ def comments_formula_processing(database, comments, starting_formula_index):
                 Formulas["CommentId"].append(comment)
                 Formulas["Body"].append(formula)
                 starting_formula_index += 1
+        else:
+            error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Comments', df)
-    return starting_formula_index
+    return starting_formula_index, error_count
 
-def formula_processing(questions, answers, comments, database):
-    index = posts_formula_processing(database, questions, answers, starting_formula_index=1)
-    comments_formula_processing(database, comments, index)
+def formula_processing(database):
+    index, error_count_posts = posts_formula_processing(database, starting_formula_index=1)
+    log("../output/statistics.log", "# " + str(error_count_posts) + " errors in parsing posts")
+    index, error_count_comments = comments_formula_processing(database, starting_formula_index=index)
+    log("../output/statistics.log", "# " + str(error_count_comments) + " errors in parsing comments")
