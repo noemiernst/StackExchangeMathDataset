@@ -3,6 +3,31 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 import os.path
+import pandas as pd
+from processing.helper import write_table
+
+def process_question_tags(output_dir, Questions, database):
+    df = pd.DataFrame({"QuestionId": Questions["QuestionId"], "Tags": Questions["Tags"]})
+
+    # rewrite this for database!!!
+    '''
+    tags_set = []
+    question_tags = {}
+    for q, t in zip(df["QuestionId"], df["Tags"]):
+        tags = [tag[1:] for tag in t.split(">") if len(tag) > 0]
+        tags_set += tags
+        question_tags[q] = tags
+    '''
+    write_table(database, "QuestionTags", df)
+
+
+def process_question_text(dir_path, Questions, database):
+    df = pd.DataFrame({"QuestionId": Questions["QuestionId"], "Title": Questions["Title"], "Body": Questions["Body"]})
+    write_table(database, "QuestionsText", df)
+
+def process_answer_body(dir_path, Answers, database):
+    df = pd.DataFrame({"AnswerId": Answers["AnswerId"], "Body": Answers["Body"]})
+    write_table(database, "AnswersText", df)
 
 def process_common_attributes(Posts, elem):
     # common attributes between questions and answers
@@ -79,3 +104,7 @@ def posts_processing(directory, database):
             except Exception as e:
                 pass
             # print("Exception: %s" % e)
+
+    process_question_text(directory, Questions, database)
+    process_answer_body(directory, Answers, database)
+    process_question_tags(directory, Questions, database)
