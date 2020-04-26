@@ -35,3 +35,5 @@ def comments_processing(directory, database):
     df = pd.DataFrame({"CommentId": d["CommentId"], "PostId": d["PostId"], "UserId": d["UserId"],
                        "Score": d["Score"], "Text": d["Text"], "CreationDate": d["CreationDate"]})
     write_table(database, 'Comments', df)
+
+    return d

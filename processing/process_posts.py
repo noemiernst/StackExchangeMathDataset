@@ -108,3 +108,5 @@ def posts_processing(directory, database):
     process_question_text(directory, Questions, database)
     process_answer_body(directory, Answers, database)
     process_question_tags(directory, Questions, database)
+
+    return Questions, Answers
