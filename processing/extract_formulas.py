@@ -84,7 +84,11 @@ def posts_formula_processing(database, starting_formula_index):
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Posts', df)
-    return starting_formula_index, error_count
+
+    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from posts")
+    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing post formulas")
+    log("../output/statistics.log", "# error rate: " + format(error_count/(len(questions["QuestionId"])*2+len(answers["AnswerId"]))*100, ".4f") + " %")
+    return starting_formula_index
 
 def comments_formula_processing(database, starting_formula_index):
     DB = sqlite3.connect(database)
@@ -107,12 +111,11 @@ def comments_formula_processing(database, starting_formula_index):
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Comments', df)
-    return starting_formula_index, error_count
+
+    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from posts")
+    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing post formulas")
+    log("../output/statistics.log", "# error rate: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(database):
-    index, error_count_posts = posts_formula_processing(database, starting_formula_index=1)
-    log("../output/statistics.log", "# " + str(index) + " formulas parsed from posts")
-    log("../output/statistics.log", "# " + str(error_count_posts) + " errors in parsing post formulas")
-    index2, error_count_comments = comments_formula_processing(database, starting_formula_index=index)
-    log("../output/statistics.log", "# " + str(index2 - index) + " formulas parsed from comments")
-    log("../output/statistics.log", "# " + str(error_count_comments) + " errors in parsing comment formulas")
+    index = posts_formula_processing(database, starting_formula_index=1)
+    comments_formula_processing(database, starting_formula_index=index)
