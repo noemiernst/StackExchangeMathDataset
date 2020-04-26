@@ -4,8 +4,8 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import sqlite3
 import pandas as pd
-from processing.helper import write_table
-from processing.helper import log
+from helper import write_table
+from helper import log
 
 def formula_extr(text):
     formulas = []

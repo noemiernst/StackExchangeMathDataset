@@ -4,7 +4,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import os.path
 import pandas as pd
-from processing.helper import write_table
+from helper import write_table
 
 def process_question_tags(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
