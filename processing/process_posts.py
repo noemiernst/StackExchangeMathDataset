@@ -5,29 +5,56 @@ except ImportError:
 import os.path
 import pandas as pd
 from helper import write_table
+from helper import log
+
+def process_answer_meta(answers, database):
+    df = pd.DataFrame({"AnswerId": answers["AnswerId"],"QuestionId": answers["QuestionId"], "CreationDate": answers["CreationDate"],
+                       "Score": answers["Score"],
+                       #"CommentCount": answers["CommentCount"],
+                       #"LastEditorUserId": answers["LastEditorUserId"],
+                       "OwnerUserId": answers["OwnerUserId"]})
+    write_table(database, "AnswersMeta", df)
+
+def process_question_meta(questions, database):
+    df = pd.DataFrame({"QuestionId": questions["QuestionId"], "CreationDate": questions["CreationDate"],
+                       "ViewCount": questions["ViewCount"], "Score": questions["Score"],
+                       #"CommentCount": questions["CommentCount"],
+                       "OwnerUserId": questions["OwnerUserId"],
+                       #"LastEditorUserId": questions["LastEditorUserId"],
+                       "AnswerCount": questions["AnswerCount"], "AcceptedAnswerId": questions["AcceptedAnswerId"]})
+    write_table(database, "QuestionMeta", df)
 
 def process_question_tags(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
+    write_table(database, "QuestionTags", df)
 
-    # rewrite this for output!!!
-    '''
     tags_set = []
     question_tags = {}
+    question_tag = {}
+    question_tag["QuestionId"]= []
+    question_tag["Tag"]= []
     for q, t in zip(df["QuestionId"], df["Tags"]):
         tags = [tag[1:] for tag in t.split(">") if len(tag) > 0]
         tags_set += tags
         question_tags[q] = tags
-    '''
-    write_table(database, "QuestionTags", df)
+        for tag in tags:
+            question_tag["QuestionId"].append(q)
+            question_tag["Tag"].append(tag)
+    df = pd.DataFrame({"QuestionId": question_tag["QuestionId"], "Tag": question_tag["Tag"]})
+    write_table(database, "QuestionTag", df)
 
+    log("../output/statistics.log", "# questions with tags: " + str(len(question_tags)))
+    log("../output/statistics.log", "# unique tags: " + str(len(set(tags_set))))
 
 def process_question_text(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionsText", df)
+    log("../output/statistics.log", "# questions: " + str(len(df)))
 
 def process_answer_body(answers, database):
     df = pd.DataFrame({"AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswersText", df)
+    log("../output/statistics.log", "# answers: " + str(len(df)))
 
 def process_common_attributes(posts, elem):
     # common attributes between questions and answers
@@ -106,6 +133,7 @@ def posts_processing(directory, database):
             # print("Exception: %s" % e)
 
     process_question_text(questions, database)
-    process_answer_body(answers, database)
     process_question_tags(questions, database)
-
+    process_question_meta(questions, database)
+    process_answer_body(answers, database)
+    process_answer_meta(answers, database)

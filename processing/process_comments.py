@@ -5,6 +5,7 @@ except ImportError:
 import pandas as pd
 import os.path
 from helper import write_table
+from helper import log
 
 def comments_processing(directory, database):
     comments = {"CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
@@ -35,3 +36,4 @@ def comments_processing(directory, database):
     df = pd.DataFrame({"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
                        "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
     write_table(database, 'Comments', df)
+    log("../output/statistics.log", "# comments: " + str(len(df)))
