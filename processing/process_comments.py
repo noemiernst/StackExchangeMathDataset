@@ -7,7 +7,7 @@ import os.path
 from processing.helper import write_table
 
 def comments_processing(directory, database):
-    d = {"CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
+    comments = {"CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
     comment_index = 0
     for event,elem in ET.iterparse(os.path.join(directory, "Comments.xml")):
             if event == "end":
@@ -18,22 +18,22 @@ def comments_processing(directory, database):
                     creationdate = elem.attrib["CreationDate"]
                     text = elem.attrib["Text"]
 
-                    d["CommentId"].append(comment_index)
-                    d["PostId"].append(postid)
-                    d["UserId"].append(userid)
-                    d["Score"].append(score)
-                    d["CreationDate"].append(creationdate)
-                    d["Text"].append(text)
+                    comments["CommentId"].append(comment_index)
+                    comments["PostId"].append(postid)
+                    comments["UserId"].append(userid)
+                    comments["Score"].append(score)
+                    comments["CreationDate"].append(creationdate)
+                    comments["Text"].append(text)
                     elem.clear()
 
                     comment_index +=1
                 except Exception as e:
                     pass
-    assert len(d["PostId"]) == len(d["UserId"]) and len(d["UserId"]) == len(d["Score"]) and \
-           len(d["Score"]) == len(d["CreationDate"]) and len(d["Score"]) == len(d["Text"])
+    assert len(comments["PostId"]) == len(comments["UserId"]) and len(comments["UserId"]) == len(comments["Score"]) and \
+           len(comments["Score"]) == len(comments["CreationDate"]) and len(comments["Score"]) == len(comments["Text"])
 
-    df = pd.DataFrame({"CommentId": d["CommentId"], "PostId": d["PostId"], "UserId": d["UserId"],
-                       "Score": d["Score"], "Text": d["Text"], "CreationDate": d["CreationDate"]})
+    df = pd.DataFrame({"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
+                       "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
     write_table(database, 'Comments', df)
 
-    return d
+    return comments
