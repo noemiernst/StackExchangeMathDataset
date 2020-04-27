@@ -87,7 +87,7 @@ def posts_formula_processing(database, starting_formula_index):
 
     log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from posts")
     log("../output/statistics.log", "# " + str(error_count) + " errors in parsing post formulas")
-    log("../output/statistics.log", "# error rate: " + format(error_count/(len(questions["QuestionId"])*2+len(answers["AnswerId"]))*100, ".4f") + " %")
+    log("../output/statistics.log", "# error rate parsing formulas from posts: " + format(error_count/(len(questions["QuestionId"])*2+len(answers["AnswerId"]))*100, ".4f") + " %")
     return starting_formula_index
 
 def comments_formula_processing(database, starting_formula_index):
@@ -114,7 +114,7 @@ def comments_formula_processing(database, starting_formula_index):
 
     log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from posts")
     log("../output/statistics.log", "# " + str(error_count) + " errors in parsing post formulas")
-    log("../output/statistics.log", "# error rate: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
+    log("../output/statistics.log", "# error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(database):
     index = posts_formula_processing(database, starting_formula_index=1)

@@ -21,8 +21,21 @@ def process_question_meta(questions, database):
                        #"CommentCount": questions["CommentCount"],
                        "OwnerUserId": questions["OwnerUserId"],
                        #"LastEditorUserId": questions["LastEditorUserId"],
-                       "AnswerCount": questions["AnswerCount"], "AcceptedAnswerId": questions["AcceptedAnswerId"]})
+                       "AnswerCount": questions["AnswerCount"]})
     write_table(database, "QuestionMeta", df)
+
+def process_question_acceptedanswer(questions, database):
+    questionId = []
+    acceptedAnswerId = []
+    for qid, aid in zip(questions["QuestionId"], questions["AcceptedAnswerId"]):
+        if aid:
+            questionId.append(qid)
+            acceptedAnswerId.append(aid)
+    df = pd.DataFrame({"QuestionId": questionId, "AcceptedAnswerId": acceptedAnswerId})
+
+    write_table(database, "Question_AcceptedAnswer", df)
+    log("../output/statistics.log", "# question-acceptedAnswer pairs: %d" % len(df))
+
 
 def process_question_tags(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
@@ -136,6 +149,7 @@ def posts_processing(directory, database):
 
     process_question_text(questions, database)
     process_question_tags(questions, database)
+    process_question_acceptedanswer(questions, database)
     process_question_meta(questions, database)
     process_answer_body(answers, database)
     process_answer_meta(answers, database)
