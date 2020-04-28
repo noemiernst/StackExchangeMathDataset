@@ -1,6 +1,6 @@
 # FormulaRetrieval
 
-Processing [stack exchange data dump](https://archive.org/details/stackexchange) to a dataset for fomula retrieval
+Processing [stack exchange data dump](https://archive.org/details/stackexchange) to a dataset in a database
 
 ## Requirements
 
@@ -13,7 +13,7 @@ Processing [stack exchange data dump](https://archive.org/details/stackexchange)
 
 ### Usage
 
-* download your interested Stack Exchange site data (*.stackexchange.com.7z) from [stack exchange data dump](https://archive.org/details/stackexchange), such as ```mathematics.stackexchange.com.7z```
+* download your interested Stack Exchange site data (*.stackexchange.com.7z) from [stack exchange data dump](https://archive.org/details/stackexchange), such as ```mathematics.stackexchange.com.7z``` or ```physics.stackexchange.com.7z
 * unzip ```mathematics.stackexchange.com.7z``` to directory: ```dataset/mathematics```
 * ```cd processing```
 * execute: ```python formula_retrieval.py --input ../dataset/mathematics/ --database '../database/dataset.db'```
@@ -22,7 +22,7 @@ Processing [stack exchange data dump](https://archive.org/details/stackexchange)
 
 * input: file directory which saves Posts.xml, PostLinks.xml, Votes.xml, Badges.xml, and Comments.xml. In above example, input is ```dataset/mathematics```
 * database: file of output database
-* 
+
 #### Outputs of ```formula_retrieval.py```
 
 * Outputs will be saved in ```.db```.
