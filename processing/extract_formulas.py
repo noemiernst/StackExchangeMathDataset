@@ -6,6 +6,7 @@ import sqlite3
 import pandas as pd
 from helper import write_table
 from helper import log
+import resource
 
 def formula_extr(text):
     formulas = []
@@ -42,10 +43,9 @@ def formula_extr(text):
 
 # operatoren: z.B. &amp, &lt, &gt
 
-def posts_formula_processing(database, starting_formula_index):
+def questions_formula_processing(database, starting_formula_index):
     DB = sqlite3.connect(database)
     questions = pd.read_sql('select * from "QuestionsText"', DB)
-    answers = pd.read_sql('select * from "AnswersText"', DB)
     DB.close()
 
     Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
@@ -70,6 +70,22 @@ def posts_formula_processing(database, starting_formula_index):
         else:
             error_count += 1
 
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+
+    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from questions")
+    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing question formulas")
+    log("../output/statistics.log", "# error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"])*2)*100, ".4f") + " %")
+    return df, starting_formula_index
+
+
+def answers_formula_processing(database, starting_formula_index):
+    DB = sqlite3.connect(database)
+    answers = pd.read_sql('select * from "AnswersText"', DB)
+    DB.close()
+
+    Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+    error_count = 0
+
     # answer processing (body)
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
         formulas, error = formula_extr(str(body))
@@ -83,12 +99,11 @@ def posts_formula_processing(database, starting_formula_index):
             error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
-    write_table(database, 'Formulas_Posts', df)
 
-    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from posts")
-    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing post formulas")
-    log("../output/statistics.log", "# error rate parsing formulas from posts: " + format(error_count/(len(questions["QuestionId"])*2+len(answers["AnswerId"]))*100, ".4f") + " %")
-    return starting_formula_index
+    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from answers")
+    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing answer formulas")
+    log("../output/statistics.log", "# error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
+    return df, starting_formula_index
 
 def comments_formula_processing(database, starting_formula_index):
     DB = sqlite3.connect(database)
@@ -117,5 +132,7 @@ def comments_formula_processing(database, starting_formula_index):
     log("../output/statistics.log", "# error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(database):
-    index = posts_formula_processing(database, starting_formula_index=1)
+    df_questions, index = questions_formula_processing(database, starting_formula_index=1)
+    df_answers, index = answers_formula_processing(database, starting_formula_index=index)
+    write_table(database, 'Formulas_Posts', pd.concat([df_questions, df_answers]))
     comments_formula_processing(database, starting_formula_index=index)
