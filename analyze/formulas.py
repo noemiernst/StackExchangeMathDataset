@@ -3,19 +3,26 @@ import argparse
 import sqlite3
 import pandas as pd
 
-def number_of_equations(formulas):
+def equations(formulas):
     count = 0
     for formula in zip(formulas["Body"]):
         if '=' in formula[0]:
             count += 1
-    print('# equations: ', count, "  (formulas containing '=')")
+    print('# equations: ', count, ', ', format(100*count/len(formulas["Body"]), ".2f"), '%', "  (formulas containing '=')")
 
-def number_of_single_character_formulas(formulas):
+def length(formulas, length):
     count = 0
     for formula in zip(formulas["Body"]):
-        if len(formula[0]) == 1:
+        if len(formula[0]) == length:
             count += 1
-    print('# single character formulas: ', count)
+    print('# formulas of length ', length, ': ', count, ', ', format(100*count/len(formulas["Body"]), ".2f"), '%')
+
+def min_length(formulas, length):
+    count = 0
+    for formula in zip(formulas["Body"]):
+        if len(formula[0]) >= length:
+            count += 1
+    print('# formulas of length >= ', length, ': ', count, ', ', format(100*count/len(formulas["Body"]), ".2f"), '%')
 
 def greek_letters(formulas):
     count = 0
@@ -26,7 +33,7 @@ def greek_letters(formulas):
         f = (formula[0]).lower()
         if any(sym in f for sym in symbols):
             count += 1
-    print('# formulas containing greek letters: ', count)
+    print('# formulas containing greek letters: ', count, ', ', format(100*count/len(formulas["Body"]), ".2f"), '%')
 
 
 def super_subscripts(formulas):
@@ -37,8 +44,8 @@ def super_subscripts(formulas):
             super_count += 1
         if '_' in formula[0]:
             sub_count += 1
-    print('# formulas containing superscripts (^): ', super_count)
-    print('# formulas containing subscripts (_): ', sub_count)
+    print('# formulas containing superscripts (^): ', super_count, ', ', format(100*super_count/len(formulas["Body"]), ".2f"), '%')
+    print('# formulas containing subscripts (_): ', sub_count, ', ', format(100*sub_count/len(formulas["Body"]), ".2f"), '%')
 
 def sum_integral(formulas):
     sum_count = 0
@@ -53,9 +60,9 @@ def sum_integral(formulas):
         if any(sym in formula[0] for sym in symbols):
             other_count += 1
 
-    print(r'# formulas containing sums (\sum): ', sum_count)
-    print(r'# formulas containing integrals (\int): ', integral_count)
-    print(r'# formulas containing others (\prod, \bigcup,\bigcup, \iint, ...): ', other_count)
+    print(r'# formulas containing sums (\sum): ', sum_count, ', ', format(100*sum_count/len(formulas["Body"]), ".2f"), '%')
+    print(r'# formulas containing integrals (\int): ', integral_count, ', ', format(100*integral_count/len(formulas["Body"]), ".2f"), '%')
+    print(r'# formulas containing others (\prod, \bigcup,\bigcup, \iint, ...): ', other_count, ', ', format(100*other_count/len(formulas["Body"]), ".2f"), '%')
 
 def fractions(formulas):
     count = 0
@@ -63,17 +70,24 @@ def fractions(formulas):
     for formula in zip(formulas["Body"]):
         if any(sym in formula[0] for sym in symbols):
             count += 1
-    print('# formulas containing fractions: ', count)
+    print('# formulas containing fractions: ', count, ', ', format(100*count/len(formulas["Body"]), ".2f"), '%')
 
 def analyze_formulas(database, table):
     DB = sqlite3.connect(database)
     formulas = pd.read_sql('select Body from "'+ table+'"', DB)
     DB.close()
 
-    print("# formulas: ", len(formulas["Body"]))
+    print("# formulas: ", len(formulas["Body"]), ', ', format(100*len(formulas["Body"])/len(formulas["Body"]), ".2f"), '%')
 
-    number_of_equations(formulas)
-    number_of_single_character_formulas(formulas)
+    equations(formulas)
+    length(formulas, 0)
+    length(formulas, 1)
+    length(formulas, 2)
+    length(formulas, 3)
+    length(formulas, 4)
+    length(formulas, 5)
+    length(formulas, 6)
+    min_length(formulas, 7)
     greek_letters(formulas)
     super_subscripts(formulas)
     sum_integral(formulas)
@@ -81,7 +95,9 @@ def analyze_formulas(database, table):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d","--database",default= "../output/physics.db", help = "input database with LaTeX formulas")
+    #parser.add_argument("-d","--database",default= "../output/physics.db", help = "input database with LaTeX formulas")
+    #parser.add_argument("-t", "--table", default="Formulas_Posts", help= "name of table in database")
+    parser.add_argument("-d","--database",default= "../output/mathematics.db", help = "input database with LaTeX formulas")
     parser.add_argument("-t", "--table", default="Formulas_Posts", help= "name of table in database")
     args = parser.parse_args()
 
