@@ -107,7 +107,7 @@ def answers_formula_processing(database, starting_formula_index):
 
 def comments_formula_processing(database, starting_formula_index):
     DB = sqlite3.connect(database)
-    comments = pd.read_sql('select * from "Comments"', DB)
+    comments = pd.read_sql('select CommentId, Text from "Comments"', DB)
     DB.close()
 
     Formulas = {"FormulaId": [], "CommentId": [], "Body":[]}
@@ -133,6 +133,9 @@ def comments_formula_processing(database, starting_formula_index):
 
 def formula_processing(database):
     df_questions, index = questions_formula_processing(database, starting_formula_index=1)
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
     df_answers, index = answers_formula_processing(database, starting_formula_index=index)
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
     write_table(database, 'Formulas_Posts', pd.concat([df_questions, df_answers]))
     comments_formula_processing(database, starting_formula_index=index)
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")

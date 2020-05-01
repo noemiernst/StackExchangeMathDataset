@@ -152,5 +152,6 @@ def posts_processing(directory, database):
     process_question_tags(questions, database)
     process_question_acceptedanswer(questions, database)
     process_question_meta(questions, database)
+    questions = {}  # 'clear questions dictionary to free up memory space
     process_answer_body(answers, database)
     process_answer_meta(answers, database)

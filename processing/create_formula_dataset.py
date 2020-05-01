@@ -20,27 +20,27 @@ def processing_main(dir_name, database_name):
 
     posts_processing(dir_name, database_name)
     time_posts = time.process_time()
-    print("# time processing posts: ", format(time_posts-start, ".2f"), "s")
+    print("time processing posts: ", format(time_posts-start, ".2f"), "s")
 
     comments_processing(dir_name, database_name)
     time_comments = time.process_time()
-    print("# time processing comments: ", format(time_comments-time_posts, ".2f"), "s")
+    print("time processing comments: ", format(time_comments-time_posts, ".2f"), "s")
 
     formula_processing(database_name)
     time_formulas = time.process_time()
-    print("# time processing formulas: ", format(time_formulas-time_comments, ".2f"), "s")
+    print("time processing formulas: ", format(time_formulas-time_comments, ".2f"), "s")
 
-    bounty_processing(dir_name, database_name)
+    #bounty_processing(dir_name, database_name)
     time_bounty = time.process_time()
-    print("# time processing bounty: ", format(time_bounty-time_formulas, ".2f"), "s")
+    #print("# time processing bounty: ", format(time_bounty-time_formulas, ".2f"), "s")
 
     badge_processing(dir_name, database_name)
     time_badge = time.process_time()
-    print("# time processing badges: ", format(time_badge-time_bounty, ".2f"), "s")
+    print("time processing badges: ", format(time_badge-time_bounty, ".2f"), "s")
 
     postlinks_processing(dir_name, database_name)
     time_postlinks = time.process_time()
-    print("# time processing postlinks: ", format(time_postlinks-time_badge, ".2f"), "s")
+    print("time processing postlinks: ", format(time_postlinks-time_badge, ".2f"), "s")
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time_postlinks-start)/60)) +"min " + str(int((time_postlinks-start)%60)) + "sec")
