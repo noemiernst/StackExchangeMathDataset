@@ -50,6 +50,7 @@ def questions_formula_processing(database, starting_formula_index):
 
     Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
     error_count = 0
+    formula_index = 0
 
     # question processing (title and body)
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
@@ -58,24 +59,24 @@ def questions_formula_processing(database, starting_formula_index):
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
             for formula in formulas_title:
-                Formulas["FormulaId"].append(starting_formula_index)
+                Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
-                starting_formula_index += 1
+                formula_index += 1
             for formula in formulas_body:
-                Formulas["FormulaId"].append(starting_formula_index)
+                Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
-                starting_formula_index += 1
+                formula_index += 1
         else:
             error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
 
-    log("../output/statistics.log", str(starting_formula_index) + " formulas parsed from questions")
+    log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
     log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
     log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"])*2)*100, ".4f") + " %")
-    return df, starting_formula_index
+    return df, starting_formula_index+formula_index
 
 
 def answers_formula_processing(database, starting_formula_index):
@@ -85,25 +86,26 @@ def answers_formula_processing(database, starting_formula_index):
 
     Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
     error_count = 0
+    formula_index = 0
 
     # answer processing (body)
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
         formulas, error = formula_extr(str(body))
         if not error:
             for formula in formulas:
-                Formulas["FormulaId"].append(int(starting_formula_index))
+                Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
                 Formulas["PostId"].append(int(answer))
                 Formulas["Body"].append(formula)
-                starting_formula_index += 1
+                formula_index += 1
         else:
             error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
 
-    log("../output/statistics.log", str(starting_formula_index) + " formulas parsed from answers")
+    log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
     log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
-    return df, starting_formula_index
+    return df, starting_formula_index+formula_index
 
 def comments_formula_processing(database, starting_formula_index):
     DB = sqlite3.connect(database)
@@ -112,23 +114,24 @@ def comments_formula_processing(database, starting_formula_index):
 
     Formulas = {"FormulaId": [], "CommentId": [], "Body":[]}
     error_count = 0
+    formula_index = 0
 
     for comment, body in zip(comments["CommentId"], comments["Text"]):
         formulas, error = formula_extr(body)
         if not error:
             for formula in formulas:
-                Formulas["FormulaId"].append(starting_formula_index)
+                Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["CommentId"].append(comment)
                 Formulas["Body"].append(formula)
-                starting_formula_index += 1
+                formula_index += 1
         else:
             error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Comments', df)
 
-    log("../output/statistics.log", str(starting_formula_index) + " formulas parsed from comments")
-    log("../output/statistics.log", str(error_count) + " errors in parsing post formulas")
+    log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
+    log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")
     log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(database):

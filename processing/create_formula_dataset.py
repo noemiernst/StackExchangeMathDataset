@@ -49,9 +49,9 @@ def processing_main(dir_name, database_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i","--input",default= "../input/mathematics", help = "input directory of stackexchange dump *.xml files")
-    parser.add_argument("-d", "--database", default='../output/mathematics.db', help="database output")
-    #parser.add_argument("-i","--input",default= "../input/physics", help = "input directory of stackexchange dump *.xml files")
-    #parser.add_argument("-d", "--database", default='../output/physics.db', help="database output")
+    #parser.add_argument("-i","--input",default= "../input/mathematics", help = "input directory of stackexchange dump *.xml files")
+    #parser.add_argument("-d", "--database", default='../output/mathematics.db', help="database output")
+    parser.add_argument("-i","--input",default= "../input/physics", help = "input directory of stackexchange dump *.xml files")
+    parser.add_argument("-d", "--database", default='../output/physics.db', help="database output")
     args = parser.parse_args()
     processing_main(args.input, args.database)
