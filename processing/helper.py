@@ -4,7 +4,7 @@ def write_table(database, table_name, dataframe, if_exists='replace', index=Fals
     DB = sqlite3.connect(database)
     dataframe.to_sql(name=table_name, con=DB, if_exists=if_exists, index=index)
     DB.close()
-    print("# wrote table ", table_name, " to database ", database, " with ", len(dataframe), " entries")
+    print("wrote table ", table_name, " to database ", database, " with ", len(dataframe), " entries")
 
 def log(file,line):
     print(line)

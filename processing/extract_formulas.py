@@ -72,9 +72,9 @@ def questions_formula_processing(database, starting_formula_index):
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
 
-    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from questions")
-    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing question formulas")
-    log("../output/statistics.log", "# error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"])*2)*100, ".4f") + " %")
+    log("../output/statistics.log", str(starting_formula_index) + " formulas parsed from questions")
+    log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
+    log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"])*2)*100, ".4f") + " %")
     return df, starting_formula_index
 
 
@@ -100,9 +100,9 @@ def answers_formula_processing(database, starting_formula_index):
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
 
-    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from answers")
-    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing answer formulas")
-    log("../output/statistics.log", "# error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
+    log("../output/statistics.log", str(starting_formula_index) + " formulas parsed from answers")
+    log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
+    log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
     return df, starting_formula_index
 
 def comments_formula_processing(database, starting_formula_index):
@@ -127,9 +127,9 @@ def comments_formula_processing(database, starting_formula_index):
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Comments', df)
 
-    log("../output/statistics.log", "# " + str(starting_formula_index) + " formulas parsed from posts")
-    log("../output/statistics.log", "# " + str(error_count) + " errors in parsing post formulas")
-    log("../output/statistics.log", "# error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
+    log("../output/statistics.log", str(starting_formula_index) + " formulas parsed from comments")
+    log("../output/statistics.log", str(error_count) + " errors in parsing post formulas")
+    log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(database):
     df_questions, index = questions_formula_processing(database, starting_formula_index=1)

@@ -8,7 +8,7 @@ from helper import write_table
 from helper import log
 
 
-def duplicte_questions(database, df):
+def duplicate_questions(database, df):
     result = df.groupby("LinkTypeId")
     for k, v in result:
         d = pd.DataFrame({"QuestionId": v["PostId"], "RelatedQuestionId": v["RelatedPostId"]})
@@ -38,4 +38,4 @@ def postlinks_processing(directory, database):
 
     df = pd.DataFrame(d)
     write_table(database, "PostId_RelatedPostId", df)
-    duplicte_questions(database, df)
+    duplicate_questions(database, df)

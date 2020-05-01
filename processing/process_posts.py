@@ -6,6 +6,7 @@ import os.path
 import pandas as pd
 from helper import write_table
 from helper import log
+import resource
 
 def process_answer_meta(answers, database):
     df = pd.DataFrame({"AnswerId": answers["AnswerId"],"QuestionId": answers["QuestionId"], "CreationDate": answers["CreationDate"],
@@ -40,7 +41,7 @@ def process_question_acceptedanswer(questions, database):
 def process_question_tags(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
     write_table(database, "QuestionTags", df)
-
+    '''
     tags_set = []
     question_tags = {}
     question_tag = {}
@@ -57,7 +58,7 @@ def process_question_tags(questions, database):
     write_table(database, "QuestionTag", df)
 
     log("../output/statistics.log", "# questions with tags: " + str(len(question_tags)))
-    log("../output/statistics.log", "# unique tags: " + str(len(set(tags_set))))
+    log("../output/statistics.log", "# unique tags: " + str(len(set(tags_set))))'''
 
 def process_question_text(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
