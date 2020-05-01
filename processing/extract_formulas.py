@@ -72,11 +72,12 @@ def questions_formula_processing(database, starting_formula_index):
             error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+    write_table(database, 'Formulas_Posts', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
     log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
     log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"])*2)*100, ".4f") + " %")
-    return df, starting_formula_index+formula_index
+    return starting_formula_index+formula_index
 
 
 def answers_formula_processing(database, starting_formula_index):
@@ -101,11 +102,12 @@ def answers_formula_processing(database, starting_formula_index):
             error_count += 1
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+    write_table(database, 'Formulas_Posts', df, "append")
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
     log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
-    return df, starting_formula_index+formula_index
+    return starting_formula_index+formula_index
 
 def comments_formula_processing(database, starting_formula_index):
     DB = sqlite3.connect(database)
@@ -135,10 +137,9 @@ def comments_formula_processing(database, starting_formula_index):
     log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(database):
-    df_questions, index = questions_formula_processing(database, starting_formula_index=1)
+    index = questions_formula_processing(database, starting_formula_index=1)
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    df_answers, index = answers_formula_processing(database, starting_formula_index=index)
+    index = answers_formula_processing(database, starting_formula_index=index)
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    write_table(database, 'Formulas_Posts', pd.concat([df_questions, df_answers]))
     comments_formula_processing(database, starting_formula_index=index)
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
