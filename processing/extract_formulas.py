@@ -30,11 +30,12 @@ def formula_extr(text):
                     _,found,after = after.partition('$')
                 else:
                     formula,found,after = after.partition('$$')
-                    if found:
-                        formulas.append(formula)
-                    else:
-                        after = formula
-                        error = True
+                    if formula != '':
+                        if found:
+                            formulas.append(formula)
+                        else:
+                            after = formula
+                            error = True
 
                     _,found,after = after.partition('$')
             if error:
