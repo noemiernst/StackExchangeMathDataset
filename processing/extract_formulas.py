@@ -102,6 +102,11 @@ def answers_formula_processing(database, starting_formula_index):
         else:
             error_count += 1
 
+        if(len(Formulas["FormulaId"])>1000000):
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+            write_table(database, 'Formulas_Posts', df, "append")
+            Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
     write_table(database, 'Formulas_Posts', df, "append")
 
