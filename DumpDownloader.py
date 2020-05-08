@@ -24,10 +24,6 @@ class DumpDownloader:
         t = time.time()
         for site in self.sites_with_mathjax:
             file = site + ".stackexchange.com.7z"
-            self.download(self, self.archive_stackexchange_dumps_url + file, os.path.join(directory, file))
+            self.download(self.archive_stackexchange_dumps_url + file, os.path.join(directory, file))
         print("total download time: " + str(int((time.time()-t)/60))+ "min " + str(int(time.time()-t)%60)+ "sec")
 
-
-dwn = DumpDownloader
-file = "ai" + ".stackexchange.com.7z"
-dwn.download_all_mathjax(dwn, "downloads")
