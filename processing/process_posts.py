@@ -23,7 +23,7 @@ def process_question_meta(questions, database):
                        "OwnerUserId": questions["OwnerUserId"],
                        #"LastEditorUserId": questions["LastEditorUserId"],
                        "AnswerCount": questions["AnswerCount"]})
-    write_table(database, "QuestionMeta", df)
+    write_table(database, "QuestionsMeta", df)
 
 def process_question_acceptedanswer(questions, database):
     questionId = []
@@ -34,13 +34,14 @@ def process_question_acceptedanswer(questions, database):
             acceptedAnswerId.append(aid)
     df = pd.DataFrame({"QuestionId": questionId, "AcceptedAnswerId": acceptedAnswerId})
 
-    write_table(database, "Question_AcceptedAnswer", df)
+    write_table(database, "QuestionAcceptedAnswer", df)
     log("../output/statistics.log", "# question-acceptedAnswer pairs: %d" % len(df))
 
 
 def process_question_tags(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
     write_table(database, "QuestionTags", df)
+    questions.pop("Tags")
     '''
     tags_set = []
     question_tags = {}
@@ -63,10 +64,13 @@ def process_question_tags(questions, database):
 def process_question_text(questions, database):
     df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionsText", df)
+    questions.pop("Title")
+    questions.pop("Body")
 
 def process_answer_body(answers, database):
     df = pd.DataFrame({"AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswersText", df)
+    answers.pop("Body")
 
 def process_common_attributes(posts, elem):
     # common attributes between questions and answers
@@ -152,6 +156,6 @@ def posts_processing(directory, database):
     process_question_tags(questions, database)
     process_question_acceptedanswer(questions, database)
     process_question_meta(questions, database)
-    questions = {}  # 'clear questions dictionary to free up memory space
+    questions.clear()  # 'clear questions dictionary to free up memory space
     process_answer_body(answers, database)
     process_answer_meta(answers, database)

@@ -8,33 +8,43 @@ from process_badges import badge_processing
 from process_postlinks import postlinks_processing
 import time
 from helper import log
+from database import create_tables
 
-def processing_main(dir_name, database_name):
+def processing_main(dir_name, database_name, append):
     log("../output/statistics.log", "#################################################")
     log("../output/statistics.log", "create_formula_dataset.py")
     log("../output/statistics.log", "input: " + dir_name)
-    log("../output/statistics.log", "output: "+ database_name)
+    log("../output/statistics.log", "output: "+ database_name + ", ../output/statistics.log")
     log("../output/statistics.log", "-------------------------")
 
     start = time.process_time()
 
+    if append is "replace":
+        create_tables(database_name)
+        print("Tables in database created")
+    else:
+        print("TODO: get table lengths")
+
     posts_processing(dir_name, database_name)
     time_posts = time.process_time()
     print("time processing posts: ", format(time_posts-start, ".2f"), "s")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
     comments_processing(dir_name, database_name)
     time_comments = time.process_time()
     print("time processing comments: ", format(time_comments-time_posts, ".2f"), "s")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
     formula_processing(database_name)
     time_formulas = time.process_time()
     print("time processing formulas: ", format(time_formulas-time_comments, ".2f"), "s")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
     #bounty_processing(dir_name, database_name)
     time_bounty = time.process_time()
     #print("# time processing bounty: ", format(time_bounty-time_formulas, ".2f"), "s")
 
-    badge_processing(dir_name, database_name)
+    #badge_processing(dir_name, database_name)
     time_badge = time.process_time()
     print("time processing badges: ", format(time_badge-time_bounty, ".2f"), "s")
 
@@ -49,9 +59,10 @@ def processing_main(dir_name, database_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    #parser.add_argument("-i","--input",default= "../input/mathematics", help = "input directory of stackexchange dump *.xml files")
-    #parser.add_argument("-d", "--database", default='../output/mathematics.db', help="database output")
-    parser.add_argument("-i","--input",default= "../input/physics", help = "input directory of stackexchange dump *.xml files")
-    parser.add_argument("-d", "--database", default='../output/physics.db', help="database output")
+    parser.add_argument("-i","--input",default= "../input/mathematics", help = "input directory of stackexchange dump *.xml files")
+    parser.add_argument("-d", "--database", default='../output/mathematics.db', help="database output")
+    parser.add_argument("-a", "--append", default="replace", help="replace tables in database or append to them, options: append, replace")
+    #parser.add_argument("-i","--input",default= "../input/physics", help = "input directory of stackexchange dump *.xml files")
+    #parser.add_argument("-d", "--database", default='../output/physics.db', help="database output")
     args = parser.parse_args()
-    processing_main(args.input, args.database)
+    processing_main(args.input, args.database, args.append)

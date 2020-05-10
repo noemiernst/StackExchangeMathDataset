@@ -14,10 +14,10 @@ def duplicate_questions(database, df):
         d = pd.DataFrame({"QuestionId": v["PostId"], "RelatedQuestionId": v["RelatedPostId"]})
         if k == 3:
             log("../output/statistics.log", "# duplicate questions: %d" % len(d))
-            file_name = "Duplicate_Questions"
+            file_name = "DuplicateQuestions"
         if k == 1:
             log("../output/statistics.log", "# related questions: %d" % len(d))
-            file_name = "Related_Questions_Source2Target"
+            file_name = "RelatedQuestionsSource2Target"
         write_table(database, file_name, d)
 
 
@@ -37,5 +37,5 @@ def postlinks_processing(directory, database):
                 pass
 
     df = pd.DataFrame(d)
-    write_table(database, "PostId_RelatedPostId", df)
+    write_table(database, "PostIdRelatedPostId", df)
     duplicate_questions(database, df)
