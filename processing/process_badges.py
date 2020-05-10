@@ -30,6 +30,6 @@ def badge_processing(directory, database):
             except Exception as e:
                 pass
 
-    df =pd.DataFrame({"UserId":UserId,"BadgeName":BadgeName,"BadgeDate":BadgeDate})
+    df =pd.DataFrame({"BadgeId":index, "UserId":UserId,"BadgeName":BadgeName,"BadgeDate":BadgeDate})
     write_table(database, "Badges", df)
     log("../output/statistics.log","# users having badges: %d" % len(df))

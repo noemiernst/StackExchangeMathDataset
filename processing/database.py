@@ -33,7 +33,7 @@ def create_table(database, table_name, sql, if_exists='delete'):
 def create_tables(database):
     create_table(database, "AnswersMeta", 'CREATE TABLE "AnswersMeta" ( "AnswerId" INTEGER PRIMARY KEY, "QuestionId" INTEGER, "CreationDate" TEXT, "Score" INTEGER, "OwnerUserId" INTEGER )')
     create_table(database, "AnswersText", 'CREATE TABLE "AnswersText" ("AnswerId" INTEGER PRIMARY KEY, "Body" TEXT)')
-    create_table(database, "Badges", 'CREATE TABLE "Badges" ( "UserId" INTEGER, "BadgeName" TEXT, "BadgeDate" TEXT, PRIMARY KEY(UserId, BadgeName, BadgeDate))')
+    create_table(database, "Badges", 'CREATE TABLE "Badges" ( "BadgeId" INTEGER PRIMARY KEY,"UserId" INTEGER, "BadgeName" TEXT, "BadgeDate" TEXT)')
     create_table(database, "Comments", 'CREATE TABLE "Comments" ("CommentId" INTEGER PRIMARY KEY, "PostId" INTEGER, "UserId" INTEGER, "Score" INTEGER, "Text" TEXT, "CreationDate" TEXT)')
     create_table(database, "DuplicateQuestions", 'CREATE TABLE "DuplicateQuestions" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId) )')
     create_table(database, "FormulasComments", 'CREATE TABLE "FormulasComments"("FormulaId" INTEGER PRIMARY KEY, "CommentId" INTEGER, "Body" TEXT)')

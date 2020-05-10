@@ -44,7 +44,7 @@ def processing_main(dir_name, database_name, append):
     time_bounty = time.process_time()
     #print("# time processing bounty: ", format(time_bounty-time_formulas, ".2f"), "s")
 
-    #badge_processing(dir_name, database_name)
+    badge_processing(dir_name, database_name)
     time_badge = time.process_time()
     print("time processing badges: ", format(time_badge-time_bounty, ".2f"), "s")
 
@@ -59,10 +59,10 @@ def processing_main(dir_name, database_name, append):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i","--input",default= "../input/mathematics", help = "input directory of stackexchange dump *.xml files")
-    parser.add_argument("-d", "--database", default='../output/mathematics.db', help="database output")
+    #parser.add_argument("-i","--input",default= "../input/mathematics", help = "input directory of stackexchange dump *.xml files")
+    #parser.add_argument("-d", "--database", default='../output/mathematics.db', help="database output")
+    parser.add_argument("-i","--input",default= "../input/physics", help = "input directory of stackexchange dump *.xml files")
+    parser.add_argument("-d", "--database", default='../output/physics.db', help="database output")
     parser.add_argument("-a", "--append", default="replace", help="replace tables in database or append to them, options: append, replace")
-    #parser.add_argument("-i","--input",default= "../input/physics", help = "input directory of stackexchange dump *.xml files")
-    #parser.add_argument("-d", "--database", default='../output/physics.db', help="database output")
     args = parser.parse_args()
     processing_main(args.input, args.database, args.append)
