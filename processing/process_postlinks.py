@@ -38,4 +38,4 @@ def postlinks_processing(directory, database):
 
     df = pd.DataFrame(d)
     write_table(database, "PostIdRelatedPostId", df)
-    duplicate_questions(database, df)
+    #duplicate_questions(database, df)
