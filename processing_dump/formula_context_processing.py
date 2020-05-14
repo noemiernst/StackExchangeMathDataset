@@ -17,6 +17,8 @@ def remove_html_tags(text):
     clean = re.compile('<.*?>')
     return re.sub(clean, ' ', text)
 
+
+
 def isolate_sentences(text):
     text = remove_html_tags(text)
     return sent_tokenize(text)
@@ -70,7 +72,8 @@ def remove_formulas(words):
     return words
 
 def context(sentence):
-    words = word_tokenize(sentence)
+    tokenexp = re.compile(r'\w+|\$\$|\$')
+    words = tokenexp.findall(sentence)
     words = remove_stopwords(words)
     words = remove_formulas(words)
     return  str(' '.join(str(x) for x in words))

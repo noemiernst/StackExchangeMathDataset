@@ -18,43 +18,43 @@ def formula_extr(text):
     formulas = []
     contexts = []
 
-    sentences = isolate_sentences(text)
+    #sentences = isolate_sentences(text)
 
     error = False
-    for text in sentences:
-        text = str(text)
-        con = context(text)
-        if text.find('$') > -1:
-            _,found,after = text.partition('$')
-            while found:
-                if text.find('$') > -1:
-                    formula,found,after = after.partition('$')
+    #for text in sentences:
+    #text = str(text)
+    con = context(text)
+    if text.find('$') > -1:
+        _,found,after = text.partition('$')
+        while found:
+            if text.find('$') > -1:
+                formula,found,after = after.partition('$')
 
-                    if(formula.endswith('\\')):
-                        formula_temp,found_temp,after = after.partition('$')
-                        formula = formula + found + formula_temp
+                if(formula.endswith('\\')):
+                    formula_temp,found_temp,after = after.partition('$')
+                    formula = formula + found + formula_temp
+                if formula != '':
+                    if found:
+                        formulas.append(formula)
+                        contexts.append(con)
+                    else:
+                        error = True
+
+                    _,found,after = after.partition('$')
+                else:
+                    formula,found,after = after.partition('$$')
                     if formula != '':
                         if found:
                             formulas.append(formula)
                             contexts.append(con)
                         else:
+                            after = formula
                             error = True
 
-                        _,found,after = after.partition('$')
-                    else:
-                        formula,found,after = after.partition('$$')
-                        if formula != '':
-                            if found:
-                                formulas.append(formula)
-                                contexts.append(con)
-                            else:
-                                after = formula
-                                error = True
+                    _,found,after = after.partition('$')
 
-                        _,found,after = after.partition('$')
-
-                if error:
-                    break
+            if error:
+                break
     if error:
         contexts = []
     return formulas, error, contexts
