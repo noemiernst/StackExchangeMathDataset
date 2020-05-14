@@ -8,43 +8,56 @@ from helper import write_table
 from helper import log
 import resource
 from database import max_column_value
+from formula_context_processing import isolate_sentences
+from formula_context_processing import context
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
 
 def formula_extr(text):
     formulas = []
+    contexts = []
+
+    sentences = isolate_sentences(text)
 
     error = False
-    if text.find('$') > -1:
-        _,found,after = text.partition('$')
-        while found:
-            if text.find('$') > -1:
-                formula,found,after = after.partition('$')
+    for text in sentences:
+        text = str(text)
+        con = context(text)
+        if text.find('$') > -1:
+            _,found,after = text.partition('$')
+            while found:
+                if text.find('$') > -1:
+                    formula,found,after = after.partition('$')
 
-                if(formula.endswith('\\')):
-                    formula_temp,found_temp,after = after.partition('$')
-                    formula = formula + found + formula_temp
-                if formula != '':
-                    if found:
-                        formulas.append(formula)
-                    else:
-                        error = True
-
-                    _,found,after = after.partition('$')
-                else:
-                    formula,found,after = after.partition('$$')
+                    if(formula.endswith('\\')):
+                        formula_temp,found_temp,after = after.partition('$')
+                        formula = formula + found + formula_temp
                     if formula != '':
                         if found:
                             formulas.append(formula)
+                            contexts.append(con)
                         else:
-                            after = formula
                             error = True
 
-                    _,found,after = after.partition('$')
-            if error:
-                break
-    return formulas, error
+                        _,found,after = after.partition('$')
+                    else:
+                        formula,found,after = after.partition('$$')
+                        if formula != '':
+                            if found:
+                                formulas.append(formula)
+                                contexts.append(con)
+                            else:
+                                after = formula
+                                error = True
+
+                        _,found,after = after.partition('$')
+
+                if error:
+                    break
+    if error:
+        contexts = []
+    return formulas, error, contexts
 
 # operatoren: z.B. &amp, &lt, &gt
 
@@ -54,16 +67,21 @@ def questions_formula_processing(database):
     DB.close()
 
     Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
+    contexts = []
 
     # question processing (title and body)
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
-        formulas_title, error_title = formula_extr(str(title))
-        formulas_body, error_body = formula_extr(str(body))
+        formulas_title, error_title, contexts_title = formula_extr(str(title))
+        formulas_body, error_body, contexts_body = formula_extr(str(body))
+
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
+            contexts.extend(contexts_title)
+            contexts.extend(contexts_body)
             for formula in formulas_title:
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
@@ -80,10 +98,17 @@ def questions_formula_processing(database):
         if(len(Formulas["FormulaId"])>1000000):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
             write_table(database, 'FormulasPosts', df)
+
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Context": contexts})
+            write_table(database, 'FormulaSentenceContext', df)
             Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+            contexts = []
+            df._clear_item_cache()
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
     write_table(database, 'FormulasPosts', df)
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Context": contexts})
+    write_table(database, 'FormulaSentenceContext', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
     log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
@@ -99,11 +124,13 @@ def answers_formula_processing(database):
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
+    contexts = []
 
     # answer processing (body)
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
-        formulas, error = formula_extr(str(body))
+        formulas, error, contexts_body = formula_extr(str(body))
         if not error:
+            contexts.extend(contexts_body)
             for formula in formulas:
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
                 Formulas["PostId"].append(int(answer))
@@ -115,10 +142,17 @@ def answers_formula_processing(database):
         if(len(Formulas["FormulaId"])>1000000):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
             write_table(database, 'FormulasPosts', df, "append")
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Context": contexts})
+            write_table(database, 'FormulaSentenceContext', df)
             Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+            contexts = []
+            df._clear_item_cache()
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
     write_table(database, 'FormulasPosts', df, "append")
+
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Context": contexts})
+    write_table(database, 'FormulaSentenceContext', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
@@ -134,10 +168,12 @@ def comments_formula_processing(database):
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
+    contexts = []
 
     for comment, body in zip(comments["CommentId"], comments["Text"]):
-        formulas, error = formula_extr(body)
+        formulas, error, contexts_body = formula_extr(body)
         if not error:
+            contexts.extend(contexts_body)
             for formula in formulas:
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["CommentId"].append(comment)
@@ -149,10 +185,17 @@ def comments_formula_processing(database):
         if(len(Formulas["FormulaId"])>1000000):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
             write_table(database, 'FormulasComments', df, "append")
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Context": contexts})
+            write_table(database, 'FormulaSentenceContext', df)
             Formulas = {"FormulaId": [], "CommentId": [], "Body":[]}
+            contexts = []
+            df._clear_item_cache()
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
     write_table(database, 'FormulasComments', df)
+
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Context": contexts})
+    write_table(database, 'FormulaSentenceContext', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
     log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")
