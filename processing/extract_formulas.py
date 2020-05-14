@@ -8,14 +8,14 @@ from helper import write_table
 from helper import log
 import resource
 from database import max_column_value
-import LatexTokenizer
+from LatexTokenizer import LatexTokenizer
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
 
 def formula_token_length(formula):
     tokenizer = LatexTokenizer
-    return len(tokenizer.tokenize(formula))
+    return len(tokenizer.tokenize(tokenizer, formula))
 
 def formula_extr(text):
     formulas = []
