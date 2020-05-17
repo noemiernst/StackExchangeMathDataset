@@ -44,6 +44,8 @@ def create_tables(database):
     create_table(database, "QuestionsMeta", 'CREATE TABLE "QuestionsMeta" ( "QuestionId" INTEGER PRIMARY KEY, "CreationDate" TEXT, "ViewCount" INTEGER, "Score" INTEGER, "OwnerUserId" INTEGER, "AnswerCount" INTEGER )')
     create_table(database, "QuestionsText", 'CREATE TABLE "QuestionsText" ( "QuestionId" INTEGER PRIMARY KEY, "Title" TEXT, "Body" TEXT )')
     #create_table(database, "RelatedQuestionsSource2Target", 'CREATE TABLE "RelatedQuestionsSource2Target" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId))')
+    #TODO: save sentences as list? use delimiter? or just use the one sentence and multiple occurances will be saved as multiple formulas?
+    create_table(database, "FormulaSentenceContext", 'CREATE TABLE "FormulaSentenceContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" TEXT)')
 
 
 #max_column_value("../output/mathematics.db", "FormulasComments", "FormulaId")

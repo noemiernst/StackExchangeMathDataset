@@ -1,0 +1,22 @@
+<p>Your equations are essentially correct... but possibly confusing.
+<BR>
+When you deal with speeds [magnitudes], you should use absolute-values.</p>
+
+<p>I think it might help to use [x-components of] velocities rather than "speeds [to the right, or left]" and to use a more descriptive notation.</p>
+
+<p>Let $v_{BA}$ denote "B is moving relative to A at a speed of u to the right".<BR>
+Let $v_{CA}$ denote "C is moving relative to A with speed v to the right".<BR>
+Let $v_{CB}$ denote "[C is moving] relative to B with speed w to the right.".</p>
+
+<p>Then the relative-velocity formula is
+$$v_{CB} = \frac{v_{CA}-v_{BA}}{1-\frac{v_{CA}v_{BA}}{c^2}},$$
+holds, regardless of the whether folks are moving to the right or the left.
+(In particular, $v_{CB}$ can be negative.)</p>
+
+<p>If you insist on using "speeds" [magnitudes], then signs get introduced if "moving to the left". So, if C is [my quotes] "moving relative to A with speed $V$ to the left", then $v_{CA}=-V$. So, the relative-velocity would be
+$$v_{CB} = \frac{(-V)-v_{BA}}{1-\frac{(-V)v_{BA}}{c^2}},$$ and the relative-speed would be its absolute-value.</p>
+
+<p>In the Galilean limit (when relative-velocities have magnitudes much smaller than light-speed $c$), the denominator is practically "1". So, we obtain the Galilean relative-velocity formula:
+$$v_{CB} \stackrel{\rm Gal}{=} v_{CA}-v_{BA}.$$
+For the Galilean the [addition] composition-of-velocities formula, solve for $v_{CA}$ to obtain
+$$v_{CA} \stackrel{\rm Gal}{=} v_{CB}+v_{BA}.$$</p>

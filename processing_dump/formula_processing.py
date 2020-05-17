@@ -21,6 +21,7 @@ def formula_extr(text):
     formulas = []
 
     error = False
+
     if text.find('$') > -1:
         _,found,after = text.partition('$')
         while found:
@@ -47,6 +48,7 @@ def formula_extr(text):
                             error = True
 
                     _,found,after = after.partition('$')
+
             if error:
                 break
     return formulas, error
@@ -67,6 +69,7 @@ def questions_formula_processing(database):
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
         formulas_title, error_title = formula_extr(str(title))
         formulas_body, error_body = formula_extr(str(body))
+
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
             for formula in formulas_title:
@@ -88,6 +91,7 @@ def questions_formula_processing(database):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
             write_table(database, 'FormulasPosts', df)
             Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
+            df._clear_item_cache()
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
     write_table(database, 'FormulasPosts', df)
@@ -124,6 +128,7 @@ def answers_formula_processing(database):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
             write_table(database, 'FormulasPosts', df, "append")
             Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
+            df._clear_item_cache()
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
     write_table(database, 'FormulasPosts', df, "append")
@@ -159,6 +164,7 @@ def comments_formula_processing(database):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
             write_table(database, 'FormulasComments', df, "append")
             Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": []}
+            df._clear_item_cache()
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
     write_table(database, 'FormulasComments', df)

@@ -2,7 +2,7 @@ import argparse
 import resource
 from process_posts import posts_processing
 from process_comments import comments_processing
-from extract_formulas import formula_processing
+from formula_processing import formula_processing
 from process_votes import bounty_processing
 from process_badges import badge_processing
 from process_postlinks import postlinks_processing
@@ -12,7 +12,7 @@ from database import create_tables
 
 def processing_main(dir_name, database_name, append):
     log("../output/statistics.log", "#################################################")
-    log("../output/statistics.log", "create_formula_dataset.py")
+    log("../output/statistics.log", "create_dataset.py")
     log("../output/statistics.log", "input: " + dir_name)
     log("../output/statistics.log", "output: "+ database_name + ", ../output/statistics.log")
     log("../output/statistics.log", "-------------------------")
