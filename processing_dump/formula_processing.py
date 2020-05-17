@@ -8,11 +8,14 @@ from helper import write_table
 from helper import log
 import resource
 from database import max_column_value
-from formula_context_processing import isolate_sentences
-from formula_context_processing import context
+from LatexTokenizer import LatexTokenizer
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
+
+def formula_token_length(formula):
+    tokenizer = LatexTokenizer
+    return len(tokenizer.tokenize(tokenizer, formula))
 
 def formula_extr(text):
     formulas = []
@@ -57,8 +60,7 @@ def questions_formula_processing(database):
     questions = pd.read_sql('select * from "QuestionsText"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
-
+    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
@@ -74,22 +76,24 @@ def questions_formula_processing(database):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
+                Formulas["TokenLength"].append(formula_token_length(formula))
                 formula_index += 1
             for formula in formulas_body:
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
+                Formulas["TokenLength"].append(formula_token_length(formula))
                 formula_index += 1
         else:
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
             write_table(database, 'FormulasPosts', df)
-            Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
     write_table(database, 'FormulasPosts', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
@@ -102,7 +106,7 @@ def answers_formula_processing(database):
     answers = pd.read_sql('select * from "AnswersText"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
@@ -115,17 +119,18 @@ def answers_formula_processing(database):
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
                 Formulas["PostId"].append(int(answer))
                 Formulas["Body"].append(formula)
+                Formulas["TokenLength"].append(formula_token_length(formula))
                 formula_index += 1
         else:
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
             write_table(database, 'FormulasPosts', df, "append")
-            Formulas = {"FormulaId": [], "PostId": [], "Body":[]}
+            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
     write_table(database, 'FormulasPosts', df, "append")
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
@@ -137,7 +142,7 @@ def comments_formula_processing(database):
     comments = pd.read_sql('select CommentId, Text from "Comments"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "CommentId": [], "Body":[]}
+    Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": []}
 
     error_count = 0
     starting_formula_index = current_formula_id(database)
@@ -150,17 +155,18 @@ def comments_formula_processing(database):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["CommentId"].append(comment)
                 Formulas["Body"].append(formula)
+                Formulas["TokenLength"].append(formula_token_length(formula))
                 formula_index += 1
         else:
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
             write_table(database, 'FormulasComments', df, "append")
-            Formulas = {"FormulaId": [], "CommentId": [], "Body":[]}
+            Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
     write_table(database, 'FormulasComments', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
