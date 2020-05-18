@@ -19,11 +19,14 @@ def formula_token_length(formula):
 
 def formula_extr(text):
     formulas = []
+    positions = []
 
     error = False
+    postion = 0
 
     if text.find('$') > -1:
-        _,found,after = text.partition('$')
+        before,found,after = text.partition('$')
+        position = len(before)
         while found:
             if text.find('$') > -1:
                 formula,found,after = after.partition('$')
@@ -34,24 +37,31 @@ def formula_extr(text):
                 if formula != '':
                     if found:
                         formulas.append(formula)
+                        positions.append(position)
                     else:
                         error = True
 
-                    _,found,after = after.partition('$')
+                    before,found,after = after.partition('$')
+                    position += len(formula) + len(before) + 2
                 else:
                     formula,found,after = after.partition('$$')
                     if formula != '':
                         if found:
                             formulas.append(formula)
+                            positions.append(position)
                         else:
                             after = formula
                             error = True
 
-                    _,found,after = after.partition('$')
+                    before,found,after = after.partition('$')
+                    position += len(formula) + len(before) + 4
 
             if error:
                 break
-    return formulas, error
+    return formulas, positions, error
+
+formula_extr("ich $formel$ ein $$beispiel$$\n lala $formelund"
+             "noch viel mehr \n lala $formel")
 
 # operatoren: z.B. &amp, &lt, &gt
 
@@ -60,40 +70,42 @@ def questions_formula_processing(database):
     questions = pd.read_sql('select * from "QuestionsText"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
+    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
 
     # question processing (title and body)
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
-        formulas_title, error_title = formula_extr(str(title))
-        formulas_body, error_body = formula_extr(str(body))
+        formulas_title, positions_title, error_title = formula_extr(str(title))
+        formulas_body, positions_body, error_body = formula_extr(str(body))
 
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
-            for formula in formulas_title:
+            for formula, position in zip(formulas_title, positions_title):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
+                Formulas["StartingPosition"].append(position)
                 formula_index += 1
-            for formula in formulas_body:
+            for formula, position in zip(formulas_body, positions_body):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
+                Formulas["StartingPosition"].append(position)
                 formula_index += 1
         else:
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
             write_table(database, 'FormulasPosts', df)
-            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
+            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasPosts', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
@@ -106,31 +118,32 @@ def answers_formula_processing(database):
     answers = pd.read_sql('select * from "AnswersText"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
+    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
 
     # answer processing (body)
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
-        formulas, error = formula_extr(str(body))
+        formulas, positions, error = formula_extr(str(body))
         if not error:
-            for formula in formulas:
+            for formula, position in zip(formulas, positions):
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
                 Formulas["PostId"].append(int(answer))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
+                Formulas["StartingPosition"].append(position)
                 formula_index += 1
         else:
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
             write_table(database, 'FormulasPosts', df, "append")
-            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": []}
+            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasPosts', df, "append")
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
@@ -142,31 +155,32 @@ def comments_formula_processing(database):
     comments = pd.read_sql('select CommentId, Text from "Comments"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": []}
+    Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
 
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
 
     for comment, body in zip(comments["CommentId"], comments["Text"]):
-        formulas, error = formula_extr(body)
+        formulas, positions, error = formula_extr(body)
         if not error:
-            for formula in formulas:
+            for formula, position in zip(formulas, positions):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["CommentId"].append(comment)
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
+                Formulas["StartingPosition"].append(position)
                 formula_index += 1
         else:
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
             write_table(database, 'FormulasComments', df, "append")
-            Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": []}
+            Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasComments', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
