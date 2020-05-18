@@ -4,8 +4,8 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import os.path
 import pandas as pd
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 import resource
 
 def process_answer_meta(answers, database):

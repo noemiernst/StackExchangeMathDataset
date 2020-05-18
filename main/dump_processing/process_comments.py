@@ -4,8 +4,8 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import pandas as pd
 import os.path
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 
 def comments_processing(directory, database):
     comments = {"CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}

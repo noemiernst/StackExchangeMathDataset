@@ -4,11 +4,11 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import sqlite3
 import pandas as pd
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 import resource
-from database import max_column_value
-from LatexTokenizer import LatexTokenizer
+from dump_processing.database import max_column_value
+from dump_processing.LatexTokenizer import LatexTokenizer
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1

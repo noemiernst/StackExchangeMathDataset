@@ -6,8 +6,8 @@ import os.path
 import pandas as pd
 import argparse
 import sqlite3
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 
 def badge_processing(directory, database):
     index = []
