@@ -6,10 +6,11 @@ import os.path
 import pandas as pd
 import argparse
 import sqlite3
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 
-def badge_processing(directory, database):
+def badge_processing(site_name, directory, database):
+    site = []
     index = []
     UserId = []
     BadgeName = []
@@ -22,6 +23,7 @@ def badge_processing(directory, database):
                 userid = int(elem.attrib["UserId"])
                 badgename = elem.attrib["Name"]
                 badgedate = elem.attrib["Date"]
+                site.append(site_name)
                 index.append(ind)
                 UserId.append(userid)
                 BadgeName.append(badgename)
@@ -30,6 +32,6 @@ def badge_processing(directory, database):
             except Exception as e:
                 pass
 
-    df =pd.DataFrame({"BadgeId":index, "UserId":UserId,"BadgeName":BadgeName,"BadgeDate":BadgeDate})
+    df =pd.DataFrame({"Site": site, "BadgeId":index, "UserId":UserId,"BadgeName":BadgeName,"BadgeDate":BadgeDate})
     write_table(database, "Badges", df)
     log("../output/statistics.log","# users having badges: %d" % len(df))

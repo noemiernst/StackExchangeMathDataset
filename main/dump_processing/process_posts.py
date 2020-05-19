@@ -2,22 +2,29 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import os.path
+import pathlib
 import pandas as pd
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 import resource
 
-def process_answer_meta(answers, database):
-    df = pd.DataFrame({"AnswerId": answers["AnswerId"],"QuestionId": answers["QuestionId"], "CreationDate": answers["CreationDate"],
+def process_answer_meta(site_name, answers, database):
+    sites = [site_name for i in range(len(answers["AnswerId"]))]
+    df = pd.DataFrame({"Site": sites, "AnswerId": answers["AnswerId"],"QuestionId": answers["QuestionId"], "CreationDate": answers["CreationDate"],
                        "Score": answers["Score"],
                        #"CommentCount": answers["CommentCount"],
                        #"LastEditorUserId": answers["LastEditorUserId"],
                        "OwnerUserId": answers["OwnerUserId"]})
     write_table(database, "AnswersMeta", df)
 
-def process_question_meta(questions, database):
-    df = pd.DataFrame({"QuestionId": questions["QuestionId"], "CreationDate": questions["CreationDate"],
+def process_question_meta(site_name, questions, database):
+    sites = [site_name for i in range(len(questions["QuestionId"]))]
+    df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "CreationDate": questions["CreationDate"],
                        "ViewCount": questions["ViewCount"], "Score": questions["Score"],
                        #"CommentCount": questions["CommentCount"],
                        "OwnerUserId": questions["OwnerUserId"],
@@ -25,21 +32,24 @@ def process_question_meta(questions, database):
                        "AnswerCount": questions["AnswerCount"]})
     write_table(database, "QuestionsMeta", df)
 
-def process_question_acceptedanswer(questions, database):
+def process_question_acceptedanswer(site_name, questions, database):
+    sites = []
     questionId = []
     acceptedAnswerId = []
     for qid, aid in zip(questions["QuestionId"], questions["AcceptedAnswerId"]):
         if aid:
+            sites.append(site_name)
             questionId.append(qid)
             acceptedAnswerId.append(aid)
-    df = pd.DataFrame({"QuestionId": questionId, "AcceptedAnswerId": acceptedAnswerId})
+    df = pd.DataFrame({"Site": sites, "QuestionId": questionId, "AcceptedAnswerId": acceptedAnswerId})
 
     write_table(database, "QuestionAcceptedAnswer", df)
     log("../output/statistics.log", "# question-acceptedAnswer pairs: %d" % len(df))
 
 
-def process_question_tags(questions, database):
-    df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
+def process_question_tags(site_name, questions, database):
+    sites = [site_name for i in range(len(questions["QuestionId"]))]
+    df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "Tags": questions["Tags"]})
     write_table(database, "QuestionTags", df)
     questions.pop("Tags")
     '''
@@ -61,15 +71,30 @@ def process_question_tags(questions, database):
     log("../output/statistics.log", "# questions with tags: " + str(len(question_tags)))
     log("../output/statistics.log", "# unique tags: " + str(len(set(tags_set))))'''
 
-def process_question_text(questions, database):
-    df = pd.DataFrame({"QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
+def process_question_text(site_name, questions, database):
+    sites = [site_name for i in range(len(questions["QuestionId"]))]
+    df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionsText", df)
+
+    questions_dict = {}
+    for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
+        questions_dict[question] = [title,body]
+    with open(os.path.join(pathlib.Path(database).parent.absolute(), "questiontext.pkl"),"wb") as f:
+        pickle.dump(questions_dict,f)
     questions.pop("Title")
     questions.pop("Body")
 
-def process_answer_body(answers, database):
-    df = pd.DataFrame({"AnswerId": answers["AnswerId"], "Body": answers["Body"]})
+def process_answer_body(site_name, answers, database):
+    sites = [site_name for i in range(len(answers["AnswerId"]))]
+    df = pd.DataFrame({"Site": sites, "AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswersText", df)
+
+    answers_dict = {}
+    for question,body in zip(answers["AnswerId"],answers["Body"]):
+        answers_dict[question] = body
+    with open(os.path.join(pathlib.Path(database).parent.absolute(), "answertext.pkl"),"wb") as f:
+        pickle.dump(answers_dict,f)
+
     answers.pop("Body")
 
 def process_common_attributes(posts, elem):
@@ -132,7 +157,7 @@ def init_posts(PostTypeId=1):
         posts["QuestionId"] = []
     return posts
 
-def posts_processing(directory, database):
+def posts_processing(site_name, directory, database):
 
     questions = init_posts(PostTypeId=1)
     answers = init_posts(PostTypeId=2)
@@ -152,10 +177,10 @@ def posts_processing(directory, database):
     log("../output/statistics.log", "# questions: " + str(len(questions["QuestionId"])))
     log("../output/statistics.log", "# answers: " + str(len(answers["AnswerId"])))
 
-    process_question_text(questions, database)
-    process_question_tags(questions, database)
-    process_question_acceptedanswer(questions, database)
-    process_question_meta(questions, database)
+    process_question_text(site_name, questions, database)
+    process_question_tags(site_name, questions, database)
+    process_question_acceptedanswer(site_name, questions, database)
+    process_question_meta(site_name, questions, database)
     questions.clear()  # 'clear questions dictionary to free up memory space
-    process_answer_body(answers, database)
-    process_answer_meta(answers, database)
+    process_answer_body(site_name, answers, database)
+    process_answer_meta(site_name, answers, database)

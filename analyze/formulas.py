@@ -3,7 +3,7 @@ import argparse
 import sqlite3
 import pandas as pd
 from Histogram import Histogram
-from log import log
+from helper import log
 
 def equations(formulas):
     count = 0
@@ -101,10 +101,10 @@ def analyze_formulas(database, table):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    #parser.add_argument("-d","--database",default= "../output/physics.db", help = "input database with LaTeX formulas")
-    #parser.add_argument("-t", "--table", default="Formulas_Posts", help= "name of table in database")
     parser.add_argument("-d","--database",default= "../output/physics.db", help = "input database with LaTeX formulas")
-    parser.add_argument("-t", "--table", default="Formulas_Posts", help= "name of table in database")
+    parser.add_argument("-t", "--table", default="FormulasPosts", help= "name of table in database")
+    #parser.add_argument("-d","--database",default= "../output/mathematics.db", help = "input database with LaTeX formulas")
+    #parser.add_argument("-t", "--table", default="FormulasPosts", help= "name of table in database")
     args = parser.parse_args()
 
     analyze_formulas(args.database, args.table)

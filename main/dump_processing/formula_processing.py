@@ -4,11 +4,11 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import sqlite3
 import pandas as pd
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 import resource
-from database import max_column_value
-from LatexTokenizer import LatexTokenizer
+from dump_processing.database import max_column_value
+from dump_processing.LatexTokenizer import LatexTokenizer
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
@@ -65,12 +65,12 @@ formula_extr("ich $formel$ ein $$beispiel$$\n lala $formelund"
 
 # operatoren: z.B. &amp, &lt, &gt
 
-def questions_formula_processing(database):
+def questions_formula_processing(site_name, database):
     DB = sqlite3.connect(database)
     questions = pd.read_sql('select * from "QuestionsText"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
+    Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
@@ -84,6 +84,7 @@ def questions_formula_processing(database):
         if not error_title and not error_body:
             for formula, position in zip(formulas_title, positions_title):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
+                Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
@@ -91,6 +92,7 @@ def questions_formula_processing(database):
                 formula_index += 1
             for formula, position in zip(formulas_body, positions_body):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
+                Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
@@ -100,12 +102,12 @@ def questions_formula_processing(database):
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
             write_table(database, 'FormulasPosts', df)
-            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
+            Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasPosts', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
@@ -113,12 +115,12 @@ def questions_formula_processing(database):
     log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"])*2)*100, ".4f") + " %")
 
 
-def answers_formula_processing(database):
+def answers_formula_processing(site_name, database):
     DB = sqlite3.connect(database)
     answers = pd.read_sql('select * from "AnswersText"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
+    Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
@@ -129,6 +131,7 @@ def answers_formula_processing(database):
         if not error:
             for formula, position in zip(formulas, positions):
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
+                Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(answer))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
@@ -138,24 +141,24 @@ def answers_formula_processing(database):
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
             write_table(database, 'FormulasPosts', df, "append")
-            Formulas = {"FormulaId": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
+            Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasPosts', df, "append")
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
     log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
 
-def comments_formula_processing(database):
+def comments_formula_processing(site_name, database):
     DB = sqlite3.connect(database)
     comments = pd.read_sql('select CommentId, Text from "Comments"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
+    Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
 
     error_count = 0
     starting_formula_index = current_formula_id(database)
@@ -166,6 +169,7 @@ def comments_formula_processing(database):
         if not error:
             for formula, position in zip(formulas, positions):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
+                Formulas["Site"].append(site_name)
                 Formulas["CommentId"].append(comment)
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
@@ -175,22 +179,22 @@ def comments_formula_processing(database):
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"],  "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
             write_table(database, 'FormulasComments', df, "append")
-            Formulas = {"FormulaId": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
+            Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"],"CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasComments', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
     log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")
     log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
-def formula_processing(database):
-    questions_formula_processing(database)
+def formula_processing(site_name, database):
+    questions_formula_processing(site_name, database)
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    answers_formula_processing(database)
+    answers_formula_processing(site_name, database)
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    comments_formula_processing(database)
+    comments_formula_processing(site_name, database)
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
