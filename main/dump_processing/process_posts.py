@@ -2,7 +2,12 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import os.path
+import pathlib
 import pandas as pd
 from dump_processing.helper import write_table
 from dump_processing.helper import log
@@ -70,6 +75,12 @@ def process_question_text(site_name, questions, database):
     sites = [site_name for i in range(len(questions["QuestionId"]))]
     df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionsText", df)
+
+    questions_dict = {}
+    for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
+        questions_dict[question] = [title,body]
+    with open(os.path.join(pathlib.Path(database).parent.absolute(), "questiontext.pkl"),"wb") as f:
+        pickle.dump(questions_dict,f)
     questions.pop("Title")
     questions.pop("Body")
 
@@ -77,6 +88,13 @@ def process_answer_body(site_name, answers, database):
     sites = [site_name for i in range(len(answers["AnswerId"]))]
     df = pd.DataFrame({"Site": sites, "AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswersText", df)
+
+    answers_dict = {}
+    for question,body in zip(answers["AnswerId"],answers["Body"]):
+        answers_dict[question] = body
+    with open(os.path.join(pathlib.Path(database).parent.absolute(), "answertext.pkl"),"wb") as f:
+        pickle.dump(answers_dict,f)
+
     answers.pop("Body")
 
 def process_common_attributes(posts, elem):

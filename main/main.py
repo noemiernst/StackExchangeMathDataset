@@ -61,8 +61,8 @@ def main(dump_directory, filename_dumps, download, database):
 
     for site, dir in zip(sites, directories):
         # TODO:
-        #  create pickles for further processing before moving on to next dump
-        #  do further processing
+        #  do further processing with pickles questiontext, answertext and commenttext in directory of database
+        #  update readme
         dump_processing.process_dump.processing_main(site, dir, database)
 
 
