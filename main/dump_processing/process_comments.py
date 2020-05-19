@@ -4,11 +4,11 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import pandas as pd
 import os.path
-from helper import write_table
-from helper import log
+from dump_processing.helper import write_table
+from dump_processing.helper import log
 
-def comments_processing(directory, database):
-    comments = {"CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
+def comments_processing(site_name, directory, database):
+    comments = {"Site": [], "CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
     comment_index = 0
     for event,elem in ET.iterparse(os.path.join(directory, "Comments.xml")):
         if event == "end":
@@ -19,6 +19,7 @@ def comments_processing(directory, database):
                 creationdate = elem.attrib["CreationDate"]
                 text = elem.attrib["Text"]
 
+                comments["Site"].append(site_name)
                 comments["CommentId"].append(comment_index)
                 comments["PostId"].append(postid)
                 comments["UserId"].append(userid)
@@ -31,12 +32,12 @@ def comments_processing(directory, database):
             except Exception as e:
                 pass
         if(len(comments["CommentId"])>1000000):
-            df = pd.DataFrame({"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
+            df = pd.DataFrame({"Site": comments["Site"],"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
                        "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
             write_table(database, 'Comments', df)
-            comments = {"CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
+            comments = {"Site": [], "CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
 
-    df = pd.DataFrame({"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
-                       "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
+    df = pd.DataFrame({"Site": comments["Site"],"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
+               "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
     write_table(database, 'Comments', df)
     log("../output/statistics.log", "# comments: " + str(len(df)))

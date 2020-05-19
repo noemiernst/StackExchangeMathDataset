@@ -50,11 +50,16 @@ def remove_paragraph_tags(text):
 def get_paragraphs(text):
     paragraph = re.compile('<p>.*?</p>')
     all = paragraph.findall(text)
+    indices = []
+    start = 0
+    for p in all:
+        indices.append((start, start +len(p)))
+        start += len(p) + 1
     all = [remove_paragraph_tags(p) for p in all]
     while("" in all) :
         all.remove("")
     if len(all) is 0:
         return text
-    return all
+    return all, indices
 
 
