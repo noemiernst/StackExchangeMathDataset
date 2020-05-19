@@ -21,14 +21,15 @@ def duplicate_questions(database, df):
         write_table(database, file_name, d)
 
 
-def postlinks_processing(directory, database):
-    d = {"PostId": [], "RelatedPostId": [], "LinkTypeId": []}
+def postlinks_processing(site_name, directory, database):
+    d = {"Site": [], "PostId": [], "RelatedPostId": [], "LinkTypeId": []}
     for event, elem in ET.iterparse(os.path.join(directory, "PostLinks.xml")):
         if event == "end":
             try:
                 postid = int(elem.attrib["PostId"])
                 relatedpostid = int(elem.attrib["RelatedPostId"])
                 linktypeid = int(elem.attrib["LinkTypeId"])
+                d["Site"].append(site_name)
                 d["PostId"].append(postid)
                 d["RelatedPostId"].append(relatedpostid)
                 d["LinkTypeId"].append(linktypeid)

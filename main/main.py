@@ -26,7 +26,7 @@ def extract_dumps(dump_directory, sites):
                 with open(output + str(entry.pathname), 'wb') as f:
                     for block in entry.get_blocks():
                         f.write(block)
-    return directories
+    return sites, directories
 
 def dumps(dump_directory, filename_dumps, download):
     with open(filename_dumps) as f:
@@ -55,15 +55,17 @@ def main(dump_directory, filename_dumps, download, database):
     log("../output/statistics.log", "dumps: " + filename_dumps)
     log("../output/statistics.log", "-------------------------")
 
-    directories = dumps(dump_directory, filename_dumps, download)
-    for dir in directories:
+    sites, directories = dumps(dump_directory, filename_dumps, download)
+
+    dump_processing.database.create_tables(database)
+
+    for site, dir in zip(sites, directories):
         #TODO: Process each dump
         # need to append to every entry
         # create pickles for further processing before moving on to next dump
         # change database in order to guarantee unique keys (add name of site as part or key)
-        dump_processing.process_dump.processing_main(dir, database)
+        dump_processing.process_dump.processing_main(site, dir, database)
 
-    dump_processing.database.create_tables(database)
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
