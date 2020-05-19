@@ -22,7 +22,6 @@ electronics
 engineering
 gamedev
 hsm
-materials
 mathoverflow
 mathematica
 math

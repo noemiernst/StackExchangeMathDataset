@@ -60,10 +60,9 @@ def main(dump_directory, filename_dumps, download, database):
     dump_processing.database.create_tables(database)
 
     for site, dir in zip(sites, directories):
-        #TODO: Process each dump
-        # need to append to every entry
-        # create pickles for further processing before moving on to next dump
-        # change database in order to guarantee unique keys (add name of site as part or key)
+        # TODO:
+        #  create pickles for further processing before moving on to next dump
+        #  do further processing
         dump_processing.process_dump.processing_main(site, dir, database)
 
 
@@ -77,7 +76,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump *.7z files")
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("--download", default="no", help="yes or no. Whether or not to download all dumps")
+    parser.add_argument("--download", default="no", help="yes or no. Whether or not to download the dumps")
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
     args = parser.parse_args()
     main(args.input, args.dumps, args.download, args.output)

@@ -7,7 +7,7 @@ class DumpDownloader:
     # sites that use mathjax as of 08/05/2020
     sites_with_mathjax = ["3dprinting", "ham", "ai", "astronomy", "aviation", "bioinformatics", "biology", "blender", "chemistry",
              "codegolf", "codereview", "scicomp", "computergraphics", "cs", "cseducators", "stats", "crypto",
-             "datascience", "earthscience", "economics", "electronics", "engineering", "gamedev", "hsm", "materials",
+             "datascience", "earthscience", "economics", "electronics", "engineering", "gamedev", "hsm",
              "mathoverflow", "mathematica", "math", "matheducators", "or", "physics", "psychology", "puzzling",
              "quant", "quantumcomputing", "robotics", "rpg", "dsp", "space", "cstheory", "worldbuilding"]
     archive_stackexchange_dumps_url = "https://archive.org/download/stackexchange/"
@@ -18,6 +18,7 @@ class DumpDownloader:
         # Download the file from `url` and save it locally under `file_name`:
         urllib.request.urlretrieve(url, file_name)
         print("file saved at " + file_name)
+        print("file size: ~"+ str(int(os.path.getsize(file_name)/(1000000))) + "MB")
         print("download time: " + format(time.time()-t, ".2f")+ "s")
 
     def download_all_mathjax(self, directory):
