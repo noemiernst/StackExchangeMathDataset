@@ -10,6 +10,7 @@ import dump_processing.process_dump
 from dump_processing.helper import log
 import time
 import resource
+import context_processing.process_context
 
 
 def extract_dumps(dump_directory, sites):
@@ -64,7 +65,14 @@ def main(dump_directory, filename_dumps, download, database):
         #  do further processing with pickles questiontext, answertext and commenttext in directory of database
         #  update readme
         dump_processing.process_dump.processing_main(site, dir, database)
+        context_processing.process_context.context_main(site, database)
 
+
+    # TODO:
+    #  keyword extraction (via tf-idf)
+    #  need corpus (of all sites texts?)
+    #  extract keywords from all texts of each site
+    #  get only context around formulas?
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")

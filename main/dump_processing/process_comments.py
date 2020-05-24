@@ -36,7 +36,7 @@ def comments_processing(site_name, directory, database):
                 comments["Text"].append(text)
                 elem.clear()
 
-                comments_dict["CommentId"] = text
+                comments_dict[comment_index] = text
 
                 comment_index +=1
             except Exception as e:
