@@ -15,10 +15,11 @@ import context_processing.process_context
 
 def extract_dumps(dump_directory, sites):
     directories = []
-    files = [os.path.join(dump_directory, site + ".stackexchange.com.7z") for site in sites]
+    downloader = DumpDownloader()
+    files = [os.path.join(dump_directory, downloader.get_file_name(site)) for site in sites]
     for file, site in zip(files, sites):
         with libarchive.public.file_reader(file) as e:
-            output = os.path.join(dump_directory, site + ".stackexchange.com/")
+            output = file.replace(".7z", "/")
             directories.append(output)
             print("extracting " + file + " to " + output + "...")
             if not os.path.exists(output):
@@ -73,6 +74,10 @@ def main(dump_directory, filename_dumps, download, database):
     #  need corpus (of all sites texts?)
     #  extract keywords from all texts of each site
     #  get only context around formulas?
+
+    # TODO
+    #  context only as BOW?
+    #  corpus of all sites text? or each site? or even seperate posts and comments?
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
