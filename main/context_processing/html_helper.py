@@ -2,9 +2,10 @@ import re
 
 def clean_html(text):
     text = re.sub('<a.*?>.*?</a>|<img.*?>', '', text)
-    # TODO: find highlighted, bold etc text first
+    strong = find_strong(text)
+    em = find_emphasized(text)
     text = strip_html(text)
-    return text
+    return text, strong, em
 
 
 def strip_html(text):

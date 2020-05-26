@@ -8,12 +8,14 @@ except ImportError:
     import pickle
 import context_processing.html_helper
 import context_processing.formula_helper
+import pathlib
 
 class BOW:
 
     def corpus_from_pickles(self, directory, extend_existing = True):
+        self.corpus_dir = pathlib.Path(directory).parent.absolute()
         if extend_existing:
-            corpus = self.unpickle_corpus(directory)
+            corpus = self.unpickle_corpus()
         else:
             corpus = []
         questions = pd.read_pickle(os.path.join(directory, "questiontext.pkl"))
@@ -25,20 +27,20 @@ class BOW:
         comments = pd.read_pickle(os.path.join(directory, "commenttext.pkl"))
         texts = list(t for c,t in comments.items())
         corpus.extend(self.strip_texts(texts))
-        self.pickle_corpus(directory, corpus)
+        self.pickle_corpus(corpus)
         print("Corpus size = ", len(corpus))
 
-    def pickle_corpus(self, directory, corpus):
-        with open(os.path.join(directory, "corpus.pkl"),"wb") as f:
+    def pickle_corpus(self, corpus):
+        with open(os.path.join(self.corpus_dir, "corpus.pkl"),"wb") as f:
             pickle.dump(corpus,f)
 
-    def unpickle_corpus(self, directory):
-        with open(os.path.join(directory, "corpus.pkl"),"rb") as f:
+    def unpickle_corpus(self):
+        with open(os.path.join(self.corpus_dir, "corpus.pkl"),"rb") as f:
             corpus = pickle.load(f)
         return corpus
 
-    def vectorize_corpus(self, directory):
-        corpus = self.unpickle_corpus(directory)
+    def vectorize_corpus(self):
+        corpus = self.unpickle_corpus()
 
         self.vectorizer = CountVectorizer(max_df = 0.75, min_df = 2, max_features=10000)
         word_count_vector=self.vectorizer.fit_transform(corpus)
@@ -57,7 +59,11 @@ class BOW:
         return top_n
 
     def strip_texts(self, texts):
-        texts = [context_processing.html_helper.clean_html(t) for t in texts]
+        #TODO: strong and emphasized text
+        temp = []
+        for t in texts:
+            text, strong, em = context_processing.html_helper.clean_html(t)
+            temp.append(text)
         texts = [context_processing.formula_helper.remove_formulas(t) for t in texts]
         return texts
 

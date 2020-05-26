@@ -50,6 +50,22 @@ def dumps(dump_directory, filename_dumps, download):
 
     return extract_dumps(dump_directory, sites)
 
+def cleanup(sites, directories):
+    try:
+        os.remove(os.path.join(pathlib.Path(directories[0]).parent.absolute(), "corpus.pkl"))
+    except OSError:
+        pass
+    except ValueError:
+        pass
+
+    for dir in directories:
+        try:
+            os.remove(os.path.join(dir, "answertext.pkl"))
+            os.remove(os.path.join(dir, "questiontext.pkl"))
+            os.remove(os.path.join(dir, "commenttext.pkl"))
+        except OSError:
+            pass
+
 def main(dump_directory, filename_dumps, download, database):
     start = time.time()
     log("../output/statistics.log", "#################################################")
@@ -68,25 +84,35 @@ def main(dump_directory, filename_dumps, download, database):
 
     for site, dir in zip(sites, directories):
         # TODO:
-        #  do further processing with pickles questiontext, answertext and commenttext in directory of database
+        #  for each pickle do processing to determine context -> later determine their bag of words
         #  update readme
         dump_processing.process_dump.processing_main(site, dir, database)
-        bag_of_words.corpus_from_pickles(os.path.join(pathlib.Path(database).parent.absolute()), not first)
+        bag_of_words.corpus_from_pickles(dir, not first)
         first = False
 
-    bag_of_words.vectorize_corpus(os.path.join(pathlib.Path(database).parent.absolute()))
+    # calculate the idf scores of the corpus
+    t = time.time()
+    bag_of_words.vectorize_corpus()
+    log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t)/60)) +"min " + str(int((time.time()-t)%60)) + "sec")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
-
-    # TODO:
-    #  keyword extraction (via tf-idf)
-    #  need corpus (of all sites texts?)
-    #  extract keywords from all texts of each site
-    #  get only context around formulas?
-
+    # calculate tf-idf scores for all sites contents
+    # for each post/comment or formulas surrounding words?
+    for dir in directories:
+        # TODO
+        #  questions
+        #  answers
+        #  comments
+        #  save all in database (postid_bow, commentid_bow)
+        #print(bag_of_words.get_top_n_tfidf(bag_of_words.unpickle_corpus(), 5))
+        pass
     # TODO
-    #  context only as BOW?
+    #  context only as BOW? get only context around formulas?
     #  corpus of all sites text? or each site? or even seperate posts and comments?
     #  also highlighted, bold etc words as keywords?
+
+    # delete all pkl files created during dump processing
+    cleanup(sites, directories)
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
