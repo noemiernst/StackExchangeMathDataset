@@ -1,5 +1,12 @@
 import re
 
+def clean_html(text):
+    text = re.sub('<a.*?>.*?</a>|<img.*?>', '', text)
+    # TODO: find highlighted, bold etc text first
+    text = strip_html(text)
+    return text
+
+
 def strip_html(text):
     clean = re.compile('<.*?>')
     return re.sub(clean, ' ', text)

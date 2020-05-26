@@ -11,6 +11,8 @@ from dump_processing.helper import log
 import time
 import resource
 import context_processing.process_context
+from context_processing.BOW import BOW
+import pathlib
 
 
 def extract_dumps(dump_directory, sites):
@@ -33,12 +35,12 @@ def extract_dumps(dump_directory, sites):
 def dumps(dump_directory, filename_dumps, download):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
+    downloader = DumpDownloader()
     if download is "yes":
-        downloader = DumpDownloader()
         downloader.download_some(dump_directory, sites)
     elif download is "no":
         for site in sites:
-            file = os.path.join(dump_directory, site + ".stackexchange.com.7z")
+            file = os.path.join(dump_directory, downloader.get_file_name(site))
             if os.path.isfile(file):
                 pass
             else:
@@ -61,12 +63,18 @@ def main(dump_directory, filename_dumps, download, database):
 
     dump_processing.database.create_tables(database)
 
+    bag_of_words = BOW()
+    first = True
+
     for site, dir in zip(sites, directories):
         # TODO:
         #  do further processing with pickles questiontext, answertext and commenttext in directory of database
         #  update readme
         dump_processing.process_dump.processing_main(site, dir, database)
-        context_processing.process_context.context_main(site, database)
+        bag_of_words.corpus_from_pickles(os.path.join(pathlib.Path(database).parent.absolute()), not first)
+        first = False
+
+    bag_of_words.vectorize_corpus(os.path.join(pathlib.Path(database).parent.absolute()))
 
 
     # TODO:
@@ -78,6 +86,7 @@ def main(dump_directory, filename_dumps, download, database):
     # TODO
     #  context only as BOW?
     #  corpus of all sites text? or each site? or even seperate posts and comments?
+    #  also highlighted, bold etc words as keywords?
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
