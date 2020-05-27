@@ -3,6 +3,10 @@ from DumpDownloader import DumpDownloader
 import os
 import os.path
 import libarchive.public
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 #TODO pip install libarchive
 
 import dump_processing.database
@@ -10,10 +14,10 @@ import dump_processing.process_dump
 from dump_processing.helper import log
 import time
 import resource
-import context_processing.process_context
 from context_processing.BOW import BOW
 import pathlib
 
+#TODO: update ReadMe
 
 def extract_dumps(dump_directory, sites):
     directories = []
@@ -83,10 +87,7 @@ def main(dump_directory, filename_dumps, download, database):
     first = True
 
     for site, dir in zip(sites, directories):
-        # TODO:
-        #  for each pickle do processing to determine context -> later determine their bag of words
-        #  update readme
-        dump_processing.process_dump.processing_main(site, dir, database)
+        dump_processing.process_dump.processing_main(site, dir, database, 7)
         bag_of_words.corpus_from_pickles(dir, not first)
         first = False
 
@@ -99,17 +100,15 @@ def main(dump_directory, filename_dumps, download, database):
     # calculate tf-idf scores for all sites contents
     # for each post/comment or formulas surrounding words?
     for dir in directories:
-        # TODO
-        #  questions
-        #  answers
-        #  comments
-        #  save all in database (postid_bow, commentid_bow)
-        #print(bag_of_words.get_top_n_tfidf(bag_of_words.unpickle_corpus(), 5))
-        pass
-    # TODO
-    #  context only as BOW? get only context around formulas?
-    #  corpus of all sites text? or each site? or even seperate posts and comments?
-    #  also highlighted, bold etc words as keywords?
+        with open(os.path.join(dir, "formulacontext.pkl"),"rb") as f:
+            formula_context_dict = pickle.load(f)
+        top_n_context = bag_of_words.get_top_n_tfidf(formula_context_dict.values(), 3)
+
+        #TODO: save in database
+        #TODO: improve runtime if possible
+
+
+    # TODO: highlighted, bold etc words
 
     # delete all pkl files created during dump processing
     cleanup(sites, directories)
