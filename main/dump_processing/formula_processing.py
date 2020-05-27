@@ -9,6 +9,34 @@ from dump_processing.helper import log
 import resource
 from dump_processing.database import max_column_value
 from dump_processing.LatexTokenizer import LatexTokenizer
+import re
+
+def tokenize_words(text):
+    # remove links
+    text = re.sub('<a.*?>.*?</a>', ' ', text)
+    # remove html tags
+    text = re.sub('<.*?>',' ',text)
+    # remove formulas
+    text = re.sub(r'(\$\$.*?\$\$|\$.*?\$)', ' ', text)
+    # tokenize
+    words = re.compile(r'\w+')
+    tokens = words.findall(text)
+    return tokens
+
+def formula_context(position, formula, inline, text, num_context_token):
+    # if formula in question title
+    if position == -1:
+        return tokenize_words(text)
+    # otherwise get context of some tokens before and after
+    else:
+        if inline:
+            formula_length = len(formula)+2
+        else:
+            formula_length = len(formula)+4
+        before = tokenize_words(text[:position])
+        after = tokenize_words(text[position+formula_length:])
+        # placeholder of formula in the middle
+        return " ".join(before[-num_context_token:]) + " $$ " + " ".join(after[:num_context_token])
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
@@ -20,6 +48,7 @@ def formula_token_length(formula):
 def formula_extr(text):
     formulas = []
     positions = []
+    inline = []
 
     error = False
     postion = 0
@@ -38,6 +67,7 @@ def formula_extr(text):
                     if found:
                         formulas.append(formula)
                         positions.append(position)
+                        inline.append(True)
                     else:
                         error = True
 
@@ -49,6 +79,7 @@ def formula_extr(text):
                         if found:
                             formulas.append(formula)
                             positions.append(position)
+                            inline.append(False)
                         else:
                             after = formula
                             error = True
@@ -58,10 +89,7 @@ def formula_extr(text):
 
             if error:
                 break
-    return formulas, positions, error
-
-formula_extr("ich $formel$ ein $$beispiel$$\n lala $formelund"
-             "noch viel mehr \n lala $formel")
+    return formulas, positions, inline, error
 
 # operatoren: z.B. &amp, &lt, &gt
 
@@ -77,8 +105,8 @@ def questions_formula_processing(site_name, database):
 
     # question processing (title and body)
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
-        formulas_title, positions_title, error_title = formula_extr(str(title))
-        formulas_body, positions_body, error_body = formula_extr(str(body))
+        formulas_title, positions_title, inline, error_title = formula_extr(str(title))
+        formulas_body, positions_body, inline, error_body = formula_extr(str(body))
 
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
@@ -88,7 +116,8 @@ def questions_formula_processing(site_name, database):
                 Formulas["PostId"].append(int(question))
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
-                Formulas["StartingPosition"].append(position)
+                # position -1 for formulas in title
+                Formulas["StartingPosition"].append(-1)
                 formula_index += 1
             for formula, position in zip(formulas_body, positions_body):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
@@ -127,7 +156,7 @@ def answers_formula_processing(site_name, database):
 
     # answer processing (body)
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
-        formulas, positions, error = formula_extr(str(body))
+        formulas, positions, inline, error = formula_extr(str(body))
         if not error:
             for formula, position in zip(formulas, positions):
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
@@ -165,7 +194,7 @@ def comments_formula_processing(site_name, database):
     formula_index = 0
 
     for comment, body in zip(comments["CommentId"], comments["Text"]):
-        formulas, positions, error = formula_extr(body)
+        formulas, positions, inline, error = formula_extr(body)
         if not error:
             for formula, position in zip(formulas, positions):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
