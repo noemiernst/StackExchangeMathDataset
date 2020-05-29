@@ -1,4 +1,5 @@
 import sqlite3
+from dump_processing.helper import log
 
 def max_column_value(database, table_name, column_name):
     DB = sqlite3.connect(database)
@@ -13,7 +14,7 @@ def max_column_value(database, table_name, column_name):
     return max
 
 
-def create_table(database, table_name, sql, if_exists='delete'):
+def create_table(database, table_name, sql, if_exists='nothing'):
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
 
@@ -45,7 +46,21 @@ def create_tables(database):
     create_table(database, "QuestionMeta", 'CREATE TABLE "QuestionMeta" ("Site" TEXT, "QuestionId" INTEGER, "CreationDate" TEXT, "ViewCount" INTEGER, "Score" INTEGER, "OwnerUserId" INTEGER, "AnswerCount" INTEGER, PRIMARY KEY(Site, QuestionId))')
     create_table(database, "QuestionText", 'CREATE TABLE "QuestionText" ("Site" TEXT, "QuestionId" INTEGER, "Title" TEXT, "Body" TEXT,  PRIMARY KEY(Site, QuestionId) )')
     #create_table(database, "RelatedQuestionsSource2Target", 'CREATE TABLE "RelatedQuestionsSource2Target" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId))')
-    create_table(database, "FormulaContext", 'CREATE TABLE "FormulaSentence" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
+    create_table(database, "FormulaContext", 'CREATE TABLE "FormulaContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
 
+def remove_site(site, database):
+    log("../output/statistics.log", "Removing old database entries of site " + site)
 
-#max_column_value("../output/mathematics.db", "FormulasComments", "FormulaId")
+    tables = ["AnswerMeta", "AnswerText", "Badges", "Comments", "FormulasComments", "FormulasPosts", "PostIdRelatedPostId",
+              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText"]
+    DB = sqlite3.connect(database)
+    cursor = DB.cursor()
+
+    for table in tables:
+        cursor.execute("DELETE FROM '"+ table + "' WHERE site = '" + site + "'")
+
+    #TODO: delete formula context of formulas that were deleted
+
+    DB.commit()
+    DB.close()
+

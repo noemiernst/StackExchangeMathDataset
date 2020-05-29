@@ -125,17 +125,19 @@ def main(dump_directory, filename_dumps, download, database):
     first = True
 
     for site, dir, file in zip(sites, directories, files):
+        log("../output/statistics.log", "Processing site " + site)
         with open(file, 'rb') as f:
             buf = f.read()
             hasher.update(buf)
             hash = hasher.hexdigest()
         old_hash, exists = get_hash(database, site)
         if hash != old_hash:
+            dump_processing.database.remove_site(site)
             dump_processing.process_dump.processing_main(site, dir, database, 7)
             save_hash(database,site, hash, exists)
 
-        bag_of_words.corpus_from_pickles(dir, not first)
-        first = False
+        #bag_of_words.corpus_from_pickles(dir, not first)
+        #first = False
 
     # calculate the idf scores of the corpus
     t = time.time()
