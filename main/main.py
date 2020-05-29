@@ -102,7 +102,6 @@ def main(dump_directory, filename_dumps, download, database):
 
     dump_processing.database.create_tables(database)
 
-    hasher = hashlib.md5()
     DB = sqlite3.connect(database)
     sites_hashs = pd.read_sql('select * from "SiteFileHash"', DB)
     DB.close()
@@ -113,8 +112,9 @@ def main(dump_directory, filename_dumps, download, database):
     for site, dir, file in zip(sites, directories, files):
         log("../output/statistics.log", "Processing site " + site)
         with open(file, 'rb') as f:
-            buf = f.read()
-            hasher.update(buf)
+            hasher = hashlib.md5()
+            for chunk in iter(lambda: f.read(128*hasher.block_size), b''):
+                hasher.update(chunk)
             hash = hasher.hexdigest()
         exists = sites_hashs[sites_hashs["Site"] == site].any()[0]
         if exists:
@@ -137,12 +137,12 @@ def main(dump_directory, filename_dumps, download, database):
 
     # calculate tf-idf scores for all sites contents
     # for each post/comment or formulas surrounding words?
-    '''
-    for dir in directories:
-        with open(os.path.join(dir, "formulacontext.pkl"),"rb") as f:
-            formula_context_dict = pickle.load(f)
-        top_n_context = bag_of_words.get_top_n_tfidf(formula_context_dict.values(), 3)
-    '''
+
+    #for dir in directories:
+    #    with open(os.path.join(dir, "formulacontext.pkl"),"rb") as f:
+    #        formula_context_dict = pickle.load(f)
+    #    top_n_context = bag_of_words.get_top_n_tfidf(formula_context_dict.values(), 3)
+
         #TODO: save in database
         #TODO: improve runtime if possible
 
