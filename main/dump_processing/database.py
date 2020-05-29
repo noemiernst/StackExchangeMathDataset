@@ -31,6 +31,7 @@ def create_table(database, table_name, sql, if_exists='delete'):
     DB.close()
 
 def create_tables(database):
+    create_table(database, "SiteFileHash", 'CREATE TABLE "SiteFileHash" ("Site" TEXT PRIMARY KEY, "MD5Hash" TEXT)')
     create_table(database, "AnswerMeta", 'CREATE TABLE "AnswerMeta" ("Site" TEXT, "AnswerId" INTEGER, "QuestionId" INTEGER, "CreationDate" TEXT, "Score" INTEGER, "OwnerUserId" INTEGER, PRIMARY KEY(Site, AnswerId))')
     create_table(database, "AnswerText", 'CREATE TABLE "AnswerText" ("Site" TEXT, "AnswerId" INTEGER, "Body" TEXT, PRIMARY KEY(Site, AnswerId))')
     create_table(database, "Badges", 'CREATE TABLE "Badges" ("Site" TEXT, "BadgeId" INTEGER,"UserId" INTEGER, "BadgeName" TEXT, "BadgeDate" TEXT, PRIMARY KEY(Site, BadgeId))')
@@ -44,10 +45,7 @@ def create_tables(database):
     create_table(database, "QuestionMeta", 'CREATE TABLE "QuestionMeta" ("Site" TEXT, "QuestionId" INTEGER, "CreationDate" TEXT, "ViewCount" INTEGER, "Score" INTEGER, "OwnerUserId" INTEGER, "AnswerCount" INTEGER, PRIMARY KEY(Site, QuestionId))')
     create_table(database, "QuestionText", 'CREATE TABLE "QuestionText" ("Site" TEXT, "QuestionId" INTEGER, "Title" TEXT, "Body" TEXT,  PRIMARY KEY(Site, QuestionId) )')
     #create_table(database, "RelatedQuestionsSource2Target", 'CREATE TABLE "RelatedQuestionsSource2Target" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId))')
-    #TODO: save sentences as list? use delimiter? or just use the one sentence and multiple occurances will be saved as multiple formulas?
-    #create_table(database, "FormulaSentenceContext", 'CREATE TABLE "FormulaSentenceContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" TEXT)')
-    create_table(database, "SentenceContext", 'CREATE TABLE "SentenceContext" ("SentenceId" INTEGER PRIMARY KEY, "PostId" INTEGER, "Sentence" TEXT)')
-    create_table(database, "FormulaSentence", 'CREATE TABLE "FormulaSentence" ("SentenceId" INTEGER, "FormulaId" INTEGER, PRIMARY KEY(SentenceId, FormulaId))')
+    create_table(database, "FormulaContext", 'CREATE TABLE "FormulaSentence" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
 
 
 #max_column_value("../output/mathematics.db", "FormulasComments", "FormulaId")

@@ -1,5 +1,5 @@
 import argparse
-from DumpDownloader import DumpDownloader
+from dump_processing.DumpDownloader import DumpDownloader
 import os
 import os.path
 import libarchive.public
@@ -8,6 +8,7 @@ try:
 except ImportError:
     import pickle
 #TODO pip install libarchive
+# pip install hashlib?
 
 import dump_processing.database
 import dump_processing.process_dump
@@ -16,8 +17,41 @@ import time
 import resource
 from context_processing.BOW import BOW
 import pathlib
+import hashlib
+import sqlite3
 
 #TODO: update ReadMe
+
+def get_hash(database, site):
+    DB = sqlite3.connect(database)
+    cursor = DB.cursor()
+
+    cursor.execute("SELECT MD5Hash FROM SiteFileHash WHERE site='" + site + "'")
+
+    DB.commit()
+    DB.close()
+
+    #if the count is 1, then table exists
+    if cursor.fetchone()[0]:
+        return True, cursor.fetchone()
+    return False, ""
+
+def save_hash(database, site, hash, exists):
+    DB = sqlite3.connect(database)
+    cursor = DB.cursor()
+
+    if exists:
+        cursor.execute("DELETE FROM MD5Hash WHERE site='" + site +"'")
+    cursor.execute("INSERT INTO MD5Hash (" + site +"," + hash + ")")
+
+    DB.commit()
+    DB.close()
+
+    #if the count is 1, then table exists
+    if cursor.fetchone()[0]:
+        return cursor.fetchone()
+    return ""
+
 
 def extract_dumps(dump_directory, sites):
     directories = []
@@ -34,7 +68,7 @@ def extract_dumps(dump_directory, sites):
                 with open(output + str(entry.pathname), 'wb') as f:
                     for block in entry.get_blocks():
                         f.write(block)
-    return sites, directories
+    return sites, directories, files
 
 def dumps(dump_directory, filename_dumps, download):
     with open(filename_dumps) as f:
@@ -64,9 +98,10 @@ def cleanup(sites, directories):
 
     for dir in directories:
         try:
-            os.remove(os.path.join(dir, "answertext.pkl"))
             os.remove(os.path.join(dir, "questiontext.pkl"))
+            os.remove(os.path.join(dir, "answertext.pkl"))
             os.remove(os.path.join(dir, "commenttext.pkl"))
+            os.remove(os.path.join(dir, "formulacontext.pkl"))
         except OSError:
             pass
 
@@ -79,15 +114,26 @@ def main(dump_directory, filename_dumps, download, database):
     log("../output/statistics.log", "dumps: " + filename_dumps)
     log("../output/statistics.log", "-------------------------")
 
-    sites, directories = dumps(dump_directory, filename_dumps, download)
+
+    hasher = hashlib.md5()
+
+    sites, directories, files = dumps(dump_directory, filename_dumps, download)
 
     dump_processing.database.create_tables(database)
 
     bag_of_words = BOW()
     first = True
 
-    for site, dir in zip(sites, directories):
-        dump_processing.process_dump.processing_main(site, dir, database, 7)
+    for site, dir, file in zip(sites, directories, files):
+        with open(file, 'rb') as f:
+            buf = f.read()
+            hasher.update(buf)
+            hash = hasher.hexdigest()
+        old_hash, exists = get_hash(database, site)
+        if hash != old_hash:
+            dump_processing.process_dump.processing_main(site, dir, database, 7)
+            save_hash(database,site, hash, exists)
+
         bag_of_words.corpus_from_pickles(dir, not first)
         first = False
 
@@ -111,7 +157,7 @@ def main(dump_directory, filename_dumps, download, database):
     # TODO: highlighted, bold etc words
 
     # delete all pkl files created during dump processing
-    cleanup(sites, directories)
+    #cleanup(sites, directories)
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
