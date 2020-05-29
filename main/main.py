@@ -3,6 +3,7 @@ from dump_processing.DumpDownloader import DumpDownloader
 import os
 import os.path
 import libarchive.public
+import pandas as pd
 try:
     import cPickle as pickle
 except ImportError:
@@ -22,36 +23,17 @@ import sqlite3
 
 #TODO: update ReadMe
 
-def get_hash(database, site):
-    DB = sqlite3.connect(database)
-    cursor = DB.cursor()
-
-    cursor.execute("SELECT MD5Hash FROM SiteFileHash WHERE site='" + site + "'")
-
-    DB.commit()
-    DB.close()
-
-    #if the count is 1, then table exists
-    if cursor.fetchone()[0]:
-        return True, cursor.fetchone()
-    return False, ""
-
 def save_hash(database, site, hash, exists):
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
 
     if exists:
-        cursor.execute("DELETE FROM MD5Hash WHERE site='" + site +"'")
-    cursor.execute("INSERT INTO MD5Hash (" + site +"," + hash + ")")
+        cursor.execute("DELETE FROM SiteFileHash WHERE Site='" + site +"'")
+    cursor.execute("INSERT INTO SiteFileHash (Site, MD5Hash)"
+                   "VALUES ('" + site + "', '" + hash + "')")
 
     DB.commit()
     DB.close()
-
-    #if the count is 1, then table exists
-    if cursor.fetchone()[0]:
-        return cursor.fetchone()
-    return ""
-
 
 def extract_dumps(dump_directory, sites):
     directories = []
@@ -115,11 +97,15 @@ def main(dump_directory, filename_dumps, download, database):
     log("../output/statistics.log", "-------------------------")
 
 
-    hasher = hashlib.md5()
 
     sites, directories, files = dumps(dump_directory, filename_dumps, download)
 
     dump_processing.database.create_tables(database)
+
+    hasher = hashlib.md5()
+    DB = sqlite3.connect(database)
+    sites_hashs = pd.read_sql('select * from "SiteFileHash"', DB)
+    DB.close()
 
     bag_of_words = BOW()
     first = True
@@ -130,9 +116,13 @@ def main(dump_directory, filename_dumps, download, database):
             buf = f.read()
             hasher.update(buf)
             hash = hasher.hexdigest()
-        old_hash, exists = get_hash(database, site)
+        exists = sites_hashs[sites_hashs["Site"] == site].any()[0]
+        if exists:
+            old_hash = sites_hashs["MD5Hash"][sites_hashs[sites_hashs["Site"] == site].index.values[0]]
+        else:
+            old_hash = ""
         if hash != old_hash:
-            dump_processing.database.remove_site(site)
+            dump_processing.database.remove_site(site, database)
             dump_processing.process_dump.processing_main(site, dir, database, 7)
             save_hash(database,site, hash, exists)
 
@@ -141,17 +131,18 @@ def main(dump_directory, filename_dumps, download, database):
 
     # calculate the idf scores of the corpus
     t = time.time()
-    bag_of_words.vectorize_corpus()
+    #bag_of_words.vectorize_corpus()
     log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t)/60)) +"min " + str(int((time.time()-t)%60)) + "sec")
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
     # calculate tf-idf scores for all sites contents
     # for each post/comment or formulas surrounding words?
+    '''
     for dir in directories:
         with open(os.path.join(dir, "formulacontext.pkl"),"rb") as f:
             formula_context_dict = pickle.load(f)
         top_n_context = bag_of_words.get_top_n_tfidf(formula_context_dict.values(), 3)
-
+    '''
         #TODO: save in database
         #TODO: improve runtime if possible
 
