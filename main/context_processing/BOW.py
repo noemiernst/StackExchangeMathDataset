@@ -62,18 +62,18 @@ class BOW:
             t1 = time.time()
             # takes 1/3
             index = [self.feature_names[index] for index in vector.indices]
-            df = pd.DataFrame(list(vector.data), index=index, columns=["tfidf"])
+            term_tfidf = list(zip(index, vector.data))
+            term_tfidf.sort(key=lambda pair: pair[1], reverse=True)
             track1 += time.time()-t1
             t2 = time.time()
             # around 1/3 of the time
-            df = df.sort_values(by=["tfidf"],ascending=False)
-            head = df.head(n)
+
             track2 +=  time.time()-t2
             t3 = time.time()
             # around 1/3 of the time
             top_n_string = ""
-            for term, value in head.iterrows():
-                top_n_string += "<"+term+ ", "+ str(value[0]) + ">"
+            for term, value in term_tfidf[:n]:
+                top_n_string += "<"+term+ ", "+ str(value) + ">"
             top_n[key] = top_n_string
             track4 += time.time()-t3
 
