@@ -9,6 +9,7 @@ except ImportError:
 import context_processing.html_helper
 import context_processing.formula_helper
 import pathlib
+import time
 
 class BOW:
 
@@ -52,14 +53,34 @@ class BOW:
         count_vector=self.vectorizer.transform(dictionary.values())
         tf_idf_vector=self.tfidf_transformer.transform(count_vector)
         top_n = {}
+
+        track1 = 0
+        track2 = 0
+        track4 = 0
+        t1 = time.time()
         for vector, key in zip(tf_idf_vector, dictionary.keys()):
-            df = pd.DataFrame(vector.T.todense(), index=self.feature_names, columns=["tfidf"])
+            t1 = time.time()
+            # takes 1/3
+            index = [self.feature_names[index] for index in vector.indices]
+            df = pd.DataFrame(list(vector.data), index=index, columns=["tfidf"])
+            track1 += time.time()-t1
+            t2 = time.time()
+            # around 1/3 of the time
             df = df.sort_values(by=["tfidf"],ascending=False)
             head = df.head(n)
+            track2 +=  time.time()-t2
+            t3 = time.time()
+            # around 1/3 of the time
             top_n_string = ""
             for term, value in head.iterrows():
                 top_n_string += "<"+term+ ", "+ str(value[0]) + ">"
             top_n[key] = top_n_string
+            track4 += time.time()-t3
+
+        print("track1 = ", track1)
+        print("track2 = ", track2)
+        print("track4 = ", track4)
+        print("get top n: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         return top_n
 
     def strip_texts(self, texts):

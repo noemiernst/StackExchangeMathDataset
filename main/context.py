@@ -21,7 +21,8 @@ def read_pickle(file):
 
 def tokenize_words(text):
     # remove links and formulas
-    text = re.sub(r'<a.*?>.*?</a>|\$\$.*?\$\$|\$.*?\$', ' ', text)
+    text = re.sub(r'\$\$.*?\$\$|\$.*?\$', ' ', text)
+    text = re.sub(r'<a.*?>.*?</a>', ' ', text)
     # remove html tags
     text = re.sub('<.*?>',' ',text)
     # tokenize
@@ -78,15 +79,36 @@ def write_context_table(site, contexts, database, table_name, if_exists='append'
     DB.close()
     print("wrote ", len(df), " entries in table ", table_name, " of database ", database)
 
+def get_words(text, formulas):
+    pos_prev = 0
+    words = []
+    formula_indices = {}
+    # formulas = {formulaid: [body, pos, inl]}
+    ids_sorted = list(formulas.keys())
+    list.sort(ids_sorted)
+    for formulaid in ids_sorted:
+        if formulas[formulaid][1] == -1:
+            formula_indices[formulaid] = -1
+        else:
+            if formulas[formulaid][2]:
+                formula_length = len(formulas[formulaid][0])+2
+            else:
+                formula_length = len(formulas[formulaid][0])+4
+            words.extend(tokenize_words(text[pos_prev:formulas[formulaid][1]]))
+            formula_indices[formulaid] = len(words)
+            pos_prev = formulas[formulaid][1] + formula_length
+    words.extend(tokenize_words(text[pos_prev:]))
+    return words, formula_indices
+
+
 def posts_context(directory, x):
     # read text from pickles
     # read formulas for site from pickle
     questions = read_pickle(os.path.join(directory, "questiontext.pkl"))
-    answers = read_pickle(os.path.join(directory, "answertext.pkl"))
+    posts = read_pickle(os.path.join(directory, "answertext.pkl"))
     formulas_posts = read_pickle(os.path.join(directory, "formulasposts.pkl"))
 
     question_titles = {}
-    posts = answers
 
     # for each post/comment
     #   text to corpus -> use function from BOW class? already reads text from pickles
@@ -98,26 +120,68 @@ def posts_context(directory, x):
     #   get context (x) around each formula
     # TODO: efficiency
     context = {}
+    posts_formulas = {}
     for formulaid, [postid, body, pos, inl] in formulas_posts.items():
-        if pos == -1:
-            context[formulaid] = formula_context(body, pos, inl, question_titles[postid], x)
-            pass
+        if postid in posts_formulas:
+            posts_formulas[postid].update({formulaid: [body, pos, inl]})
         else:
-            context[formulaid] = formula_context(body, pos, inl, posts[postid], x)
+            posts_formulas[postid] = {formulaid: [body, pos, inl]}
+
+    for postid, formulas in posts_formulas.items():
+        # process post with formula positions
+
+        words, formula_indices = get_words(posts[postid], formulas)
+
+        for formulaid, index in formula_indices.items():
+            if index == -1:
+                context[formulaid] = tokenize_words(question_titles[postid])
+            else:
+                beg = index - x
+                end = index + x
+                if index < x:
+                    beg = 0
+                if (index + x) > len(words):
+                    end = len(words)
+                context[formulaid] = " ".join(words[beg:end])
+
+    #for formulaid, [postid, body, pos, inl] in formulas_posts.items():
+    #    if pos == -1:
+    #        context[formulaid] = formula_context(body, pos, inl, question_titles[postid], x)
+    #    else:
+    #        context[formulaid] = formula_context(body, pos, inl, posts[postid], x)
     return context
 
 def comments_context(directory, x):
     # read text from pickles
     # read formulas for site from pickle
     comments = read_pickle(os.path.join(directory, "commenttext.pkl"))
-    formulas_posts = read_pickle(os.path.join(directory, "formulascomments.pkl"))
+    formulas_comments = read_pickle(os.path.join(directory, "formulascomments.pkl"))
 
     # for each formula (posts and comments)
     #   get context (x) around each formula
     # TODO: efficiency
     context = {}
-    for formulaid, [commentid, body, pos, inl] in formulas_posts.items():
-        context[formulaid] = formula_context(body, pos, inl, comments[commentid], x)
+    comments_formulas = {}
+    for formulaid, [commentid, body, pos, inl] in formulas_comments.items():
+        if commentid in comments_formulas:
+            comments_formulas[commentid].update({formulaid: [body, pos, inl]})
+        else:
+            comments_formulas[commentid] = {formulaid: [body, pos, inl]}
+
+    for commentid, formulas in comments_formulas.items():
+        # process post with formula positions
+        words, formula_indices = get_words(comments[commentid], formulas)
+        for formulaid, index in formula_indices.items():
+            beg = index - x
+            end = index + x
+            if index < x:
+                beg = 0
+            if (index + x) > len(words):
+                end = len(words)
+            context[formulaid] = " ".join(words[beg:end])
+    #context = {}
+    #for formulaid, [commentid, body, pos, inl] in formulas_posts.items():
+    #    context[formulaid] = formula_context(body, pos, inl, comments[commentid], x)
 
     return context
 
@@ -152,13 +216,18 @@ def context_main(sites, dump_directory, database, x, n):
         #    calculate top n context
         #   save in table in database (option for other table name)
         contexts = posts_context(directory, x)
+        t1 = time.time()
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
+        log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+
         write_context_table(site, top_n_contexts, database, "FormulaContext", if_exists)
 
         if_exists = "append"
 
         contexts = comments_context(directory, x)
+        t1 = time.time()
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
+        log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, "FormulaContext", if_exists)
 
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
@@ -171,6 +240,7 @@ def context_main(sites, dump_directory, database, x, n):
 #  check if all pkl files are there -> error: suggest to run main again
 #  tabellen name selber definieren
 #  n als alle terme
+#  nutzer kann max_df = 0.75, min_df = 2, max_features=5000 ändern in BOW
 
 sites = ["ai"]
 dump_directory = "../input/"
