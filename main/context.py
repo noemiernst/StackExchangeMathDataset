@@ -10,6 +10,7 @@ from dump_processing.DumpDownloader import DumpDownloader
 import pandas as pd
 import time
 from dump_processing.helper import log
+import resource
 
 #TODO: for performance enhancement
 #  tokenize words in between formulas and then just pick and choose for each formula until contex length is satisfied
@@ -61,14 +62,16 @@ def write_context_table(site, contexts, database, table_name, if_exists='append'
     cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='"+ table_name +"' ")
 
     #if the count is 1, then table exists
-    if cursor.fetchone()[0]==1 :
-        if if_exists == 'delete':
-            cursor.execute("DROP TABLE " + table_name)
-            cursor.execute("CREATE TABLE '" + table_name + "' ('Site' TEXT, 'FormulaId' INTEGER PRIMARY KEY, 'Context' TEXT)")
-    else:
+    if cursor.fetchone()[0]!=1 :
         cursor.execute("CREATE TABLE '" + table_name + "' ('Site' TEXT, 'FormulaId' INTEGER PRIMARY KEY, 'Context' TEXT)")
 
-    df = pd.DataFrame({"Site": [site] * len(contexts.keys()), "FormulaId": contexts.keys(), "Context": contexts.values()})
+    ids = []
+    cons = []
+    for id, context in contexts.items():
+        ids.append(int(id))
+        cons.append(context)
+
+    df = pd.DataFrame({"Site": [site] * len(ids), "FormulaId": ids, "Context": cons})
 
     df.to_sql(name=table_name, con=DB, if_exists=if_exists, index=index)
     DB.close()
@@ -157,6 +160,8 @@ def context_main(sites, dump_directory, database, x, n):
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
         write_context_table(site, top_n_contexts, database, "FormulaContext", if_exists)
 
+    log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
 
 
