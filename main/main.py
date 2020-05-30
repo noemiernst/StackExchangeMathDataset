@@ -1,23 +1,47 @@
 import argparse
-from DumpDownloader import DumpDownloader
+from dump_processing.DumpDownloader import DumpDownloader
 import os
 import os.path
 import libarchive.public
+import pandas as pd
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 #TODO pip install libarchive
+# pip install hashlib?
 
 import dump_processing.database
 import dump_processing.process_dump
 from dump_processing.helper import log
 import time
 import resource
+from context_processing.BOW import BOW
+import pathlib
+import hashlib
+import sqlite3
 
+#TODO: update ReadMe
+
+def save_hash(database, site, hash, exists):
+    DB = sqlite3.connect(database)
+    cursor = DB.cursor()
+
+    if exists:
+        cursor.execute("DELETE FROM SiteFileHash WHERE Site='" + site +"'")
+    cursor.execute("INSERT INTO SiteFileHash (Site, MD5Hash)"
+                   "VALUES ('" + site + "', '" + hash + "')")
+
+    DB.commit()
+    DB.close()
 
 def extract_dumps(dump_directory, sites):
     directories = []
-    files = [os.path.join(dump_directory, site + ".stackexchange.com.7z") for site in sites]
+    downloader = DumpDownloader()
+    files = [os.path.join(dump_directory, downloader.get_file_name(site)) for site in sites]
     for file, site in zip(files, sites):
         with libarchive.public.file_reader(file) as e:
-            output = os.path.join(dump_directory, site + ".stackexchange.com/")
+            output = file.replace(".7z", "/")
             directories.append(output)
             print("extracting " + file + " to " + output + "...")
             if not os.path.exists(output):
@@ -26,17 +50,17 @@ def extract_dumps(dump_directory, sites):
                 with open(output + str(entry.pathname), 'wb') as f:
                     for block in entry.get_blocks():
                         f.write(block)
-    return sites, directories
+    return sites, directories, files
 
 def dumps(dump_directory, filename_dumps, download):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
+    downloader = DumpDownloader()
     if download is "yes":
-        downloader = DumpDownloader()
         downloader.download_some(dump_directory, sites)
     elif download is "no":
         for site in sites:
-            file = os.path.join(dump_directory, site + ".stackexchange.com.7z")
+            file = os.path.join(dump_directory, downloader.get_file_name(site))
             if os.path.isfile(file):
                 pass
             else:
@@ -45,6 +69,23 @@ def dumps(dump_directory, filename_dumps, download):
         raise ValueError("Invalid argument 'download'")
 
     return extract_dumps(dump_directory, sites)
+
+def cleanup(sites, directories):
+    try:
+        os.remove(os.path.join(pathlib.Path(directories[0]).parent.absolute(), "corpus.pkl"))
+    except OSError:
+        pass
+    except ValueError:
+        pass
+
+    for dir in directories:
+        try:
+            os.remove(os.path.join(dir, "questiontext.pkl"))
+            os.remove(os.path.join(dir, "answertext.pkl"))
+            os.remove(os.path.join(dir, "commenttext.pkl"))
+            os.remove(os.path.join(dir, "formulacontext.pkl"))
+        except OSError:
+            pass
 
 def main(dump_directory, filename_dumps, download, database):
     start = time.time()
@@ -55,16 +96,61 @@ def main(dump_directory, filename_dumps, download, database):
     log("../output/statistics.log", "dumps: " + filename_dumps)
     log("../output/statistics.log", "-------------------------")
 
-    sites, directories = dumps(dump_directory, filename_dumps, download)
+
+
+    sites, directories, files = dumps(dump_directory, filename_dumps, download)
 
     dump_processing.database.create_tables(database)
 
-    for site, dir in zip(sites, directories):
-        # TODO:
-        #  do further processing with pickles questiontext, answertext and commenttext in directory of database
-        #  update readme
-        dump_processing.process_dump.processing_main(site, dir, database)
+    DB = sqlite3.connect(database)
+    sites_hashs = pd.read_sql('select * from "SiteFileHash"', DB)
+    DB.close()
 
+    bag_of_words = BOW()
+    first = True
+
+    for site, dir, file in zip(sites, directories, files):
+        log("../output/statistics.log", "Processing site " + site)
+        with open(file, 'rb') as f:
+            hasher = hashlib.md5()
+            for chunk in iter(lambda: f.read(128*hasher.block_size), b''):
+                hasher.update(chunk)
+            hash = hasher.hexdigest()
+        exists = sites_hashs[sites_hashs["Site"] == site].any()[0]
+        if exists:
+            old_hash = sites_hashs["MD5Hash"][sites_hashs[sites_hashs["Site"] == site].index.values[0]]
+        else:
+            old_hash = ""
+        if hash != old_hash:
+            dump_processing.database.remove_site(site, database)
+            dump_processing.process_dump.processing_main(site, dir, database, 7)
+            save_hash(database,site, hash, exists)
+
+        #bag_of_words.corpus_from_pickles(dir, not first)
+        #first = False
+
+    # calculate the idf scores of the corpus
+    t = time.time()
+    #bag_of_words.vectorize_corpus()
+    log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t)/60)) +"min " + str(int((time.time()-t)%60)) + "sec")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+
+    # calculate tf-idf scores for all sites contents
+    # for each post/comment or formulas surrounding words?
+
+    #for dir in directories:
+    #    with open(os.path.join(dir, "formulacontext.pkl"),"rb") as f:
+    #        formula_context_dict = pickle.load(f)
+    #    top_n_context = bag_of_words.get_top_n_tfidf(formula_context_dict.values(), 3)
+
+        #TODO: save in database
+        #TODO: improve runtime if possible
+
+
+    # TODO: highlighted, bold etc words
+
+    # delete all pkl files created during dump processing
+    #cleanup(sites, directories)
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")

@@ -71,7 +71,7 @@ def process_question_tags(site_name, questions, database):
     log("../output/statistics.log", "# questions with tags: " + str(len(question_tags)))
     log("../output/statistics.log", "# unique tags: " + str(len(set(tags_set))))'''
 
-def process_question_text(site_name, questions, database):
+def process_question_text(site_name, questions, database, directory):
     sites = [site_name for i in range(len(questions["QuestionId"]))]
     df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionsText", df)
@@ -79,12 +79,12 @@ def process_question_text(site_name, questions, database):
     questions_dict = {}
     for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
         questions_dict[question] = [title,body]
-    with open(os.path.join(pathlib.Path(database).parent.absolute(), "questiontext.pkl"),"wb") as f:
+    with open(os.path.join(directory, "questiontext.pkl"),"wb") as f:
         pickle.dump(questions_dict,f)
     questions.pop("Title")
     questions.pop("Body")
 
-def process_answer_body(site_name, answers, database):
+def process_answer_body(site_name, answers, database, directory):
     sites = [site_name for i in range(len(answers["AnswerId"]))]
     df = pd.DataFrame({"Site": sites, "AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswersText", df)
@@ -92,7 +92,7 @@ def process_answer_body(site_name, answers, database):
     answers_dict = {}
     for question,body in zip(answers["AnswerId"],answers["Body"]):
         answers_dict[question] = body
-    with open(os.path.join(pathlib.Path(database).parent.absolute(), "answertext.pkl"),"wb") as f:
+    with open(os.path.join(directory, "answertext.pkl"),"wb") as f:
         pickle.dump(answers_dict,f)
 
     answers.pop("Body")
@@ -177,10 +177,10 @@ def posts_processing(site_name, directory, database):
     log("../output/statistics.log", "# questions: " + str(len(questions["QuestionId"])))
     log("../output/statistics.log", "# answers: " + str(len(answers["AnswerId"])))
 
-    process_question_text(site_name, questions, database)
+    process_question_text(site_name, questions, database, directory)
     process_question_tags(site_name, questions, database)
     process_question_acceptedanswer(site_name, questions, database)
     process_question_meta(site_name, questions, database)
     questions.clear()  # 'clear questions dictionary to free up memory space
-    process_answer_body(site_name, answers, database)
+    process_answer_body(site_name, answers, database, directory)
     process_answer_meta(site_name, answers, database)

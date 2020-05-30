@@ -1,4 +1,5 @@
 import sqlite3
+from dump_processing.helper import log
 
 def max_column_value(database, table_name, column_name):
     DB = sqlite3.connect(database)
@@ -13,7 +14,7 @@ def max_column_value(database, table_name, column_name):
     return max
 
 
-def create_table(database, table_name, sql, if_exists='delete'):
+def create_table(database, table_name, sql, if_exists='nothing'):
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
 
@@ -31,23 +32,35 @@ def create_table(database, table_name, sql, if_exists='delete'):
     DB.close()
 
 def create_tables(database):
-    create_table(database, "AnswersMeta", 'CREATE TABLE "AnswersMeta" ("Site" TEXT, "AnswerId" INTEGER, "QuestionId" INTEGER, "CreationDate" TEXT, "Score" INTEGER, "OwnerUserId" INTEGER, PRIMARY KEY(Site, AnswerId))')
-    create_table(database, "AnswersText", 'CREATE TABLE "AnswersText" ("Site" TEXT, "AnswerId" INTEGER, "Body" TEXT, PRIMARY KEY(Site, AnswerId))')
+    create_table(database, "SiteFileHash", 'CREATE TABLE "SiteFileHash" ("Site" TEXT PRIMARY KEY, "MD5Hash" TEXT)')
+    create_table(database, "AnswerMeta", 'CREATE TABLE "AnswerMeta" ("Site" TEXT, "AnswerId" INTEGER, "QuestionId" INTEGER, "CreationDate" TEXT, "Score" INTEGER, "OwnerUserId" INTEGER, PRIMARY KEY(Site, AnswerId))')
+    create_table(database, "AnswerText", 'CREATE TABLE "AnswerText" ("Site" TEXT, "AnswerId" INTEGER, "Body" TEXT, PRIMARY KEY(Site, AnswerId))')
     create_table(database, "Badges", 'CREATE TABLE "Badges" ("Site" TEXT, "BadgeId" INTEGER,"UserId" INTEGER, "BadgeName" TEXT, "BadgeDate" TEXT, PRIMARY KEY(Site, BadgeId))')
     create_table(database, "Comments", 'CREATE TABLE "Comments" ("Site" TEXT, "CommentId" INTEGER, "PostId" INTEGER, "UserId" INTEGER, "Score" INTEGER, "Text" TEXT, "CreationDate" TEXT, PRIMARY KEY(Site, CommentId))')
     #create_table(database, "DuplicateQuestions", 'CREATE TABLE "DuplicateQuestions" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId) )')
-    create_table(database, "FormulasComments", 'CREATE TABLE "FormulasComments"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "CommentId" INTEGER, "Body" TEXT, "TokenLength" INTEGER)')
-    create_table(database, "FormulasPosts", 'CREATE TABLE "FormulasPosts"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "PostId" INTEGER, "Body" TEXT, "TokenLength" INTEGER)')
+    create_table(database, "FormulasComments", 'CREATE TABLE "FormulasComments"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "CommentId" INTEGER, "Body" TEXT, "TokenLength" INTEGER, "StartingPosition" INTEGER)')
+    create_table(database, "FormulasPosts", 'CREATE TABLE "FormulasPosts"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "PostId" INTEGER, "Body" TEXT, "TokenLength" INTEGER, "StartingPosition" INTEGER)')
     create_table(database, "PostIdRelatedPostId", 'CREATE TABLE "PostIdRelatedPostId" ("Site" TEXT, "PostId" INTEGER, "RelatedPostId" INTEGER, "LinkTypeId" INTEGER, PRIMARY KEY(Site, PostId, RelatedPostId, LinkTypeId))')
     create_table(database, "QuestionAcceptedAnswer", 'CREATE TABLE "QuestionAcceptedAnswer" ("Site" TEXT, "QuestionId" INTEGER, "AcceptedAnswerId" INTEGER, PRIMARY KEY(Site, QuestionId))')
     create_table(database, "QuestionTags", 'CREATE TABLE "QuestionTags" ("Site" TEXT, "QuestionId" INTEGER, "Tags" TEXT, PRIMARY KEY(Site, QuestionId) )')
-    create_table(database, "QuestionsMeta", 'CREATE TABLE "QuestionsMeta" ("Site" TEXT, "QuestionId" INTEGER, "CreationDate" TEXT, "ViewCount" INTEGER, "Score" INTEGER, "OwnerUserId" INTEGER, "AnswerCount" INTEGER, PRIMARY KEY(Site, QuestionId))')
-    create_table(database, "QuestionsText", 'CREATE TABLE "QuestionsText" ("Site" TEXT, "QuestionId" INTEGER, "Title" TEXT, "Body" TEXT,  PRIMARY KEY(Site, QuestionId) )')
+    create_table(database, "QuestionMeta", 'CREATE TABLE "QuestionMeta" ("Site" TEXT, "QuestionId" INTEGER, "CreationDate" TEXT, "ViewCount" INTEGER, "Score" INTEGER, "OwnerUserId" INTEGER, "AnswerCount" INTEGER, PRIMARY KEY(Site, QuestionId))')
+    create_table(database, "QuestionText", 'CREATE TABLE "QuestionText" ("Site" TEXT, "QuestionId" INTEGER, "Title" TEXT, "Body" TEXT,  PRIMARY KEY(Site, QuestionId) )')
     #create_table(database, "RelatedQuestionsSource2Target", 'CREATE TABLE "RelatedQuestionsSource2Target" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId))')
-    #TODO: save sentences as list? use delimiter? or just use the one sentence and multiple occurances will be saved as multiple formulas?
-    #create_table(database, "FormulaSentenceContext", 'CREATE TABLE "FormulaSentenceContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" TEXT)')
-    create_table(database, "SentenceContext", 'CREATE TABLE "SentenceContext" ("SentenceId" INTEGER PRIMARY KEY, "PostId" INTEGER, "Sentence" TEXT)')
-    create_table(database, "FormulaSentence", 'CREATE TABLE "FormulaSentence" ("SentenceId" INTEGER, "FormulaId" INTEGER, PRIMARY KEY(SentenceId, FormulaId))')
+    create_table(database, "FormulaContext", 'CREATE TABLE "FormulaContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
 
+def remove_site(site, database):
+    log("../output/statistics.log", "Removing old database entries of site " + site)
 
-#max_column_value("../output/mathematics.db", "FormulasComments", "FormulaId")
+    tables = ["AnswerMeta", "AnswerText", "Badges", "Comments", "FormulasComments", "FormulasPosts", "PostIdRelatedPostId",
+              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText"]
+    DB = sqlite3.connect(database)
+    cursor = DB.cursor()
+
+    for table in tables:
+        cursor.execute("DELETE FROM '"+ table + "' WHERE site = '" + site + "'")
+
+    #TODO: delete formula context of formulas that were deleted
+
+    DB.commit()
+    DB.close()
+
