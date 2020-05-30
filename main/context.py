@@ -64,6 +64,7 @@ def write_context_table(site, contexts, database, table_name, if_exists='append'
     #if the count is 1, then table exists
     if cursor.fetchone()[0]!=1 :
         cursor.execute("CREATE TABLE '" + table_name + "' ('Site' TEXT, 'FormulaId' INTEGER PRIMARY KEY, 'Context' TEXT)")
+    DB.commit()
 
     ids = []
     cons = []
@@ -173,5 +174,6 @@ def context_main(sites, dump_directory, database, x, n):
 
 sites = ["ai"]
 dump_directory = "../input/"
+database = '../output/database.db'
 
-context_main(sites, dump_directory, "", 10, 3)
+context_main(sites, dump_directory, database, 10, 3)
