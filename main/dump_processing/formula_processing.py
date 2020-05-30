@@ -17,41 +17,13 @@ from dump_processing.LatexTokenizer import LatexTokenizer
 import re
 import time
 
-# TODO: for performance enhancement
-#  tokenize words in between formulas and then just pick and choose for each formula until contex length is satisfied
-
-def context_pickle(formula_context_dict, directory, extend = True):
+def context_pickle(formula_context_dict, directory, file, extend = True):
     if extend:
-        with open(os.path.join(directory, "formulacontext.pkl"),"rb") as f:
+        with open(os.path.join(directory, file),"rb") as f:
             previous_formula_context_dict = pickle.load(f)
             formula_context_dict.update(previous_formula_context_dict)
-    with open(os.path.join(directory, "formulacontext.pkl"),"wb") as f:
+    with open(os.path.join(directory, file),"wb") as f:
         pickle.dump(formula_context_dict,f)
-
-def tokenize_words(text):
-    # remove links and formulas
-    text = re.sub(r'<a.*?>.*?</a>|\$\$.*?\$\$|\$.*?\$', ' ', text)
-    # remove html tags
-    text = re.sub('<.*?>',' ',text)
-    # tokenize
-    words = re.compile(r'\w+')
-    tokens = words.findall(text)
-    return tokens
-
-def formula_context(formula, position, inline, text, num_context_token):
-    # if formula in question title
-    if position == -1:
-        return tokenize_words(text)
-    # otherwise get context of some tokens before and after
-    else:
-        if inline:
-            formula_length = len(formula)+2
-        else:
-            formula_length = len(formula)+4
-        before = tokenize_words(text[:position])
-        after = tokenize_words(text[position+formula_length:])
-        # placeholder of formula in the middle
-        return " ".join(before[-num_context_token:]) + " $$ " + " ".join(after[:num_context_token])
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
@@ -144,7 +116,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 # position -1 for formulas in title
                 Formulas["StartingPosition"].append(-1)
-                #formula_con[starting_formula_index+formula_index] = formula_context(formula, -1, True, title, 0)
+                formula_con[starting_formula_index+formula_index] = [int(question), formula, position, inl]
                 formula_index += 1
             for formula, position, inl in zip(formulas_body, positions_body, inline):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
@@ -153,7 +125,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
-                #formula_con[starting_formula_index+formula_index] = formula_context(formula, position, inl, body, context_length)
+                formula_con[starting_formula_index+formula_index] = [int(question), formula, position, inl]
                 formula_index += 1
         else:
             error_count += 1
@@ -167,7 +139,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasPosts', df)
 
-    #context_pickle(formula_con,directory, False)
+    context_pickle(formula_con, directory, "formulasposts.pkl", False)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
     log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
@@ -194,7 +166,7 @@ def answers_formula_processing(site_name, database, directory, context_length):
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
-                #formula_con[starting_formula_index+formula_index] = formula_context(formula, position, inl, body, context_length)
+                formula_con[starting_formula_index+formula_index] = [int(answer), formula, position, inl]
                 formula_index += 1
         else:
             error_count += 1
@@ -208,7 +180,7 @@ def answers_formula_processing(site_name, database, directory, context_length):
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasPosts', df, "append")
 
-    #context_pickle(formula_con,directory, True)
+    context_pickle(formula_con, directory, "formulasposts.pkl", True)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
@@ -234,7 +206,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
                 Formulas["Body"].append(formula)
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
-                #formula_con[starting_formula_index+formula_index] = formula_context(formula, position, inl, body, context_length)
+                formula_con[starting_formula_index+formula_index] = [int(comment), formula, position, inline]
                 formula_index += 1
         else:
             error_count += 1
@@ -248,7 +220,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"]})
     write_table(database, 'FormulasComments', df)
 
-    #context_pickle(formula_con,directory, True)
+    context_pickle(formula_con,directory, "formulascomments.pkl", False)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
     log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")

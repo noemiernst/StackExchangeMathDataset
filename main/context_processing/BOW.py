@@ -48,14 +48,18 @@ class BOW:
         self.tfidf_transformer.fit(word_count_vector)
         self.feature_names = self.vectorizer.get_feature_names()
 
-    def get_top_n_tfidf(self, collection, n):
-        count_vector=self.vectorizer.transform(collection)
+    def get_top_n_tfidf(self, dictionary, n):
+        count_vector=self.vectorizer.transform(dictionary.values())
         tf_idf_vector=self.tfidf_transformer.transform(count_vector)
-        top_n = []
-        for vector in tf_idf_vector:
+        top_n = {}
+        for vector, key in zip(tf_idf_vector, dictionary.keys()):
             df = pd.DataFrame(vector.T.todense(), index=self.feature_names, columns=["tfidf"])
             df = df.sort_values(by=["tfidf"],ascending=False)
-            top_n.append(df.head(n))
+            head = df.head(n)
+            top_n_string = ""
+            for term, value in head.iterrows():
+                top_n_string += "<"+term+ ", "+ str(value[0]) + ">"
+            top_n[key] = top_n_string
         return top_n
 
     def strip_texts(self, texts):
