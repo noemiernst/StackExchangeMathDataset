@@ -44,7 +44,7 @@ def extract_dumps(dump_directory, sites, extract):
         for file, site in zip(files, sites):
             output = file.replace(".7z", "/")
             directories.append(output)
-            if extract == "yes":
+            if extract is "yes":
                 with libarchive.public.file_reader(file) as e:
                     print("extracting " + file + " to " + output + "...")
                     if not os.path.exists(output):
@@ -53,7 +53,7 @@ def extract_dumps(dump_directory, sites, extract):
                         with open(output + str(entry.pathname), 'wb') as f:
                             for block in entry.get_blocks():
                                 f.write(block)
-            elif extract == "no":
+            elif extract is "no":
                 if not os.path.exists(output):
                     raise OSError
                 if (not os.path.exists(os.path.join(output, "Badges.xml"))) | (not os.path.exists(os.path.join(output, "Comments.xml"))) | \

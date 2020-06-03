@@ -52,7 +52,7 @@ def remove_site(site, database):
     log("../output/statistics.log", "Removing old database entries of site " + site)
 
     tables = ["AnswerMeta", "AnswerText", "Badges", "Comments", "FormulasComments", "FormulasPosts", "PostIdRelatedPostId",
-              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText"]
+              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText", "QuestionMeta"]
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
 

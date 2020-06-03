@@ -82,7 +82,7 @@ def formula_extr(text):
 
 def questions_formula_processing(site_name, database, directory, context_length):
     DB = sqlite3.connect(database)
-    questions = pd.read_sql('select * from "QuestionsText" where Site="'+site_name+'"', DB)
+    questions = pd.read_sql('select * from "QuestionText" where Site="'+site_name+'"', DB)
     DB.close()
 
     Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
@@ -138,7 +138,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
 
 def answers_formula_processing(site_name, database, directory, context_length):
     DB = sqlite3.connect(database)
-    answers = pd.read_sql('select * from "AnswersText" where Site="'+site_name+'"', DB)
+    answers = pd.read_sql('select * from "AnswerText" where Site="'+site_name+'"', DB)
     DB.close()
 
     Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
