@@ -96,18 +96,6 @@ def questions_formula_processing(site_name, database, directory, context_length)
 
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
-            '''
-            inbetween = []
-            previous = 0
-            for formula, position, inl in zip(formulas_body, positions_body, inline):
-                inbetween.append(" ".join(tokenize_words(body[previous:position])))
-                previous = position + len(formula) + 2
-                if not inline:
-                    previous += 2
-            inbetween.append(" ".join(tokenize_words(body[positions_body[-1]:])))
-            '''
-
-
             for formula, position in zip(formulas_title, positions_title):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["Site"].append(site_name)

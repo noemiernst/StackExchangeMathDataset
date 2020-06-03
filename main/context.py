@@ -11,6 +11,10 @@ import pandas as pd
 import time
 from dump_processing.helper import log
 import resource
+import string
+from nltk.corpus import stopwords
+import sys
+import argparse
 
 #TODO: for performance enhancement
 #  tokenize words in between formulas and then just pick and choose for each formula until contex length is satisfied
@@ -26,9 +30,12 @@ def tokenize_words(text):
     # remove html tags
     text = re.sub('<.*?>',' ',text)
     # tokenize
-    words = re.compile(r'\w+')
-    tokens = words.findall(text)
-    return tokens
+    text = text.split()
+    table = str.maketrans('', '', string.punctuation)
+    text =  [(w.translate(table)).lower() for w in text]
+    #stop_words = set(stopwords.words('english'))
+    #text = [w for w in text if not w in stop_words]
+    return text
 
 def formula_context(formula, position, inline, text, num_context_token):
     # if formula in question title
@@ -185,13 +192,9 @@ def comments_context(directory, x):
 
     return context
 
-def context_main(sites, dump_directory, database, x, n):
-    #bag_of_words = calculate_idf(directories)
-    #ids, contexts = calculate_topn(directories, bag_of_words, n)
-
-    #write_context_table(sites, ids, contexts, database)
-
-
+def context_main(filename_dumps, dump_directory, database, x, n, tablename, all):
+    with open(filename_dumps) as f:
+        sites = [line.rstrip() for line in f if line is not ""]
     downloader = DumpDownloader()
     directories = [os.path.join(dump_directory, downloader.get_file_name(site)).replace(".7z", "/") for site in sites]
 
@@ -220,7 +223,7 @@ def context_main(sites, dump_directory, database, x, n):
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
         log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
-        write_context_table(site, top_n_contexts, database, "FormulaContext", if_exists)
+        write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
         if_exists = "append"
 
@@ -228,7 +231,7 @@ def context_main(sites, dump_directory, database, x, n):
         t1 = time.time()
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
-        write_context_table(site, top_n_contexts, database, "FormulaContext", if_exists)
+        write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
@@ -237,13 +240,20 @@ def context_main(sites, dump_directory, database, x, n):
 
 
 # TODO:
-#  check if all pkl files are there -> error: suggest to run main again
-#  tabellen name selber definieren
 #  n als alle terme
 #  nutzer kann max_df = 0.75, min_df = 2, max_features=5000 ändern in BOW
+#  strong and emphasized text
+#  stem and normalize words? need to stem? or tokenizing enough?
 
-sites = ["ai"]
-dump_directory = "../input/"
-database = '../output/database.db'
 
-context_main(sites, dump_directory, database, 10, 3)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump files and directories")
+    parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
+    parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
+    parser.add_argument("-c", "--context", default='10', help="number of words around formula to be reagarded as context")
+    parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
+    parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
+    parser.add_argument("-a", "--all", default="no", help="get all words")
+    args = parser.parse_args()
+    context_main(args.dumps, args.input, args.output, int(args.context), int(args.topn), args.tablename, args.all)
