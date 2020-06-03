@@ -77,8 +77,8 @@ def process_question_text(site_name, questions, database, directory):
     write_table(database, "QuestionsText", df)
 
     questions_dict = {}
-    for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
-        questions_dict[question] = [title,body]
+    #for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
+    #    questions_dict[question] = [title,body]
     with open(os.path.join(directory, "questiontext.pkl"),"wb") as f:
         pickle.dump(questions_dict,f)
     questions.pop("Title")
@@ -90,8 +90,8 @@ def process_answer_body(site_name, answers, database, directory):
     write_table(database, "AnswersText", df)
 
     answers_dict = {}
-    for question,body in zip(answers["AnswerId"],answers["Body"]):
-        answers_dict[question] = body
+    #for question,body in zip(answers["AnswerId"],answers["Body"]):
+    #    answers_dict[question] = body
     with open(os.path.join(directory, "answertext.pkl"),"wb") as f:
         pickle.dump(answers_dict,f)
 

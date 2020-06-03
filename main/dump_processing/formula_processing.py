@@ -81,7 +81,9 @@ def formula_extr(text):
 # operatoren: z.B. &amp, &lt, &gt
 
 def questions_formula_processing(site_name, database, directory, context_length):
-    questions = pd.read_pickle(os.path.join(directory, "questiontext.pkl"))
+    DB = sqlite3.connect(database)
+    questions = pd.read_sql('select * from "QuestionsText" where Site="'+site_name+'"', DB)
+    DB.close()
 
     Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     formula_con={}
@@ -90,9 +92,9 @@ def questions_formula_processing(site_name, database, directory, context_length)
     formula_index = 0
 
     # question processing (title and body)
-    for question, texts in questions.items():
-        formulas_title, positions_title, _, error_title = formula_extr(texts[0])
-        formulas_body, positions_body, inline, error_body = formula_extr(texts[1])
+    for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
+        formulas_title, positions_title, _, error_title = formula_extr(title)
+        formulas_body, positions_body, inline, error_body = formula_extr(body)
 
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
@@ -135,7 +137,9 @@ def questions_formula_processing(site_name, database, directory, context_length)
 
 
 def answers_formula_processing(site_name, database, directory, context_length):
-    answers = pd.read_pickle(os.path.join(directory, "answertext.pkl"))
+    DB = sqlite3.connect(database)
+    answers = pd.read_sql('select * from "AnswersText" where Site="'+site_name+'"', DB)
+    DB.close()
 
     Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     formula_con = {}
@@ -143,8 +147,7 @@ def answers_formula_processing(site_name, database, directory, context_length):
     starting_formula_index = current_formula_id(database)
     formula_index = 0
 
-    # answer processing (body)
-    for answer, body in answers.items():
+    for answer, body in zip(answers["AnswerId"], answers["Body"]):
         formulas, positions, inline, error = formula_extr(str(body))
         if not error:
             for formula, position, inl in zip(formulas, positions, inline):
@@ -175,7 +178,9 @@ def answers_formula_processing(site_name, database, directory, context_length):
     log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers))*100, ".4f") + " %")
 
 def comments_formula_processing(site_name, database, directory, context_length):
-    comments = pd.read_pickle(os.path.join(directory, "commenttext.pkl"))
+    DB = sqlite3.connect(database)
+    comments = pd.read_sql('select CommentId, Text from "Comments" where Site="'+site_name+'"', DB)
+    DB.close()
 
     Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": []}
     formula_con = {}
@@ -183,8 +188,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
     error_count = 0
     starting_formula_index = current_formula_id(database)
     formula_index = 0
-
-    for comment, body in comments.items():
+    for comment, body in zip(comments["CommentId"], comments["Text"]):
         formulas, positions, inline, error = formula_extr(body)
         if not error:
             for formula, position, inl in zip(formulas, positions, inline):
