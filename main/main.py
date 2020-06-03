@@ -104,7 +104,7 @@ def cleanup(sites, directories):
         except OSError:
             pass
 
-def main(dump_directory, filename_dumps, download, extract, database):
+def main(dump_directory, filename_dumps, download, extract, database, force_process):
     start = time.time()
     log("../output/statistics.log", "#################################################")
     log("../output/statistics.log", "create_dataset.py")
@@ -138,7 +138,7 @@ def main(dump_directory, filename_dumps, download, extract, database):
             old_hash = sites_hashs["MD5Hash"][sites_hashs[sites_hashs["Site"] == site].index.values[0]]
         else:
             old_hash = ""
-        if hash != old_hash:
+        if (hash != old_hash) | (force_process == "yes"):
             dump_processing.database.remove_site(site, database)
             dump_processing.process_dump.processing_main(site, dir, database, 7)
             save_hash(database,site, hash, exists)
@@ -168,5 +168,6 @@ if __name__ == "__main__":
     parser.add_argument("--download", default="no", help="yes or no. Whether or not to download the dumps")
     parser.add_argument("-x" ,"--extract", default="no", help="yes or no. Whether or not to extract the *.7z dump files")
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
+    parser.add_argument("-a", "--all", default="yes", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
     args = parser.parse_args()
-    main(args.input, args.dumps, args.download, args.extract, args.output)
+    main(args.input, args.dumps, args.download, args.extract, args.output, args.all)
