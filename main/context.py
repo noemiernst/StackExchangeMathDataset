@@ -238,8 +238,9 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
         sys.exit("option for --corpus must be 'all' or 'individual'")
     if corpus == "all":
         print("Calculating idf values of all sites texts")
+        t1 = time.time()
         bow = calculate_idf(sites, directories, database)
-        log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+        log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
 
 
