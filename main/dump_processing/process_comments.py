@@ -47,8 +47,8 @@ def comments_processing(site_name, directory, database):
             write_table(database, 'Comments', df)
             comments = {"Site": [], "CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
 
-    with open(os.path.join(directory, "commenttext.pkl"),"wb") as f:
-        pickle.dump(comments_dict,f)
+    #with open(os.path.join(directory, "commenttext.pkl"),"wb") as f:
+    #    pickle.dump(comments_dict,f)
 
     df = pd.DataFrame({"Site": comments["Site"],"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
                "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})

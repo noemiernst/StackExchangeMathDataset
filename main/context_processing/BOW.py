@@ -17,29 +17,32 @@ from dump_processing.helper import log
 import sys
 import re
 import psutil
+import sqlite3
 
 class BOW:
 
-    def corpus_from_pickles(self, directory, extend_existing = True):
+    def corpus_from_database(self, directory, database, site_name, extend_existing = True):
         self.corpus_dir = pathlib.Path(directory).parent.absolute()
         if extend_existing:
             corpus = self.unpickle_corpus()
         else:
             corpus = []
-        questions = pd.read_pickle(os.path.join(directory, "questiontext.pkl"))
-        questions = list((t+ " " + b) for q,[t, b] in questions.items())
+        DB = sqlite3.connect(database)
+        questions = pd.read_sql('select Title, Body from "QuestionText" where Site="'+site_name+'"', DB)
+        questions = list((t+ " " + b) for t, b in zip(questions["Title"], questions["Body"]))
         for i in range(len(questions)):
             corpus.append(questions.pop())
         #corpus.extend(self.strip_texts(questions))
         questions.clear()
-        answers = pd.read_pickle(os.path.join(directory, "answertext.pkl"))
-        answers = list(t for a,t in answers.items())
+        answers = pd.read_sql('select Body from "AnswerText" where Site="'+site_name+'"', DB)
+        answers = list(answers["Body"])
         for i in range(len(answers)):
             corpus.append(answers.pop())
         #corpus.extend(self.strip_texts(answers))
         answers.clear()
-        comments = pd.read_pickle(os.path.join(directory, "commenttext.pkl"))
-        comments = list(t for c,t in comments.items())
+        comments = pd.read_sql('select Text from "Comments" where Site="'+site_name+'"', DB)
+        DB.close()
+        comments = list(comments["Text"])
         for i in range(len(comments)):
             corpus.append(comments.pop())
         #corpus.extend(self.strip_texts(comments))
@@ -66,7 +69,8 @@ class BOW:
         self.feature_names = self.vectorizer.get_feature_names()
 
     def get_top_n_tfidf(self, dictionary, n):
-        count_vector=self.vectorizer.transform(dictionary.values())
+        docs = list(dictionary.values())
+        count_vector=self.vectorizer.transform(docs)
         tf_idf_vector=self.tfidf_transformer.transform(count_vector)
         top_n = {}
         print( "getting top n terms")

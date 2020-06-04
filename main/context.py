@@ -52,12 +52,12 @@ def formula_context(formula, position, inline, text, num_context_token):
         # placeholder of formula in the middle
         return " ".join(before[-num_context_token:]) + " ".join(after[:num_context_token])
 
-def calculate_idf(directories):
+def calculate_idf(sites, directories, database):
     bow = BOW()
     first = True
 
-    for dir in directories:
-        bow.corpus_from_pickles(dir, not first)
+    for site, dir in zip(sites, directories):
+        bow.corpus_from_database(dir, database, site, not first)
         first = False
 
     bow.vectorize_corpus()
@@ -108,31 +108,49 @@ def get_words(text, formulas):
     return words, formula_indices
 
 
-def posts_context(directory, x):
+def posts_context(directory, database, site_name, x):
     # read text from pickles
     # read formulas for site from pickle
-    questions = read_pickle(os.path.join(directory, "questiontext.pkl"))
-    posts = read_pickle(os.path.join(directory, "answertext.pkl"))
-    formulas_posts = read_pickle(os.path.join(directory, "formulasposts.pkl"))
+    DB = sqlite3.connect(database)
+    answers = pd.read_sql('select AnswerId, Body from "AnswerText" where Site="'+site_name+'"', DB)
+    questions = pd.read_sql('select QuestionId, Title, Body from "QuestionText" where Site="'+site_name+'"', DB)
+    formulas_posts = pd.read_sql('select FormulaId, PostId, Body, StartingPosition, Inline from "FormulasPosts" where Site="'+site_name+'"', DB)
+    DB.close()
+
+    #formulas_posts = read_pickle(os.path.join(directory, "formulasposts.pkl"))
 
     question_titles = {}
+    posts = {}
+
+    for id, b in zip(answers["AnswerId"], answers["Body"]):
+        posts[id] = b
+    answers.pop("AnswerId")
+    answers.pop("Body")
 
     # for each post/comment
     #   text to corpus -> use function from BOW class? already reads text from pickles
-    for id, [t, b] in questions.items():
+    for id, t, b in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
         question_titles[id] = t
         posts[id] = b
+    questions.pop("QuestionId")
+    questions.pop("Body")
+    questions.pop("Title")
 
     # for each formula (posts and comments)
     #   get context (x) around each formula
     # TODO: efficiency
     context = {}
     posts_formulas = {}
-    for formulaid, [postid, body, pos, inl] in formulas_posts.items():
+    for formulaid, postid, body, pos, inl in zip(formulas_posts["FormulaId"],formulas_posts["PostId"],formulas_posts["Body"],formulas_posts["StartingPosition"],formulas_posts["Inline"]):
         if postid in posts_formulas:
             posts_formulas[postid].update({formulaid: [body, pos, inl]})
         else:
             posts_formulas[postid] = {formulaid: [body, pos, inl]}
+    formulas_posts.pop("FormulaId")
+    formulas_posts.pop("PostId")
+    formulas_posts.pop("Body")
+    formulas_posts.pop("StartingPosition")
+    formulas_posts.pop("Inline")
 
     for postid, formulas in posts_formulas.items():
         # process post with formula positions
@@ -141,7 +159,7 @@ def posts_context(directory, x):
 
         for formulaid, index in formula_indices.items():
             if index == -1:
-                context[formulaid] = tokenize_words(question_titles[postid])
+                context[formulaid] = " ".join(tokenize_words(question_titles[postid]))
             else:
                 beg = index - x
                 end = index + x
@@ -158,26 +176,41 @@ def posts_context(directory, x):
     #        context[formulaid] = formula_context(body, pos, inl, posts[postid], x)
     return context
 
-def comments_context(directory, x):
+def comments_context(directory, database, site_name, x):
     # read text from pickles
     # read formulas for site from pickle
-    comments = read_pickle(os.path.join(directory, "commenttext.pkl"))
-    formulas_comments = read_pickle(os.path.join(directory, "formulascomments.pkl"))
+    DB = sqlite3.connect(database)
+    comments = pd.read_sql('select CommentId, Text from "Comments" where Site="'+site_name+'"', DB)
+    formulas_comments = pd.read_sql('select FormulaId, CommentId, Body, StartingPosition, Inline from "FormulasComments" where Site="'+site_name+'"', DB)
+    DB.close()
+    #formulas_comments = read_pickle(os.path.join(directory, "formulascomments.pkl"))
+
+    comments_dict = {}
+
+    for id, b in zip(comments["CommentId"], comments["Text"]):
+        comments_dict[id] = b
+    comments.pop("CommentId")
+    comments.pop("Text")
 
     # for each formula (posts and comments)
     #   get context (x) around each formula
     # TODO: efficiency
     context = {}
     comments_formulas = {}
-    for formulaid, [commentid, body, pos, inl] in formulas_comments.items():
+    for formulaid, commentid, body, pos, inl in zip(formulas_comments["FormulaId"],formulas_comments["CommentId"],formulas_comments["Body"],formulas_comments["StartingPosition"],formulas_comments["Inline"]):
         if commentid in comments_formulas:
             comments_formulas[commentid].update({formulaid: [body, pos, inl]})
         else:
             comments_formulas[commentid] = {formulaid: [body, pos, inl]}
+    formulas_comments.pop("FormulaId")
+    formulas_comments.pop("CommentId")
+    formulas_comments.pop("Body")
+    formulas_comments.pop("StartingPosition")
+    formulas_comments.pop("Inline")
 
     for commentid, formulas in comments_formulas.items():
         # process post with formula positions
-        words, formula_indices = get_words(comments[commentid], formulas)
+        words, formula_indices = get_words(comments_dict[commentid], formulas)
         for formulaid, index in formula_indices.items():
             beg = index - x
             end = index + x
@@ -192,16 +225,22 @@ def comments_context(directory, x):
 
     return context
 
-def context_main(filename_dumps, dump_directory, database, x, n, tablename, all):
+def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablename, all):
+    start = time.time()
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
     downloader = DumpDownloader()
     directories = [os.path.join(dump_directory, downloader.get_file_name(site)).replace(".7z", "/") for site in sites]
+    try:
+        if not ((corpus == "all") | (corpus == "individual")):
+            raise ValueError
+    except ValueError:
+        sys.exit("option for --corpus must be 'all' or 'individual'")
+    if corpus == "all":
+        print("Calculating idf values of all sites texts")
+        bow = calculate_idf(sites, directories, database)
+        log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
 
-    print("Calculating idf values of all sites texts")
-    start = time.time()
-    bow = calculate_idf(directories)
-    log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
 
 
     if_exists = "replace"
@@ -212,13 +251,20 @@ def context_main(filename_dumps, dump_directory, database, x, n, tablename, all)
         except OSError:
             print(directory + " not found")
 
+        if corpus == "individual":
+            print("Calculating idf values of texts of site "+ site)
+            t1 = time.time()
+            bow = calculate_idf([site], directories, database)
+            log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+
+
         # check if pickles are there -> error: suggest to run main again
 
         #   for each formula
         #    get context
         #    calculate top n context
         #   save in table in database (option for other table name)
-        contexts = posts_context(directory, x)
+        contexts = posts_context(directory, database, site, x)
         t1 = time.time()
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
         log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
@@ -227,7 +273,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, tablename, all)
 
         if_exists = "append"
 
-        contexts = comments_context(directory, x)
+        contexts = comments_context(directory, database, site, x)
         t1 = time.time()
         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
@@ -253,7 +299,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
     parser.add_argument("-c", "--context", default='10', help="number of words around formula to be reagarded as context")
     parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
+    parser.add_argument("--corpus", default="all", help="oprtions: all or individual. corpus for idf over all sites or individually for each")
     parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
     parser.add_argument("-a", "--all", default="no", help="get all words")
     args = parser.parse_args()
-    context_main(args.dumps, args.input, args.output, int(args.context), int(args.topn), args.tablename, args.all)
+    context_main(args.dumps, args.input, args.output, int(args.context), int(args.topn), args.corpus, args.tablename, args.all)

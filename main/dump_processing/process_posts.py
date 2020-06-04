@@ -76,11 +76,11 @@ def process_question_text(site_name, questions, database, directory):
     df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
     write_table(database, "QuestionText", df)
 
-    questions_dict = {}
+    #questions_dict = {}
     #for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
     #    questions_dict[question] = [title,body]
-    with open(os.path.join(directory, "questiontext.pkl"),"wb") as f:
-        pickle.dump(questions_dict,f)
+    #with open(os.path.join(directory, "questiontext.pkl"),"wb") as f:
+    #    pickle.dump(questions_dict,f)
     questions.pop("Title")
     questions.pop("Body")
 
@@ -89,11 +89,11 @@ def process_answer_body(site_name, answers, database, directory):
     df = pd.DataFrame({"Site": sites, "AnswerId": answers["AnswerId"], "Body": answers["Body"]})
     write_table(database, "AnswerText", df)
 
-    answers_dict = {}
+    #answers_dict = {}
     #for question,body in zip(answers["AnswerId"],answers["Body"]):
     #    answers_dict[question] = body
-    with open(os.path.join(directory, "answertext.pkl"),"wb") as f:
-        pickle.dump(answers_dict,f)
+    #with open(os.path.join(directory, "answertext.pkl"),"wb") as f:
+    #    pickle.dump(answers_dict,f)
 
     answers.pop("Body")
 
