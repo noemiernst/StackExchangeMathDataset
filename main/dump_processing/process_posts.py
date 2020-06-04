@@ -20,7 +20,7 @@ def process_answer_meta(site_name, answers, database):
                        #"CommentCount": answers["CommentCount"],
                        #"LastEditorUserId": answers["LastEditorUserId"],
                        "OwnerUserId": answers["OwnerUserId"]})
-    write_table(database, "AnswersMeta", df)
+    write_table(database, "AnswerMeta", df)
 
 def process_question_meta(site_name, questions, database):
     sites = [site_name for i in range(len(questions["QuestionId"]))]
@@ -30,7 +30,7 @@ def process_question_meta(site_name, questions, database):
                        "OwnerUserId": questions["OwnerUserId"],
                        #"LastEditorUserId": questions["LastEditorUserId"],
                        "AnswerCount": questions["AnswerCount"]})
-    write_table(database, "QuestionsMeta", df)
+    write_table(database, "QuestionMeta", df)
 
 def process_question_acceptedanswer(site_name, questions, database):
     sites = []
@@ -74,26 +74,26 @@ def process_question_tags(site_name, questions, database):
 def process_question_text(site_name, questions, database, directory):
     sites = [site_name for i in range(len(questions["QuestionId"]))]
     df = pd.DataFrame({"Site": sites, "QuestionId": questions["QuestionId"], "Title": questions["Title"], "Body": questions["Body"]})
-    write_table(database, "QuestionsText", df)
+    write_table(database, "QuestionText", df)
 
-    questions_dict = {}
-    for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
-        questions_dict[question] = [title,body]
-    with open(os.path.join(directory, "questiontext.pkl"),"wb") as f:
-        pickle.dump(questions_dict,f)
+    #questions_dict = {}
+    #for question,title,body in zip(questions["QuestionId"],questions["Title"],questions["Body"]):
+    #    questions_dict[question] = [title,body]
+    #with open(os.path.join(directory, "questiontext.pkl"),"wb") as f:
+    #    pickle.dump(questions_dict,f)
     questions.pop("Title")
     questions.pop("Body")
 
 def process_answer_body(site_name, answers, database, directory):
     sites = [site_name for i in range(len(answers["AnswerId"]))]
     df = pd.DataFrame({"Site": sites, "AnswerId": answers["AnswerId"], "Body": answers["Body"]})
-    write_table(database, "AnswersText", df)
+    write_table(database, "AnswerText", df)
 
-    answers_dict = {}
-    for question,body in zip(answers["AnswerId"],answers["Body"]):
-        answers_dict[question] = body
-    with open(os.path.join(directory, "answertext.pkl"),"wb") as f:
-        pickle.dump(answers_dict,f)
+    #answers_dict = {}
+    #for question,body in zip(answers["AnswerId"],answers["Body"]):
+    #    answers_dict[question] = body
+    #with open(os.path.join(directory, "answertext.pkl"),"wb") as f:
+    #    pickle.dump(answers_dict,f)
 
     answers.pop("Body")
 
