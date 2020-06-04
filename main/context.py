@@ -15,6 +15,7 @@ import string
 from nltk.corpus import stopwords
 import sys
 import argparse
+import context_processing.html_helper
 
 #TODO: for performance enhancement
 #  tokenize words in between formulas and then just pick and choose for each formula until contex length is satisfied
@@ -26,16 +27,15 @@ def read_pickle(file):
 def tokenize_words(text):
     # remove links and formulas
     text = re.sub(r'\$\$.*?\$\$|\$.*?\$', ' ', text)
-    text = re.sub(r'<a.*?>.*?</a>', ' ', text)
     # remove html tags
-    text = re.sub('<.*?>',' ',text)
+    text, strong, em = context_processing.html_helper.clean_html(text)
     # tokenize
     text = text.split()
     table = str.maketrans('', '', string.punctuation)
     text =  [(w.translate(table)).lower() for w in text]
     #stop_words = set(stopwords.words('english'))
     #text = [w for w in text if not w in stop_words]
-    return text
+    return text, strong, em
 
 def formula_context(formula, position, inline, text, num_context_token):
     # if formula in question title
@@ -47,10 +47,10 @@ def formula_context(formula, position, inline, text, num_context_token):
             formula_length = len(formula)+2
         else:
             formula_length = len(formula)+4
-        before = tokenize_words(text[:position])
-        after = tokenize_words(text[position+formula_length:])
+        before, b_strong, b_em = tokenize_words(text[:position])
+        after, a_strong, a_em = tokenize_words(text[position+formula_length:])
         # placeholder of formula in the middle
-        return " ".join(before[-num_context_token:]) + " ".join(after[:num_context_token])
+        return " ".join(before[-num_context_token:]) + " ".join(after[:num_context_token]), b_strong + a_strong, b_em + a_em
 
 def calculate_idf(sites, directories, database):
     bow = BOW()
@@ -89,6 +89,8 @@ def write_context_table(site, contexts, database, table_name, if_exists='append'
 def get_words(text, formulas):
     pos_prev = 0
     words = []
+    strong = []
+    emphasized = []
     formula_indices = {}
     # formulas = {formulaid: [body, pos, inl]}
     ids_sorted = list(formulas.keys())
@@ -101,11 +103,17 @@ def get_words(text, formulas):
                 formula_length = len(formulas[formulaid][0])+2
             else:
                 formula_length = len(formulas[formulaid][0])+4
-            words.extend(tokenize_words(text[pos_prev:formulas[formulaid][1]]))
+            w, s, e = tokenize_words(text[pos_prev:formulas[formulaid][1]])
+            words.extend(w)
+            strong.extend(s)
+            emphasized.extend(e)
             formula_indices[formulaid] = len(words)
             pos_prev = formulas[formulaid][1] + formula_length
-    words.extend(tokenize_words(text[pos_prev:]))
-    return words, formula_indices
+    w, s, e = tokenize_words(text[pos_prev:formulas[formulaid][1]])
+    words.extend(w)
+    strong.extend(s)
+    emphasized.extend(e)
+    return words, formula_indices, strong, emphasized
 
 
 def posts_context(directory, database, site_name, x):
@@ -155,11 +163,13 @@ def posts_context(directory, database, site_name, x):
     for postid, formulas in posts_formulas.items():
         # process post with formula positions
 
-        words, formula_indices = get_words(posts[postid], formulas)
-
+        words, formula_indices, strong, emphasized = get_words(posts[postid], formulas)
+        print(strong)
+        print(emphasized)
         for formulaid, index in formula_indices.items():
             if index == -1:
-                context[formulaid] = " ".join(tokenize_words(question_titles[postid]))
+                w, s, e = tokenize_words(question_titles[postid])
+                context[formulaid] = " ".join(w)
             else:
                 beg = index - x
                 end = index + x
@@ -210,7 +220,8 @@ def comments_context(directory, database, site_name, x):
 
     for commentid, formulas in comments_formulas.items():
         # process post with formula positions
-        words, formula_indices = get_words(comments_dict[commentid], formulas)
+        words, formula_indices, strong, emphasized = get_words(comments_dict[commentid], formulas)
+
         for formulaid, index in formula_indices.items():
             beg = index - x
             end = index + x

@@ -1,12 +1,11 @@
 import re
 
 def clean_html(text):
-    text = re.sub('<a.*?>.*?</a>|<img.*?>', '', text)
+    text = re.sub('<a.*?>.*?</a>', '', text)
     strong = find_strong(text)
     em = find_emphasized(text)
     text = strip_html(text)
     return text, strong, em
-
 
 def strip_html(text):
     clean = re.compile('<.*?>')

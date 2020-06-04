@@ -68,6 +68,8 @@ class BOW:
         self.tfidf_transformer.fit(word_count_vector)
         self.feature_names = self.vectorizer.get_feature_names()
 
+
+    #tf-idf over entire post/comment or just formula context
     def get_top_n_tfidf(self, dictionary, n):
         docs = list(dictionary.values())
         count_vector=self.vectorizer.transform(docs)
