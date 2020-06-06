@@ -14,7 +14,6 @@ import collections
 import re
 import resource
 import string
-import pathlib
 import os.path
 
 
@@ -66,12 +65,13 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     file = os.path.join(directory,"diagrams", site+"_stats.png")
     fig.savefig(file, dpi=300)
     print("Figure saved to " + file)
+    return os.path.join("diagrams", site+"_stats.png")
 
     # text pro gleichung: avg text of post with formula
 
 
 def common_words(docs, x):
-    docs = [re.sub(r'(\$\$.*?\$\$|\$.*?\$)|<.*?>|\\amp', ' ', d) for d in docs]
+    docs = [re.sub(r'(\$\$.*?\$\$|\$.*?\$)|<.*?>', ' ', d) for d in docs]
     table = str.maketrans('', '', string.punctuation)
     temp = []
     for words in docs:
@@ -82,7 +82,7 @@ def common_words(docs, x):
     word_list = vectorizer.get_feature_names()
     words = dict(zip(word_list, count_list))
     words = collections.OrderedDict(sorted(words.items(), key=lambda item: item[1], reverse=True))
-    print(pd.DataFrame(words.items(), columns=['Word', 'idf']).to_string())
+    return pd.DataFrame(words.items(), columns=['Word', 'df'])
 
 def common_tokens(tokens, x):
     token_dict = {}
@@ -93,7 +93,22 @@ def common_tokens(tokens, x):
             token_dict[token] = 1
     counter = Counter(tokens)
     topx = counter.most_common(x)
-    print(pd.DataFrame(topx, columns=['Token', 'Occurences']).to_string())
+    return pd.DataFrame(topx, columns=['Token', 'Occurences'])
+
+def save_to_html(figure_file, df_tokens, df_words, directory, site):
+    tokens = df_tokens.to_html(classes='table table-striped', index=False, justify='center', col_space=80)
+    words = df_words.to_html(classes='table table-striped', justify='center', index=False, col_space=80)
+
+    f = open(os.path.join(directory, site+'_stats.html'),'w')
+
+    text = """<html><head></head><body>
+    <div style="float:left; margin:15px">"""+ words + """</div>
+    <div style="float:left; margin:15px">"""+ tokens + """</div>
+    <div style="float:left; margin:15px">"""+ '<img src="' + figure_file +'" alt="statistics figure ' + figure_file + '" width="800">' + """</div>
+    </body></html>"""
+
+    f.write(text)
+    f.close()
 
 def all_tokens(formulas):
     tokens = []
@@ -104,11 +119,9 @@ def all_tokens(formulas):
     return tokens
 
 
-def main(filename_dumps, database):
+def main(filename_dumps, database, directory):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
-
-    directory = pathlib.Path(database).parent.absolute()
 
     for site in sites:
         DB = sqlite3.connect(database)
@@ -120,7 +133,7 @@ def main(filename_dumps, database):
         question_ids.pop("QuestionId")
         answer_ids.pop("AnswerId")
 
-        formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site, directory)
+        figure_file = formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site, directory)
         formulas_posts.pop("FormulaId")
         formulas_posts.pop("PostId")
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
@@ -130,7 +143,7 @@ def main(filename_dumps, database):
         answer_texts = pd.read_sql('select Body from "AnswerText" where Site="'+site+'"', DB)
         DB.close()
 
-        common_words(list(question_texts["Title"]) + list(question_texts["Body"]) + list(answer_texts["Body"]), 100)
+        df_words = common_words(list(question_texts["Title"]) + list(question_texts["Body"]) + list(answer_texts["Body"]), 100)
         question_texts.pop("Title")
         question_texts.pop("Body")
         answer_texts.pop("Body")
@@ -140,13 +153,16 @@ def main(filename_dumps, database):
         formulas_posts = pd.read_sql('select Body from "FormulasPosts" where Site="'+site+'"', DB)
         DB.close()
 
-        common_tokens(all_tokens(list(formulas_posts["Body"])), 100)
+        df_tokens = common_tokens(all_tokens(list(formulas_posts["Body"])), 100)
         formulas_posts.pop("Body")
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+
+        save_to_html(figure_file, df_tokens, df_words, directory, site)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
     parser.add_argument("--database", default='../output/database.db', help="database")
+    parser.add_argument("-o", "--output", default='../output/', help="output directory")
     args = parser.parse_args()
-    main(args.dumps, args.database)
+    main(args.dumps, args.database, args.output)
