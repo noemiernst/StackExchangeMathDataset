@@ -44,7 +44,7 @@ def extract_dumps(dump_directory, sites, extract):
         for file, site in zip(files, sites):
             output = file.replace(".7z", "/")
             directories.append(output)
-            if extract is "yes":
+            if extract == "yes":
                 with libarchive.public.file_reader(file) as e:
                     print("extracting " + file + " to " + output + "...")
                     if not os.path.exists(output):
@@ -53,7 +53,7 @@ def extract_dumps(dump_directory, sites, extract):
                         with open(output + str(entry.pathname), 'wb') as f:
                             for block in entry.get_blocks():
                                 f.write(block)
-            elif extract is "no":
+            elif extract == "no":
                 if not os.path.exists(output):
                     raise OSError
                 if (not os.path.exists(os.path.join(output, "Badges.xml"))) | (not os.path.exists(os.path.join(output, "Comments.xml"))) | \
@@ -61,8 +61,8 @@ def extract_dumps(dump_directory, sites, extract):
                         (not os.path.exists(os.path.join(output, "Tags.xml"))):
                     raise OSError
             else:
-                raise ValueError
-    except ValueError:
+                raise NameError
+    except NameError:
         sys.exit("-x --extract value not valid. Possible values: 'yes' and 'no'")
     except OSError:
         sys.exit("Files or Directories missing. Extract dump files")
@@ -75,6 +75,7 @@ def dumps(dump_directory, filename_dumps, download, extract):
     downloader = DumpDownloader()
     if download is "yes":
         downloader.download_some(dump_directory, sites)
+        extract="yes"
     elif download is "no":
         for site in sites:
             file = os.path.join(dump_directory, downloader.get_file_name(site))
@@ -165,9 +166,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump *.7z files")
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("--download", default="no", help="yes or no. Whether or not to download the dumps")
-    parser.add_argument("-x" ,"--extract", default="no", help="yes or no. Whether or not to extract the *.7z dump files")
+    parser.add_argument("--download", default="yes", help="yes or no. Whether or not to download the dumps")
+    parser.add_argument("-x" ,"--extract", default="yes", help="yes or no. Whether or not to extract the *.7z dump files")
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
-    parser.add_argument("-a", "--all", default="yes", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
+    parser.add_argument("-a", "--all", default="no", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
     args = parser.parse_args()
     main(args.input, args.dumps, args.download, args.extract, args.output, args.all)

@@ -14,10 +14,12 @@ import collections
 import re
 import resource
 import string
+import pathlib
+import os.path
 
 
 # formulaid_postid = {formulaid: postid}, all_postids = [], token_lengths = []
-def formulas_per_post(formulaid_postid, all_postids, token_lengths, site):
+def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, directory):
     posts = len(all_postids)
     formulas = len(formulaid_postid)
     print("# posts: "+ str(posts))
@@ -46,23 +48,24 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site):
         else:
             break
 
-
+    fig, (ax1, ax2) = plt.subplots(2, 1)
     # make this into a histogram of number of formula distribution in questions, answers, posts and comments
-    #counts_counter_below_100 = {k:v for (k,v) in counts_counter.items() if k <100}
-    plt.subplot(2, 1, 1)
-    plt.subplots_adjust(left=0.15, hspace=0.55, wspace=0.3)
-    plt.bar(list(counts_counter.keys()), counts_counter.values(), color='g',edgecolor='black', linewidth=1)
-    plt.title("Formula Distribution of '"+ site + "' Dump")
-    plt.xlabel("Number of Formulas per Post")
-    plt.ylabel("Number of Posts")
+    #plt.subplot(2, 1, 1)
+    fig.subplots_adjust(left=0.15, hspace=0.55, wspace=0.3)
+    ax1.bar(list(counts_counter.keys()), counts_counter.values(), color='g',edgecolor='black', linewidth=1)
+    ax1.set_title("Formula Distribution of '"+ site + "' Dump")
+    ax1.set_xlabel("Number of Formulas per Post")
+    ax1.set_ylabel("Number of Posts")
 
     top_filtered = sorted(token_lengths, reverse=True)[int(0.05*len(token_lengths)):]
-    plt.subplot(2, 1, 2)
-    plt.hist(top_filtered, bins=len(set(top_filtered)), color='g',edgecolor='black', linewidth=1, align='left')
-    plt.title("Formula Length Distribution in '"+ site + "' Dump")
-    plt.xlabel("Number of Tokens per Formula")
-    plt.ylabel("Number of Formulas")
-    plt.show()
+    #plt.subplot(2, 1, 2)
+    ax2.hist(top_filtered, bins=len(set(top_filtered)), color='g',edgecolor='black', linewidth=1, align='left')
+    ax2.set_title("Formula Length Distribution in '"+ site + "' Dump")
+    ax2.set_xlabel("Number of Tokens per Formula")
+    ax2.set_ylabel("Number of Formulas")
+    file = os.path.join(directory,"diagrams", site+"_stats.png")
+    fig.savefig(file, dpi=300)
+    print("Figure saved to " + file)
 
     # text pro gleichung: avg text of post with formula
 
@@ -105,17 +108,19 @@ def main(filename_dumps, database):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
 
+    directory = pathlib.Path(database).parent.absolute()
+
     for site in sites:
         DB = sqlite3.connect(database)
         formulas_posts = pd.read_sql('select FormulaId, PostId, TokenLength from "FormulasPosts" where Site="'+site+'"', DB)
         question_ids = pd.read_sql('select QuestionId from "QuestionTags" where Site="'+site+'"', DB)
         answer_ids = pd.read_sql('select AnswerId from "AnswerMeta" where Site="'+site+'"', DB)
         DB.close()
-        post_ids = question_ids["QuestionId"] + answer_ids["AnswerId"]
+        post_ids = list(question_ids["QuestionId"]) + list(answer_ids["AnswerId"])
         question_ids.pop("QuestionId")
         answer_ids.pop("AnswerId")
 
-        formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site)
+        formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site, directory)
         formulas_posts.pop("FormulaId")
         formulas_posts.pop("PostId")
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
