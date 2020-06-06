@@ -8,7 +8,7 @@ class DumpDownloader:
     sites_with_mathjax = ["3dprinting", "ham", "ai", "astronomy", "aviation", "bioinformatics", "biology", "blender", "chemistry",
              "codegolf", "codereview", "scicomp", "computergraphics", "cs", "cseducators", "stats", "crypto",
              "datascience", "earthscience", "economics", "electronics", "engineering", "gamedev", "hsm",
-             "mathoverflow", "mathematica", "math", "matheducators", "or", "physics", "psychology", "puzzling",
+             "mathoverflow", "mathematica", "math", "matheducators", "or", "physics", "puzzling",
              "quant", "quantumcomputing", "robotics", "rpg", "dsp", "space", "cstheory", "worldbuilding"]
     downloads = {"3dprinting": "3dprinting.stackexchange.com.7z",
                  "ham": "ham.stackexchange.com.7z",
@@ -40,7 +40,6 @@ class DumpDownloader:
                  "matheducators": "matheducators.stackexchange.com.7z",
                  "or": "or.stackexchange.com.7z",
                  "physics": "physics.stackexchange.com.7z",
-                 "psychology": "psychology.stackexchange.com.7z",
                  "puzzling": "puzzling.stackexchange.com.7z",
                  "quant": "quant.stackexchange.com.7z",
                  "quantumcomputing": "quantumcomputing.stackexchange.com.7z",
