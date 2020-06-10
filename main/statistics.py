@@ -1,9 +1,7 @@
 # TODO:
 #  wv text pro gleichung
 
-from dump_processing.helper import log
 from sklearn.feature_extraction.text import CountVectorizer
-import numpy as np
 from dump_processing.LatexTokenizer import LatexTokenizer
 from collections import Counter
 import matplotlib.pyplot as plt

@@ -10,7 +10,6 @@ import pandas as pd
 import os.path
 from dump_processing.helper import write_table
 from dump_processing.helper import log
-import pathlib
 
 def comments_processing(site_name, directory, database):
     comments = {"Site": [], "CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}

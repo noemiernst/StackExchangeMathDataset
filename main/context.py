@@ -12,7 +12,6 @@ import time
 from dump_processing.helper import log
 import resource
 import string
-from nltk.corpus import stopwords
 import sys
 import argparse
 import context_processing.html_helper
@@ -308,11 +307,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump files and directories")
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
-    parser.add_argument("-c", "--context", default='10', help="number of words around formula to be reagarded as context")
+    parser.add_argument("-o", "--database", default='../output/database.db', help="database output")
+    parser.add_argument("-c", "--context", default='10', help="number of words around formula to be reagarded as possible context")
     parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
-    parser.add_argument("--corpus", default="all", help="oprtions: all or individual. corpus for idf over all sites or individually for each")
+    parser.add_argument("--corpus", default="all", help="options: all or individual. corpus for idf over all sites or individually for each")
     parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
     parser.add_argument("-a", "--all", default="no", help="get all words")
     args = parser.parse_args()
-    context_main(args.dumps, args.input, args.output, int(args.context), int(args.topn), args.corpus, args.tablename, args.all)
+    context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.all)

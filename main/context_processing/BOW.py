@@ -10,13 +10,7 @@ import context_processing.html_helper
 import context_processing.formula_helper
 import pathlib
 import time
-from nltk.tokenize import word_tokenize
 import string
-import resource
-from dump_processing.helper import log
-import sys
-import re
-import psutil
 import sqlite3
 
 class BOW:

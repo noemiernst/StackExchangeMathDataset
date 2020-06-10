@@ -7,11 +7,9 @@ try:
 except ImportError:
     import pickle
 import os.path
-import pathlib
 import pandas as pd
 from dump_processing.helper import write_table
 from dump_processing.helper import log
-import resource
 
 def process_answer_meta(site_name, answers, database):
     sites = [site_name for i in range(len(answers["AnswerId"]))]

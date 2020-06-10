@@ -4,8 +4,6 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import os.path
 import pandas as pd
-import argparse
-import sqlite3
 from dump_processing.helper import write_table
 from dump_processing.helper import log
 

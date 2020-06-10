@@ -1,4 +1,3 @@
-import argparse
 import resource
 from dump_processing.process_posts import posts_processing
 from dump_processing.process_comments import comments_processing
