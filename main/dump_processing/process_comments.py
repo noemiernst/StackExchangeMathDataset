@@ -2,10 +2,6 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 import pandas as pd
 import os.path
 from dump_processing.helper import write_table
@@ -45,9 +41,6 @@ def comments_processing(site_name, directory, database):
                        "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
             write_table(database, 'Comments', df)
             comments = {"Site": [], "CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
-
-    #with open(os.path.join(directory, "commenttext.pkl"),"wb") as f:
-    #    pickle.dump(comments_dict,f)
 
     df = pd.DataFrame({"Site": comments["Site"],"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
                "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})

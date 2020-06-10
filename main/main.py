@@ -4,12 +4,7 @@ import os
 import os.path
 import libarchive.public
 import pandas as pd
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 #TODO pip install libarchive
-# pip install hashlib?
 
 import dump_processing.database
 import dump_processing.process_dump

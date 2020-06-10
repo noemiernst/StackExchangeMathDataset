@@ -2,10 +2,6 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 import os.path
 import sqlite3
 import pandas as pd
@@ -15,13 +11,6 @@ import resource
 from dump_processing.database import max_column_value
 from dump_processing.LatexTokenizer import LatexTokenizer
 
-def context_pickle(formula_context_dict, directory, file, extend = True):
-    if extend:
-        with open(os.path.join(directory, file),"rb") as f:
-            previous_formula_context_dict = pickle.load(f)
-            formula_context_dict.update(previous_formula_context_dict)
-    with open(os.path.join(directory, file),"wb") as f:
-        pickle.dump(formula_context_dict,f)
 
 def current_formula_id(database):
     return max(max_column_value(database, "FormulasPosts", "FormulaId"), max_column_value(database, "FormulasComments", "FormulaId")) + 1
@@ -129,8 +118,6 @@ def questions_formula_processing(site_name, database, directory, context_length)
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasPosts', df)
 
-    #context_pickle(formula_con, directory, "formulasposts.pkl", False)
-
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
     log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
     log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions)*2)*100, ".4f") + " %")
@@ -172,8 +159,6 @@ def answers_formula_processing(site_name, database, directory, context_length):
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasPosts', df, "append")
 
-    #context_pickle(formula_con, directory, "formulasposts.pkl", True)
-
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
     log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers))*100, ".4f") + " %")
@@ -213,8 +198,6 @@ def comments_formula_processing(site_name, database, directory, context_length):
 
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasComments', df)
-
-    #context_pickle(formula_con,directory, "formulascomments.pkl", False)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
     log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")

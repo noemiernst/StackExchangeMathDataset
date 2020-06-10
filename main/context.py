@@ -1,9 +1,5 @@
 from context_processing.BOW import BOW
 import os.path
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 import sqlite3
 import re
 from dump_processing.DumpDownloader import DumpDownloader
@@ -18,10 +14,6 @@ import context_processing.html_helper
 
 #TODO: for performance enhancement
 #  tokenize words in between formulas and then just pick and choose for each formula until contex length is satisfied
-
-def read_pickle(file):
-    with open(file,"rb") as f:
-        return pickle.load(f)
 
 def tokenize_words(text):
     # remove links and formulas
@@ -116,15 +108,11 @@ def get_words(text, formulas):
 
 
 def posts_context(directory, database, site_name, x):
-    # read text from pickles
-    # read formulas for site from pickle
     DB = sqlite3.connect(database)
     answers = pd.read_sql('select AnswerId, Body from "AnswerText" where Site="'+site_name+'"', DB)
     questions = pd.read_sql('select QuestionId, Title, Body from "QuestionText" where Site="'+site_name+'"', DB)
     formulas_posts = pd.read_sql('select FormulaId, PostId, Body, StartingPosition, Inline from "FormulasPosts" where Site="'+site_name+'"', DB)
     DB.close()
-
-    #formulas_posts = read_pickle(os.path.join(directory, "formulasposts.pkl"))
 
     question_titles = {}
     posts = {}
@@ -135,7 +123,6 @@ def posts_context(directory, database, site_name, x):
     answers.pop("Body")
 
     # for each post/comment
-    #   text to corpus -> use function from BOW class? already reads text from pickles
     for id, t, b in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
         question_titles[id] = t
         posts[id] = b
@@ -186,13 +173,10 @@ def posts_context(directory, database, site_name, x):
     return context
 
 def comments_context(directory, database, site_name, x):
-    # read text from pickles
-    # read formulas for site from pickle
     DB = sqlite3.connect(database)
     comments = pd.read_sql('select CommentId, Text from "Comments" where Site="'+site_name+'"', DB)
     formulas_comments = pd.read_sql('select FormulaId, CommentId, Body, StartingPosition, Inline from "FormulasComments" where Site="'+site_name+'"', DB)
     DB.close()
-    #formulas_comments = read_pickle(os.path.join(directory, "formulascomments.pkl"))
 
     comments_dict = {}
 
@@ -267,9 +251,6 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
             t1 = time.time()
             bow = calculate_idf([site], directories, database)
             log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
-
-
-        # check if pickles are there -> error: suggest to run main again
 
         #   for each formula
         #    get context
