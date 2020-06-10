@@ -73,10 +73,10 @@ def dumps(dump_directory, filename_dumps, download, extract):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
     downloader = DumpDownloader()
-    if download is "yes":
+    if download == "yes":
         downloader.download_some(dump_directory, sites)
         extract="yes"
-    elif download is "no":
+    elif download == "no":
         for site in sites:
             file = os.path.join(dump_directory, downloader.get_file_name(site))
             if os.path.isfile(file):

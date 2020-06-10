@@ -18,9 +18,9 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 ### Usage
 
 * ```cd main```
-* execute: ```python main.py --input ../input/ --dumps test_dumps --download yes --extract yes --output '../database/dataset.db'```
-* execute (only after main.py has been executed): ```python context.py --input ../input/ --dumps test_dumps --download yes --database '../database/dataset.db' --context 10 --topn 3 --tablename FormulaContext```
-* execute (only after main.py has been executed): ```python statistics.py --dumps test_dumps --database '../database/dataset.db' --output ../output/```
+* execute: ```python main.py --input ../input/ --dumps test_dumps --download yes --extract yes --output ../output/database.db```
+* execute (only after main.py has been executed): ```python context.py --input ../input/ --dumps test_dumps --download yes --database ../output/database.db --context 10 --topn 3 --tablename FormulaContext```
+* execute (only after main.py has been executed): ```python statistics.py --dumps test_dumps --database ../output/database.db --output ../output/```
 
 
 
@@ -90,7 +90,7 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 
 * dumps: A text file containing a list of stackexchange dump sites names to be processed.
     * format: file containing a list of dump sites. Viable options can be found in the file /main/mathjax_dumps. The sites must already been processed into the database by running ```main.py``
-    * default="test_dumps" in main directory
+    * default='test_dumps' in main directory
 * database: Database file for data input.
     * default='../output/database.db'
 * output: The output directory.
