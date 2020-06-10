@@ -1,6 +1,6 @@
 # Stack Exchange Dataset for Math Embeddings
 
-Processing [stack exchange data dumps](https://archive.org/details/stackexchange) to a dataset in a database.
+Processing [stack exchange data dumps](https://archive.org/details/stackexchange) to a dataset intended for math embeddings into a database.
 
 ## Requirements
 
@@ -8,9 +8,10 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 * [pandas](http://pandas.pydata.org/)
 * [xml.etree.ElementTree](https://docs.python.org/2/library/xml.etree.elementtree.html)
 * [cPickle or pickle](https://docs.python.org/3/library/pickle.html)
-* matplotlib.pyplot
-* sqlite3
-* sklearn.feature_extraction.text -> CountVectorizer
+* [matplotlib](https://matplotlib.org/users/installing.html)
+* [sqlite3](https://docs.python.org/3/library/sqlite3.html)
+* [scikit_learn](https://scikit-learn.org/stable/install.html)
+* [libarchive](https://pypi.org/project/libarchive/)
 
 ## Dataset
 
@@ -80,32 +81,6 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 * Analysis/Statistics will be saved in file ```statistics.log``` in same directory as the database.
 
 ## ```statistics.py```
-
-#### Parameters of ```main.py```
-
-* input: Input directory of stackexchange dump *.7z files. Where they are or where there should be downloaded to. 
-    * default= "../input/"
-* dumps: A text file containing a list of stackexchange dump sites names to be processed.
-    * format: file containing a list of dump sites. Viable options can be found in the file /main/mathjax_dumps.
-    * default="test_dumps" in main directory
-* download: Whether or not the program should download the dumps.
-    * options: yes or no
-    * default="yes"
-* extract: Whether or not to extract the *.7z dump files.
-    * options: yes or no
-    * default="yes"
-* output: database output
-    * default='../output/database.db'
-* all: Force to process all dumps, even if they have previously been processed and already exist in the database.
-    * options: yes or no
-    * default="no"
-
-#### Outputs of ```main.py```
-
-* The Dataset will be saved in a database (```*.db```) as specified by the input parameter 'output'.
-* Analysis/Statistics will be saved in file ```statistics.log``` in same directory as the database.
-
-## ```context.py```
 
 ```main.py``` must previously been run for the dumps before running ```statistics.py```
 
