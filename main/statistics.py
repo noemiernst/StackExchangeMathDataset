@@ -16,17 +16,36 @@ import resource
 import string
 import os.path
 
+# TODO:
+#  #posts etc stats also in html
+#  comments and comment formulas
 
 # formulaid_postid = {formulaid: postid}, all_postids = [], token_lengths = []
 def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, directory):
     posts = len(all_postids)
     formulas = len(formulaid_postid)
+    stats_titles = []
+    stats_values = []
+
     print("# posts: "+ str(posts))
+    stats_titles.append("total posts: ")
+    stats_values.append(str(posts))
+
     print("# formulas in posts: "+ str(formulas))
+    stats_titles.append("total formulas in posts: ")
+    stats_values.append(str(formulas))
+
     print("# average number of formulas per post: "+ format(formulas/posts, ".2f"))
+    stats_titles.append("average number of formulas per post: ")
+    stats_values.append(format(formulas/posts, ".2f"))
+
     # percentage of posts with at least 1 formula
     unique_postids = len(set(formulaid_postid.values()))
     print("# posts containing formulas: "+ str(unique_postids) + " -> "+ format(100* unique_postids/posts, ".2f") + "% of posts")
+    stats_titles.append("total number of posts containing formulas: ")
+    stats_values.append(str(unique_postids))
+    stats_titles.append("percentage of posts containing formulas: ")
+    stats_values.append(format(100* unique_postids/posts, ".2f"))
 
     # number of formulas in post {postid: #formulas}
     counter = Counter(formulaid_postid.values())
@@ -52,20 +71,20 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     #plt.subplot(2, 1, 1)
     fig.subplots_adjust(left=0.15, hspace=0.55, wspace=0.3)
     ax1.bar(list(counts_counter.keys()), counts_counter.values(), color='g',edgecolor='black', linewidth=1)
-    ax1.set_title("Formula Distribution of '"+ site + "' Dump")
+    ax1.set_title("Formula Distribution of '"+ site + "'")
     ax1.set_xlabel("Number of Formulas per Post")
     ax1.set_ylabel("Number of Posts")
 
     top_filtered = sorted(token_lengths, reverse=True)[int(0.05*len(token_lengths)):]
     #plt.subplot(2, 1, 2)
     ax2.hist(top_filtered, bins=len(set(top_filtered)), color='g',edgecolor='black', linewidth=1, align='left')
-    ax2.set_title("Formula Length Distribution in '"+ site + "' Dump")
+    ax2.set_title("Formula Length Distribution in '"+ site + "'")
     ax2.set_xlabel("Number of Tokens per Formula")
     ax2.set_ylabel("Number of Formulas")
     file = os.path.join(directory,"diagrams", site+"_stats.png")
     fig.savefig(file, dpi=300)
     print("Figure saved to " + file)
-    return os.path.join("diagrams", site+"_stats.png")
+    return os.path.join("diagrams", site+"_stats.png"), pd.DataFrame({"Title": stats_titles, "Value": stats_values})
 
     # text pro gleichung: avg text of post with formula
 
@@ -95,16 +114,21 @@ def common_tokens(tokens, x):
     topx = counter.most_common(x)
     return pd.DataFrame(topx, columns=['Token', 'Occurences'])
 
-def save_to_html(figure_file, df_tokens, df_words, directory, site):
-    tokens = df_tokens.to_html(classes='table table-striped', index=False, justify='center', col_space=80)
-    words = df_words.to_html(classes='table table-striped', justify='center', index=False, col_space=80)
+def save_to_html(figure_file, df_tokens, df_words, df_stats, directory, site):
+    tokens = df_tokens.to_html(classes='table table-striped', bold_rows=False, justify='center', border=2)
+    words = df_words.to_html(classes='table table-striped', bold_rows=False, justify='center', border=2)
+    stats = df_stats.to_html(classes='table table-striped', index=False, justify='center', border=2)
 
     f = open(os.path.join(directory, site+'_stats.html'),'w')
 
     text = """<html><head></head><body>
+    <div style="margin-top:50px"><h1 style="text-align: center;">"""+ site +"""</h1></div>
     <div style="float:left; margin:15px">"""+ words + """</div>
     <div style="float:left; margin:15px">"""+ tokens + """</div>
-    <div style="float:left; margin:15px">"""+ '<img src="' + figure_file +'" alt="statistics figure ' + figure_file + '" width="800">' + """</div>
+    <div style="float:left; margin:15px">
+    <div style="float:top">"""+ stats + """</div>
+    <div style="float:top; margin-top:30px">"""+ '<img src="' + figure_file +'" alt="statistics figure ' + figure_file + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
+    </div>
     </body></html>"""
 
     f.write(text)
@@ -133,7 +157,7 @@ def main(filename_dumps, database, directory):
         question_ids.pop("QuestionId")
         answer_ids.pop("AnswerId")
 
-        figure_file = formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site, directory)
+        figure_file, df_stats = formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site, directory)
         formulas_posts.pop("FormulaId")
         formulas_posts.pop("PostId")
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
@@ -157,7 +181,7 @@ def main(filename_dumps, database, directory):
         formulas_posts.pop("Body")
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
-        save_to_html(figure_file, df_tokens, df_words, directory, site)
+        save_to_html(figure_file, df_tokens, df_words, df_stats, directory, site)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
