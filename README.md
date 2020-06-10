@@ -17,10 +17,12 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 
 ### Usage
 
-* download your interested Stack Exchange site data (*.stackexchange.com.7z) from [stack exchange data dump](https://archive.org/details/stackexchange), such as ```mathematics.stackexchange.com.7z``` or ```physics.stackexchange.com.7z
-* unzip ```mathematics.stackexchange.com.7z``` to directory: ```dataset/mathematics```
 * ```cd main```
 * execute: ```python main.py --input ../input/ --dumps test_dumps --download yes --extract yes --output '../database/dataset.db'```
+* execute (only after main.py has been executed): ```python context.py --input ../input/ --dumps test_dumps --download yes --database '../database/dataset.db' --context 10 --topn 3 --tablename FormulaContext```
+* execute (only after main.py has been executed): ```python statistics.py --dumps test_dumps --database '../database/dataset.db' --output ../output/```
+
+
 
 ## ```main.py```
 
@@ -99,9 +101,3 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 * Directory '/diagrams/' in the output directory (as specified by the user) filled with diagrams of formula distributions for the sites specified by the user.
 * HTML files displaying the diagram and some statistical values for each of the sites.
 
-### How to unzip a *.7z file
-
-* Install ```p7zip``` if not already installed: ```sudo apt-get install p7zip```
-* To install the command line utility ```sudp atp-get install p7zip-full```
-* Or [Install p7zip on Mac OSX](http://macappstore.org/p7zip/)
-* execute command to extract a *.7z file: ```7za x *.7z```
