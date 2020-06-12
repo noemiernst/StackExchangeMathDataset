@@ -21,7 +21,9 @@ from collections import OrderedDict
 
 def reduce_labels(labels):
     if len(labels) < 5:
-        return labels
+        return [l for l in labels]
+    if len(labels) < 15:
+        return [l for l in labels if int(l) % 3 == 0]
     if len(labels) < 50:
         return [l for l in labels if int(l) % 5 == 0]
     return [l for l in labels if int(l) % 10 == 0]
@@ -60,15 +62,24 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
 
     rev_ordered_counts_counter = collections.OrderedDict(sorted(counts_counter.items(), reverse=True))
 
-    to_remove = 0.05*unique_postids
+    to_remove = 0.02*posts
     removed = 0
     top = []
     for k,v in rev_ordered_counts_counter.items():
+        if k < 20:
+            break
         if removed <= to_remove:
             top.append(counts_counter.pop(k))
             removed += v
         else:
             break
+
+    prev = 0
+    for k in sorted(counts_counter.keys()):
+        while k > prev+1:
+            prev += 1
+            counts_counter[prev] = 0
+        prev = k
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     # make this into a histogram of number of formula distribution in questions, answers, posts and comments
@@ -85,33 +96,49 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     plt.sca(ax1)
     labels.remove("x")
     maximum = labels[len(labels)-1]
-    locations = reduce_labels(labels)
-    if locations[-1] == labels[-1]:
-        locations.remove(labels[-1])
-        labels.remove(labels[-1])
-    locations.append("x")
-    labels = reduce_labels(labels)
-    labels.append(r'$\geq$'+str(int(maximum)+1))
+    if int(maximum) < 20:
+        locations = reduce_labels(labels)
+        labels = locations
+    else:
+        locations = reduce_labels(labels)
+        if (locations[-1] == labels[-1]) & (len(locations)>5):
+            locations.remove(labels[-1])
+            labels.remove(labels[-1])
+        locations.append("x")
+        labels = reduce_labels(labels)
+        labels.append(r'$\geq$'+str(int(maximum)+1))
     plt.xticks(locations, labels)
 
 
     counter = Counter(sorted(token_lengths))
+    counter[0] = 0
+    removed = 0
+
     rev_ordered_counter = collections.OrderedDict(sorted(counter.items(), reverse=True))
 
-    to_remove = 0.04*len(token_lengths)
-    removed = 0
+    to_remove = 0.05*len(token_lengths)
     top = []
     for k,v in rev_ordered_counter.items():
+        if k < 20:
+            break
         if removed <= to_remove:
             top.append(counter.pop(k))
             removed += v
         else:
             break
 
-    labels = [str(k) for k in counter.keys()] + ["x"]
+    prev = 0
+    for k in sorted(counter.keys()):
+        while k > prev+1:
+            prev += 1
+            counter[prev] = 0
+        prev = k
 
-    counter[max(counter.keys())+1] = removed
-    ax2.bar(labels, counter.values(), color='g',edgecolor='black', linewidth=1)
+    ordered_counter = collections.OrderedDict(sorted(counter.items()))
+    labels = [str(k) for k in ordered_counter.keys()] + ["x"]
+
+    ordered_counter[max(ordered_counter.keys())+1] = removed
+    ax2.bar(labels, ordered_counter.values(), color='g',edgecolor='black', linewidth=1)
     ax2.set_title("Formula Length Distribution of " + text_type.title() + "s in '"+ site + "'")
     ax2.set_xlabel("Number of Tokens per Formula")
     ax2.set_ylabel("Number of Formulas")
@@ -119,7 +146,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     labels.remove("x")
     maximum = labels[len(labels)-1]
     locations = reduce_labels(labels)
-    if locations[-1] == labels[-1]:
+    if (locations[-1] == labels[-1]) & (len(locations)>5):
         locations.remove(labels[-1])
         labels.remove(labels[-1])
     locations.append("x")
@@ -217,7 +244,7 @@ def main(filename_dumps, database, directory):
         answer_texts = pd.read_sql('select Body from "AnswerText" where Site="'+site+'"', DB)
         DB.close()
 
-        df_words = common_words(list(question_texts["Title"]) + list(question_texts["Body"]) + list(answer_texts["Body"]), 100)
+        #df_words = common_words(list(question_texts["Title"]) + list(question_texts["Body"]) + list(answer_texts["Body"]), 100)
         question_texts.pop("Title")
         question_texts.pop("Body")
         answer_texts.pop("Body")
@@ -243,11 +270,11 @@ def main(filename_dumps, database, directory):
         all_formulas = list(formulas_posts["Body"]) + list(formulas_comments["Body"])
         formulas_posts.pop("Body")
         formulas_comments.pop("Body")
-        df_tokens = common_tokens(all_tokens(all_formulas), 100)
+        #df_tokens = common_tokens(all_tokens(all_formulas), 100)
         all_formulas = []
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
-        save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site)
+        #save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
