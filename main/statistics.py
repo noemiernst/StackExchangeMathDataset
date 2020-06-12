@@ -109,6 +109,8 @@ def common_tokens(tokens, x):
     return pd.DataFrame(topx, columns=['Token', 'Occurences'])
 
 def save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site):
+    df_tokens.index += 1
+    df_words.index += 1
     tokens = df_tokens.to_html(classes='table table-striped', bold_rows=False, justify='center', border=2)
     words = df_words.to_html(classes='table table-striped', bold_rows=False, justify='center', border=2)
     df_stats = pd.concat([df_stats_p, df_stats_c])
