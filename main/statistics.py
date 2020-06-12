@@ -84,7 +84,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
 
 
 def common_words(docs, x):
-    docs = [re.sub(r'(\$\$.*?\$\$|\$.*?\$)|<.*?>', ' ', d) for d in docs]
+    docs = [re.sub(r'(\$\$.*?\$\$|\$.*?\$)|<.*?>|&amp;|&lt;|&gt;', ' ', d) for d in docs]
     table = str.maketrans('', '', string.punctuation)
     temp = []
     for words in docs:
