@@ -60,7 +60,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
 
     rev_ordered_counts_counter = collections.OrderedDict(sorted(counts_counter.items(), reverse=True))
 
-    to_remove = 0.02*unique_postids
+    to_remove = 0.05*unique_postids
     removed = 0
     top = []
     for k,v in rev_ordered_counts_counter.items():
@@ -75,39 +75,56 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     #plt.subplot(2, 1, 1)
     fig.subplots_adjust(left=0.15, hspace=0.55, wspace=0.3)
     o_counts_counter = OrderedDict(sorted(counts_counter.items()))
-    labels = [str(k) for k in o_counts_counter.keys()] + ["more"]
-    o_counts_counter[len(o_counts_counter)] = len(top)
+    labels = [str(k) for k in o_counts_counter.keys()] + ["x"]
+    o_counts_counter[len(o_counts_counter)] = removed
 
     ax1.bar(labels, o_counts_counter.values(), color='g',edgecolor='black', linewidth=1)
-    ax1.set_title("Formula Distribution of '"+ site + "' in " + text_type + "s")
-    ax1.set_xlabel("Number of Formulas per " + text_type)
-    ax1.set_ylabel("Number of " + text_type + "s")
+    ax1.set_title("Formula Distribution of '"+ site + "' in " + text_type.title() + "s")
+    ax1.set_xlabel("Number of Formulas per " + text_type.title())
+    ax1.set_ylabel("Number of " + text_type.title() + "s")
     plt.sca(ax1)
-    labels.remove("more")
+    labels.remove("x")
     maximum = labels[len(labels)-1]
     locations = reduce_labels(labels)
-    locations.append("more")
+    if locations[-1] == labels[-1]:
+        locations.remove(labels[-1])
+        labels.remove(labels[-1])
+    locations.append("x")
     labels = reduce_labels(labels)
-    labels.append(">"+maximum)
+    labels.append(r'$\geq$'+str(int(maximum)+1))
     plt.xticks(locations, labels)
 
-    top_filtered = sorted(token_lengths, reverse=True)[int(0.05*len(token_lengths)):]
-    top_values = sorted(token_lengths, reverse=True)[-int(0.05*len(token_lengths)):]
-    counter = Counter(sorted(top_filtered))
-    labels = [str(k) for k in counter.keys()] + ["more"]
 
-    counter[max(counter.keys())+1] = sum(top_values)
+    counter = Counter(sorted(token_lengths))
+    rev_ordered_counter = collections.OrderedDict(sorted(counter.items(), reverse=True))
+
+    to_remove = 0.04*len(token_lengths)
+    removed = 0
+    top = []
+    for k,v in rev_ordered_counter.items():
+        if removed <= to_remove:
+            top.append(counter.pop(k))
+            removed += v
+        else:
+            break
+
+    labels = [str(k) for k in counter.keys()] + ["x"]
+
+    counter[max(counter.keys())+1] = removed
     ax2.bar(labels, counter.values(), color='g',edgecolor='black', linewidth=1)
-    ax2.set_title("Formula Length Distribution of " + text_type + "s in '"+ site + "'")
+    ax2.set_title("Formula Length Distribution of " + text_type.title() + "s in '"+ site + "'")
     ax2.set_xlabel("Number of Tokens per Formula")
     ax2.set_ylabel("Number of Formulas")
     plt.sca(ax2)
-    labels.remove("more")
+    labels.remove("x")
     maximum = labels[len(labels)-1]
     locations = reduce_labels(labels)
-    locations.append("more")
+    if locations[-1] == labels[-1]:
+        locations.remove(labels[-1])
+        labels.remove(labels[-1])
+    locations.append("x")
     labels = reduce_labels(labels)
-    labels.append(">"+maximum)
+    labels.append(r'$\geq$'+str(int(maximum)+1))
     plt.xticks(locations, labels)
 
 
