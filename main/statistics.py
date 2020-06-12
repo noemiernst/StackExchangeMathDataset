@@ -84,19 +84,33 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     ax1.set_ylabel("Number of " + text_type + "s")
     plt.sca(ax1)
     labels.remove("more")
-    max = labels[len(labels)-1]
+    maximum = labels[len(labels)-1]
     locations = reduce_labels(labels)
     locations.append("more")
     labels = reduce_labels(labels)
-    labels.append(">"+max)
+    labels.append(">"+maximum)
     plt.xticks(locations, labels)
 
     top_filtered = sorted(token_lengths, reverse=True)[int(0.05*len(token_lengths)):]
-    #plt.subplot(2, 1, 2)
-    ax2.hist(top_filtered, bins=len(set(top_filtered)), color='g',edgecolor='black', linewidth=1, align='left')
+    top_values = sorted(token_lengths, reverse=True)[-int(0.05*len(token_lengths)):]
+    counter = Counter(sorted(top_filtered))
+    labels = [str(k) for k in counter.keys()] + ["more"]
+
+    counter[max(counter.keys())+1] = sum(top_values)
+    ax2.bar(labels, counter.values(), color='g',edgecolor='black', linewidth=1)
     ax2.set_title("Formula Length Distribution of " + text_type + "s in '"+ site + "'")
     ax2.set_xlabel("Number of Tokens per Formula")
     ax2.set_ylabel("Number of Formulas")
+    plt.sca(ax2)
+    labels.remove("more")
+    maximum = labels[len(labels)-1]
+    locations = reduce_labels(labels)
+    locations.append("more")
+    labels = reduce_labels(labels)
+    labels.append(">"+maximum)
+    plt.xticks(locations, labels)
+
+
     file = os.path.join(directory,"diagrams", site + "_" + text_type + "_stats.png")
     fig.savefig(file, dpi=300)
     print("Figure saved to " + file)
