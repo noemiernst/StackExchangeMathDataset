@@ -13,10 +13,19 @@ import re
 import resource
 import string
 import os.path
+from collections import OrderedDict
 
 # TODO:
 #  #posts etc stats also in html
 #  comments and comment formulas
+
+def reduce_labels(labels):
+    if len(labels) < 5:
+        return labels
+    if len(labels) < 50:
+        return [l for l in labels if int(l) % 5 == 0]
+    return [l for l in labels if int(l) % 10 == 0]
+
 
 # formulaid_postid = {formulaid: postid}, all_postids = [], token_lengths = []
 def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, directory, text_type):
@@ -53,9 +62,10 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
 
     to_remove = 0.02*unique_postids
     removed = 0
+    top = []
     for k,v in rev_ordered_counts_counter.items():
         if removed <= to_remove:
-            counts_counter.pop(k)
+            top.append(counts_counter.pop(k))
             removed += v
         else:
             break
@@ -64,10 +74,22 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     # make this into a histogram of number of formula distribution in questions, answers, posts and comments
     #plt.subplot(2, 1, 1)
     fig.subplots_adjust(left=0.15, hspace=0.55, wspace=0.3)
-    ax1.bar(list(counts_counter.keys()), counts_counter.values(), color='g',edgecolor='black', linewidth=1)
+    o_counts_counter = OrderedDict(sorted(counts_counter.items()))
+    labels = [str(k) for k in o_counts_counter.keys()] + ["more"]
+    o_counts_counter[len(o_counts_counter)] = len(top)
+
+    ax1.bar(labels, o_counts_counter.values(), color='g',edgecolor='black', linewidth=1)
     ax1.set_title("Formula Distribution of '"+ site + "' in " + text_type + "s")
     ax1.set_xlabel("Number of Formulas per " + text_type)
     ax1.set_ylabel("Number of " + text_type + "s")
+    plt.sca(ax1)
+    labels.remove("more")
+    max = labels[len(labels)-1]
+    locations = reduce_labels(labels)
+    locations.append("more")
+    labels = reduce_labels(labels)
+    labels.append(">"+max)
+    plt.xticks(locations, labels)
 
     top_filtered = sorted(token_lengths, reverse=True)[int(0.05*len(token_lengths)):]
     #plt.subplot(2, 1, 2)
