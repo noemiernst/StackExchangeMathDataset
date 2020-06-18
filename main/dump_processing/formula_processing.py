@@ -10,7 +10,7 @@ from dump_processing.helper import log
 import resource
 from dump_processing.database import max_column_value
 from dump_processing.LatexTokenizer import LatexTokenizer
-from dump_processing.formula_tree_parse import get_slt
+from test import get_slt
 
 
 def current_formula_id(database):
