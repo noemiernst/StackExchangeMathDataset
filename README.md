@@ -1,6 +1,6 @@
-# Stack Exchange Dataset for Math Embeddings
+# Stack Exchange Dataset of Mathematical Formulas
 
-Processing [stack exchange data dumps](https://archive.org/details/stackexchange) to a dataset intended for math embeddings into a database.
+Processing [stack exchange data dumps](https://archive.org/details/stackexchange) to a dataset of mathematical formulas
 
 ## Requirements
 
