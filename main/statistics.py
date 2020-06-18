@@ -14,6 +14,7 @@ import resource
 import string
 import os.path
 from collections import OrderedDict
+from matplotlib.ticker import StrMethodFormatter
 
 # TODO:
 #  #posts etc stats also in html
@@ -37,10 +38,10 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     stats_values = []
 
     stats_titles.append("total " + text_type + "s: ")
-    stats_values.append(str(posts))
+    stats_values.append(format(posts,',d'))
 
     stats_titles.append("total formulas in " + text_type + "s: ")
-    stats_values.append(str(formulas))
+    stats_values.append(format(formulas,',d'))
 
     stats_titles.append("average number of formulas per " + text_type + ": ")
     stats_values.append(format(formulas/posts, ".2f"))
@@ -48,7 +49,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     # percentage of posts with at least 1 formula
     unique_postids = len(set(formulaid_postid.values()))
     stats_titles.append("total number of " + text_type + "s containing formulas: ")
-    stats_values.append(str(unique_postids))
+    stats_values.append(format(unique_postids,',d'))
     stats_titles.append("percentage of " + text_type + "s containing formulas: ")
     stats_values.append(format(100* unique_postids/posts, ".2f"))
 
@@ -108,6 +109,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
         labels = reduce_labels(labels)
         labels.append(r'$\geq$'+str(int(maximum)+1))
     plt.xticks(locations, labels)
+    plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
 
 
     counter = Counter(sorted(token_lengths))
@@ -153,6 +155,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     labels = reduce_labels(labels)
     labels.append(r'$\geq$'+str(int(maximum)+1))
     plt.xticks(locations, labels)
+    plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
 
 
     file = os.path.join(directory,"diagrams", site + "_" + text_type + "_stats.png")
@@ -173,6 +176,7 @@ def common_words(docs, x):
     word_count_vector = vectorizer.fit_transform(temp)
     count_list = word_count_vector.toarray().sum(axis=0)
     word_list = vectorizer.get_feature_names()
+    count_list = [format(c, ',d') for c in count_list]
     words = dict(zip(word_list, count_list))
     words = collections.OrderedDict(sorted(words.items(), key=lambda item: item[1], reverse=True))
     return pd.DataFrame(words.items(), columns=['Word', 'df'])
@@ -186,6 +190,8 @@ def common_tokens(tokens, x):
             token_dict[token] = 1
     counter = Counter(tokens)
     topx = counter.most_common(x)
+    topx = [(k, format(v, ',d')) for (k, v) in topx]
+
     return pd.DataFrame(topx, columns=['Token', 'Occurences'])
 
 def save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site):
@@ -244,7 +250,7 @@ def main(filename_dumps, database, directory):
         answer_texts = pd.read_sql('select Body from "AnswerText" where Site="'+site+'"', DB)
         DB.close()
 
-        #df_words = common_words(list(question_texts["Title"]) + list(question_texts["Body"]) + list(answer_texts["Body"]), 100)
+        df_words = common_words(list(question_texts["Title"]) + list(question_texts["Body"]) + list(answer_texts["Body"]), 100)
         question_texts.pop("Title")
         question_texts.pop("Body")
         answer_texts.pop("Body")
@@ -270,11 +276,11 @@ def main(filename_dumps, database, directory):
         all_formulas = list(formulas_posts["Body"]) + list(formulas_comments["Body"])
         formulas_posts.pop("Body")
         formulas_comments.pop("Body")
-        #df_tokens = common_tokens(all_tokens(all_formulas), 100)
+        df_tokens = common_tokens(all_tokens(all_formulas), 100)
         all_formulas = []
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
-        #save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site)
+        save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
