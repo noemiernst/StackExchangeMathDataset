@@ -12,9 +12,6 @@ import sys
 import argparse
 import context_processing.html_helper
 
-#TODO: for performance enhancement
-#  tokenize words in between formulas and then just pick and choose for each formula until contex length is satisfied
-
 def tokenize_words(text):
     # remove links and formulas
     text = re.sub(r'\$\$.*?\$\$|\$.*?\$', ' ', text)
@@ -157,7 +154,7 @@ def posts_context(directory, database, site_name, x, all):
                 w, s, e = tokenize_words(question_titles[postid])
                 context[formulaid] = " ".join(w)
             else:
-                if all == 'yes':
+                if all:
                     context[formulaid] = " ".join(words)
                 else:
                     beg = index - x
@@ -209,7 +206,7 @@ def comments_context(directory, database, site_name, x, all):
         words, formula_indices, strong, emphasized = get_words(comments_dict[commentid], formulas)
 
         for formulaid, index in formula_indices.items():
-            if all == 'yes':
+            if all:
                 context[formulaid] = " ".join(words)
             else:
                 beg = index - x
@@ -242,7 +239,10 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
         bow = calculate_idf(sites, directories, database)
         log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
-
+    if all == 'yes':
+        all = True
+    else:
+        all = False
 
     if_exists = "replace"
     for site, directory in zip(sites, directories):
@@ -265,10 +265,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
         #   save in table in database (option for other table name)
         contexts = posts_context(directory, database, site, x, all)
         t1 = time.time()
-        if all == 'yes':
-            top_n_contexts = contexts
-        else:
-         top_n_contexts = bow.get_top_n_tfidf(contexts, n)
+        top_n_contexts = bow.get_top_n_tfidf(contexts, n, all)
         log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
@@ -277,10 +274,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
 
         contexts = comments_context(directory, database, site, x, all)
         t1 = time.time()
-        if all == 'yes':
-            top_n_contexts = contexts
-        else:
-            top_n_contexts = bow.get_top_n_tfidf(contexts, n)
+        top_n_contexts = bow.get_top_n_tfidf(contexts, n, all)
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
@@ -306,6 +300,6 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
     parser.add_argument("--corpus", default="all", help="options: all or individual. corpus for idf over all sites or individually for each")
     parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
-    parser.add_argument("-a", "--all", default="no", help="get all words")
+    parser.add_argument("-a", "--all", default="yes", help="get all words")
     args = parser.parse_args()
     context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.all)

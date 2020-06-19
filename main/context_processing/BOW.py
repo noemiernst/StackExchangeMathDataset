@@ -64,7 +64,7 @@ class BOW:
 
 
     #tf-idf over entire post/comment or just formula context
-    def get_top_n_tfidf(self, dictionary, n):
+    def get_top_n_tfidf(self, dictionary, n, all = False):
         docs = list(dictionary.values())
         count_vector=self.vectorizer.transform(docs)
         tf_idf_vector=self.tfidf_transformer.transform(count_vector)
@@ -81,6 +81,8 @@ class BOW:
             term_tfidf.sort(key=lambda pair: pair[1], reverse=True)
 
             top_n_string = ""
+            if all:
+                n = len(term_tfidf)
             for term, value in term_tfidf[:n]:
                 top_n_string += "<"+term+ ", "+ str(value) + ">"
             top_n[key] = top_n_string
