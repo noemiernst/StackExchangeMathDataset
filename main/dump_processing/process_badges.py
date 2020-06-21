@@ -12,6 +12,7 @@ def badge_processing(site_name, directory, database):
     index = []
     UserId = []
     BadgeName = []
+    Class = []
     BadgeDate = []
 
     for event,elem in ET.iterparse(os.path.join(directory, "Badges.xml")):
@@ -20,16 +21,18 @@ def badge_processing(site_name, directory, database):
                 ind = int(elem.attrib["Id"])
                 userid = int(elem.attrib["UserId"])
                 badgename = elem.attrib["Name"]
+                badgeclass = elem.attrib["Class"]
                 badgedate = elem.attrib["Date"]
                 site.append(site_name)
                 index.append(ind)
                 UserId.append(userid)
                 BadgeName.append(badgename)
+                Class.append(badgeclass)
                 BadgeDate.append(badgedate)
                 elem.clear()
             except Exception as e:
                 pass
 
-    df =pd.DataFrame({"Site": site, "BadgeId":index, "UserId":UserId,"BadgeName":BadgeName,"BadgeDate":BadgeDate})
+    df =pd.DataFrame({"Site": site, "BadgeId":index, "UserId":UserId,"BadgeName":BadgeName,"BadgeClass": Class, "BadgeDate":BadgeDate})
     write_table(database, "Badges", df)
     log("../output/statistics.log","# users having badges: %d" % len(df))
