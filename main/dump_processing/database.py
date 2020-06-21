@@ -47,6 +47,7 @@ def create_tables(database):
     create_table(database, "QuestionText", 'CREATE TABLE "QuestionText" ("Site" TEXT, "QuestionId" INTEGER, "Title" TEXT, "Body" TEXT,  PRIMARY KEY(Site, QuestionId) )')
     #create_table(database, "RelatedQuestionsSource2Target", 'CREATE TABLE "RelatedQuestionsSource2Target" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId))')
     create_table(database, "FormulaContext", 'CREATE TABLE "FormulaContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
+    create_table(database, "Users", 'CREATE TABLE "Users" ("Site" INTEGER, "UserId" INTEGER, "Reputation" STRING, PRIMARY KEY(Site, UserId))')
 
 def remove_site(site, database):
     log("../output/statistics.log", "Removing old database entries of site " + site)

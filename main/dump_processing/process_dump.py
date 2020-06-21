@@ -4,6 +4,7 @@ from dump_processing.process_comments import comments_processing
 from dump_processing.formula_processing import formula_processing
 from dump_processing.process_badges import badge_processing
 from dump_processing.process_postlinks import postlinks_processing
+from dump_processing.process_users import users_processing
 import time
 from dump_processing.helper import log
 
@@ -34,3 +35,9 @@ def processing_main(site_name, dir_name, database_name, context_length):
     time_postlinks = time.process_time()
     print("time processing postlinks: ", format(time_postlinks-time_badge, ".2f"), "s")
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+
+    users_processing(site_name, dir_name, database_name)
+    time_users = time.process_time()
+    print("time processing postlinks: ", format(time_users-time_postlinks, ".2f"), "s")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+
