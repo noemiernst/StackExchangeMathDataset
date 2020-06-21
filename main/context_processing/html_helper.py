@@ -3,7 +3,12 @@ import re
 def clean_html(text):
     text = re.sub('<a.*?>.*?</a>', '', text)
     strong = find_strong(text)
+    text = re.sub('<strong>.*?</strong>', ' ', text)
     em = find_emphasized(text)
+    text = re.sub('<em>.*?</em>', ' ', text)
+    text = re.sub('<p>', '', text)
+    text = re.sub('/<p>', '', text)
+    text = re.sub('<.*?>.*?</.*?>', '', text)
     text = strip_html(text)
     return text, strong, em
 

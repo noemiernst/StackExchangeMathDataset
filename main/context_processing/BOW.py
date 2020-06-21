@@ -101,12 +101,12 @@ class BOW:
         t1 = time.time()
 
 
-        for vector, key in zip(tf_idf_vector, postids):
+        for vector, postid in zip(tf_idf_vector, postids):
             index = [self.feature_names[index] for index in vector.indices]
             term_tfidf = list(zip(index, vector.data))
             term_tfidf.sort(key=lambda pair: pair[1], reverse=True)
 
-            for formulaid, formulacontext in (dictionary[key]).items():
+            for formulaid, formulacontext in (dictionary[postid]).items():
                 terms = [(w, idf) for (w, idf) in term_tfidf if w in formulacontext]
                 top_n_string = ""
                 if all:
