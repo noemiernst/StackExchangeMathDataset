@@ -143,19 +143,23 @@ def posts_context(directory, database, site_name, x, all):
     formulas_posts.pop("StartingPosition")
     formulas_posts.pop("Inline")
 
+    docs = {}
+
     for postid, formulas in posts_formulas.items():
         # process post with formula positions
 
         words, formula_indices, strong, emphasized = get_words(posts[postid], formulas)
+        docs[postid] = " ".join(words)
         print(strong)
         print(emphasized)
+        d = {}
         for formulaid, index in formula_indices.items():
             if index == -1:
                 w, s, e = tokenize_words(question_titles[postid])
-                context[formulaid] = " ".join(w)
+                d[formulaid] = w
             else:
                 if all:
-                    context[formulaid] = " ".join(words)
+                    d[formulaid] = words
                 else:
                     beg = index - x
                     end = index + x
@@ -163,14 +167,15 @@ def posts_context(directory, database, site_name, x, all):
                         beg = 0
                     if (index + x) > len(words):
                         end = len(words)
-                    context[formulaid] = " ".join(words[beg:end])
+                    d[formulaid] = words[beg:end]
+        context[postid] = d
 
     #for formulaid, [postid, body, pos, inl] in formulas_posts.items():
     #    if pos == -1:
     #        context[formulaid] = formula_context(body, pos, inl, question_titles[postid], x)
     #    else:
     #        context[formulaid] = formula_context(body, pos, inl, posts[postid], x)
-    return context
+    return context, docs
 
 def comments_context(directory, database, site_name, x, all):
     DB = sqlite3.connect(database)
@@ -201,13 +206,16 @@ def comments_context(directory, database, site_name, x, all):
     formulas_comments.pop("StartingPosition")
     formulas_comments.pop("Inline")
 
+    docs = {}
+
     for commentid, formulas in comments_formulas.items():
         # process post with formula positions
         words, formula_indices, strong, emphasized = get_words(comments_dict[commentid], formulas)
-
+        docs[commentid] = " ".join(words)
+        d = {}
         for formulaid, index in formula_indices.items():
             if all:
-                context[formulaid] = " ".join(words)
+                d[formulaid] = words
             else:
                 beg = index - x
                 end = index + x
@@ -215,12 +223,13 @@ def comments_context(directory, database, site_name, x, all):
                     beg = 0
                 if (index + x) > len(words):
                     end = len(words)
-                context[formulaid] = " ".join(words[beg:end])
+                d[formulaid] = words[beg:end]
+        context[commentid] = d
     #context = {}
     #for formulaid, [commentid, body, pos, inl] in formulas_posts.items():
     #    context[formulaid] = formula_context(body, pos, inl, comments[commentid], x)
 
-    return context
+    return context, docs
 
 def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablename, all):
     start = time.time()
@@ -263,18 +272,18 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
         #    get context
         #    calculate top n context
         #   save in table in database (option for other table name)
-        contexts = posts_context(directory, database, site, x, all)
+        contexts, docs = posts_context(directory, database, site, x, all)
         t1 = time.time()
-        top_n_contexts = bow.get_top_n_tfidf(contexts, n, all)
+        top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
         log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
         if_exists = "append"
 
-        contexts = comments_context(directory, database, site, x, all)
+        contexts, docs = comments_context(directory, database, site, x, all)
         t1 = time.time()
-        top_n_contexts = bow.get_top_n_tfidf(contexts, n, all)
+        top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
@@ -300,6 +309,6 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
     parser.add_argument("--corpus", default="all", help="options: all or individual. corpus for idf over all sites or individually for each")
     parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
-    parser.add_argument("-a", "--all", default="yes", help="get all words")
+    parser.add_argument("-a", "--all", default="no", help="get all words")
     args = parser.parse_args()
     context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.all)

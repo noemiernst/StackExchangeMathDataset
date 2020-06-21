@@ -90,6 +90,34 @@ class BOW:
         print("get top n: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         return top_n
 
+    #tf-idf over entire post/comment or just formula context
+    def get_top_n_tfidf2(self, dictionary, docs, n, all = False):
+        postids = list(docs.keys())
+        docs = list(docs.values())
+        count_vector=self.vectorizer.transform(docs)
+        tf_idf_vector=self.tfidf_transformer.transform(count_vector)
+        top_n = {}
+        print( "getting top n terms")
+        t1 = time.time()
+
+
+        for vector, key in zip(tf_idf_vector, postids):
+            index = [self.feature_names[index] for index in vector.indices]
+            term_tfidf = list(zip(index, vector.data))
+            term_tfidf.sort(key=lambda pair: pair[1], reverse=True)
+
+            for formulaid, formulacontext in (dictionary[key]).items():
+                terms = [(w, idf) for (w, idf) in term_tfidf if w in formulacontext]
+                top_n_string = ""
+                if all:
+                    n = len(terms)
+                for term, value in terms[:n]:
+                    top_n_string += "<"+term+ ", "+ str(value) + ">"
+                top_n[formulaid] = top_n_string
+
+        print("get top n: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+        return top_n
+
     def strip_texts(self, texts):
         #TODO: strong and emphasized text
         temp = []
