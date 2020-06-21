@@ -194,22 +194,24 @@ def common_tokens(tokens, x):
 
     return pd.DataFrame(topx, columns=['Token', 'Occurences'])
 
-def save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site):
+def save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, df_duplicates, directory, site):
     df_tokens.index += 1
     df_words.index += 1
     tokens = df_tokens.to_html(classes='table table-striped', bold_rows=False, justify='center', border=2)
     words = df_words.to_html(classes='table table-striped', bold_rows=False, justify='center', border=2)
     df_stats = pd.concat([df_stats_p, df_stats_c])
     stats = df_stats.to_html(classes='table table-striped', index=False, justify='center', border=2)
+    duplicates = df_duplicates.to_html(classes='table table-striped', index=False, justify='center', border=2)
 
     f = open(os.path.join(directory, site+'_stats.html'),'w')
 
     text = """<html><head></head><body>
     <div style="margin-top:50px"><h1 style="text-align: center;">"""+ site +"""</h1></div>
-    <div style="float:left; margin:15px">"""+ words + """</div>
-    <div style="float:left; margin:15px">"""+ tokens + """</div>
+    <div style="float:left; margin:15px"><h3 style="text-align: center;"><br><br>Common Words</h3>"""+ words + """</div>
+    <div style="float:left; margin:15px"><h3 style="text-align: center;"><br>Common Formula<br>Tokens</h3>"""+ tokens + """</div>
+    <div style="float:left; margin:15px"><h3 style="text-align: center;">Common Formula<br>Duplicates<br>(min. 2 Tokens)</h3>"""+ duplicates + """</div>
     <div style="float:left; margin:15px">
-    <div style="float:top">"""+ stats + """</div>
+    <div style="float:top"><h3 style="text-align: left;"><br><br>&emspFormula Statistics</h3>"""+ stats + """</div>
     <div style="float:top; margin-top:30px">"""+ '<img src="' + figure_file_p +'" alt="statistics figure ' + figure_file_p + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
     <div style="float:top; margin-top:30px">"""+ '<img src="' + figure_file_c +'" alt="statistics figure ' + figure_file_c + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
     </div>
@@ -225,6 +227,9 @@ def all_tokens(formulas):
         tokens.extend(t)
     return tokens
 
+def duplicate_formulas(formulas, n):
+    duplicates = Counter(formulas)
+    return pd.DataFrame(duplicates.most_common(n), columns=['Formula', 'Occurences'])
 
 def main(filename_dumps, database, directory):
     with open(filename_dumps) as f:
@@ -278,9 +283,22 @@ def main(filename_dumps, database, directory):
         formulas_comments.pop("Body")
         df_tokens = common_tokens(all_tokens(all_formulas), 100)
         all_formulas = []
+
+
+        DB = sqlite3.connect(database)
+        formulas_posts = pd.read_sql('select Body from "FormulasPosts" where Site="'+site+'" and TokenLength>"1"', DB)
+        formulas_comments = pd.read_sql('select Body from "FormulasComments" where Site="'+site+'" and TokenLength>"1"', DB)
+        DB.close()
+
+        all_formulas = list(formulas_posts["Body"]) + list(formulas_comments["Body"])
+        formulas_posts.pop("Body")
+        formulas_comments.pop("Body")
+
+        df_duplicates = duplicate_formulas(all_formulas, 100)
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
-        save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, directory, site)
+
+        save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, df_duplicates, directory, site)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
