@@ -207,13 +207,13 @@ def save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, 
 
     text = """<html><head></head><body>
     <div style="margin-top:50px"><h1 style="text-align: center;">"""+ site +"""</h1></div>
-    <div style="float:left; margin:15px"><h3 style="text-align: center;"><br><br>Common Words</h3>"""+ words + """</div>
-    <div style="float:left; margin:15px"><h3 style="text-align: center;"><br>Common Formula<br>Tokens</h3>"""+ tokens + """</div>
-    <div style="float:left; margin:15px"><h3 style="text-align: center;">Common Formula<br>Duplicates<br>(min. 2 Tokens)</h3>"""+ duplicates + """</div>
-    <div style="float:left; margin:15px">
+    <div style="float:left; margin:10px"><h3 style="text-align: center;"><br><br>Common Words</h3>"""+ words + """</div>
+    <div style="float:left; margin:10px"><h3 style="text-align: center;"><br>Common Formula<br>Tokens</h3>"""+ tokens + """</div>
+    <div style="float:left; margin:10px"><h3 style="text-align: center;">Common Formula<br>Duplicates<br>(min. 2 Tokens)</h3>"""+ duplicates + """</div>
+    <div style="float:left; margin:10px">
     <div style="float:top"><h3 style="text-align: left;"><br><br>&emspFormula Statistics</h3>"""+ stats + """</div>
-    <div style="float:top; margin-top:30px">"""+ '<img src="' + figure_file_p +'" alt="statistics figure ' + figure_file_p + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
-    <div style="float:top; margin-top:30px">"""+ '<img src="' + figure_file_c +'" alt="statistics figure ' + figure_file_c + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
+    <div style="float:top; margin-top:20px">"""+ '<img src="' + figure_file_p +'" alt="statistics figure ' + figure_file_p + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
+    <div style="float:top; margin-top:20px">"""+ '<img src="' + figure_file_c +'" alt="statistics figure ' + figure_file_c + '" width="600" style=\'border:2px solid #000000\'>' + """</div>
     </div>
     </body></html>"""
     f.write(text)
@@ -227,6 +227,7 @@ def all_tokens(formulas):
         tokens.extend(t)
     return tokens
 
+# TODO: format occurences: format(x,',d')
 def duplicate_formulas(formulas, n):
     duplicates = Counter(formulas)
     return pd.DataFrame(duplicates.most_common(n), columns=['Formula', 'Occurences'])
