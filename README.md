@@ -13,6 +13,8 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 * [scikit_learn](https://scikit-learn.org/stable/install.html)
 * [libarchive](https://pypi.org/project/libarchive/)
 
+Install packages by running: ```pip install -r requirements.txt```
+
 ## Dataset
 
 ### Usage
