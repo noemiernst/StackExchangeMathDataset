@@ -17,14 +17,24 @@ Install packages by running: ```pip install -r requirements.txt```
 
 ## Dataset
 
-### Usage
+### Creating the Dataset
 
 * ```cd main```
 * execute: ```python main.py --input ../input/ --dumps test_dumps --download yes --extract yes --output ../output/database.db```
 * execute (only after main.py has been executed): ```python context.py --input ../input/ --dumps test_dumps --download yes --database ../output/database.db --context 10 --topn 3 --tablename FormulaContext```
 * execute (only after main.py has been executed): ```python statistics.py --dumps test_dumps --database ../output/database.db --output ../output/```
 
+### Using the Dataset
 
+The data from the database can be accessed via SQL commands, e.g.:
+```
+sqlite3
+.open output/database.db
+SELECT * FROM FormulasPosts WHERE FormulaId="5783548";
+SELECT Site, Tag FROM Tags WHERE Count>"1500";
+SELECT AnswerText.Site, AnswerText.AnswerId, AnswerText.Body FROM AnswerText INNER JOIN AnswerMeta ON AnswerText.Site=AnswerMeta.Site AND AnswerText.AnswerId=AnswerMeta.AnswerId AND AnswerMeta.Score="100";
+SELECT max(Score) FROM QuestionMeta;
+```
 
 ## ```main.py```
 
