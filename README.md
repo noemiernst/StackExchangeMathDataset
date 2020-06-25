@@ -32,7 +32,9 @@ sqlite3
 .open output/database.db
 SELECT * FROM FormulasPosts WHERE FormulaId="5783548";
 SELECT Site, Tag FROM Tags WHERE Count>"1500";
-SELECT AnswerText.Site, AnswerText.AnswerId, AnswerText.Body FROM AnswerText INNER JOIN AnswerMeta ON AnswerText.Site=AnswerMeta.Site AND AnswerText.AnswerId=AnswerMeta.AnswerId AND AnswerMeta.Score="100";
+SELECT AnswerText.Site, AnswerText.AnswerId, AnswerText.Body 
+   FROM AnswerText INNER JOIN AnswerMeta ON AnswerText.Site=AnswerMeta.Site 
+   AND AnswerText.AnswerId=AnswerMeta.AnswerId AND AnswerMeta.Score="100";
 SELECT max(Score) FROM QuestionMeta;
 ```
 
