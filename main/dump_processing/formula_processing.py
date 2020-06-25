@@ -10,7 +10,8 @@ from dump_processing.helper import log
 import resource
 from dump_processing.database import max_column_value
 from dump_processing.LatexTokenizer import LatexTokenizer
-from test import get_slt
+from formula_parsing.test import get_slt
+from formula_parsing.test import get_mathml
 
 
 def current_formula_id(database):
@@ -91,7 +92,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
                 Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(question))
                 Formulas["LaTeXBody"].append(formula)
-                Formulas["SLTBody"].append(get_slt(formula))
+                Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 # position -1 for formulas in title
                 Formulas["StartingPosition"].append(-1)
@@ -103,7 +104,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
                 Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(question))
                 Formulas["LaTeXBody"].append(formula)
-                Formulas["SLTBody"].append(get_slt(formula))
+                Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
                 Formulas["Inline"].append(inl)
@@ -145,7 +146,7 @@ def answers_formula_processing(site_name, database, directory, context_length):
                 Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(answer))
                 Formulas["LaTeXBody"].append(formula)
-                Formulas["SLTBody"].append(get_slt(formula))
+                Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
                 Formulas["Inline"].append(inl)
@@ -186,7 +187,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
                 Formulas["Site"].append(site_name)
                 Formulas["CommentId"].append(comment)
                 Formulas["LaTeXBody"].append(formula)
-                Formulas["SLTBody"].append(get_slt(formula))
+                Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
                 Formulas["Inline"].append(inl)

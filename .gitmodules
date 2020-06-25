@@ -1,3 +1,6 @@
 [submodule "main/TangentCFT"]
 	path = main/TangentCFT
 	url = https://github.com/BehroozMansouri/TangentCFT
+[submodule "main/--force"]
+	path = main/--force
+	url = https://github.com/BehroozMansouri/TangentCFT.git
