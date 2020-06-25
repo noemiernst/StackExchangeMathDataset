@@ -47,13 +47,14 @@ def create_tables(database):
     create_table(database, "QuestionText", 'CREATE TABLE "QuestionText" ("Site" TEXT, "QuestionId" INTEGER, "Title" TEXT, "Body" TEXT,  PRIMARY KEY(Site, QuestionId) )')
     #create_table(database, "RelatedQuestionsSource2Target", 'CREATE TABLE "RelatedQuestionsSource2Target" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId))')
     create_table(database, "FormulaContext", 'CREATE TABLE "FormulaContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
-    create_table(database, "Users", 'CREATE TABLE "Users" ("Site" INTEGER, "UserId" INTEGER, "Reputation" STRING, PRIMARY KEY(Site, UserId))')
+    create_table(database, "Users", 'CREATE TABLE "Users" ("Site" TEXT, "UserId" INTEGER, "Reputation" INTEGER, PRIMARY KEY(Site, UserId))')
+    create_table(database, "Tags", 'CREATE TABLE "Tags" ("Site" TEXT, "Tag" TEXT, "Count" INTEGER, PRIMARY KEY(Site, Tag))')
 
 def remove_site(site, database):
     log("../output/statistics.log", "Removing old database entries of site " + site)
 
     tables = ["AnswerMeta", "AnswerText", "Badges", "Comments", "FormulasComments", "FormulasPosts", "PostIdRelatedPostId",
-              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText", "QuestionMeta", "Users"]
+              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText", "QuestionMeta", "Users", "Tags"]
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
 

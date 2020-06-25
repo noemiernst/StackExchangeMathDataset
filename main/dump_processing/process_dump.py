@@ -5,6 +5,7 @@ from dump_processing.formula_processing import formula_processing
 from dump_processing.process_badges import badge_processing
 from dump_processing.process_postlinks import postlinks_processing
 from dump_processing.process_users import users_processing
+from dump_processing.process_tags import tags_processing
 import time
 from dump_processing.helper import log
 
@@ -38,6 +39,11 @@ def processing_main(site_name, dir_name, database_name, context_length):
 
     users_processing(site_name, dir_name, database_name)
     time_users = time.process_time()
-    print("time processing postlinks: ", format(time_users-time_postlinks, ".2f"), "s")
+    print("time processing users: ", format(time_users-time_postlinks, ".2f"), "s")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+
+    tags_processing(site_name, dir_name, database_name)
+    time_tags = time.process_time()
+    print("time processing tags: ", format(time_tags - time_users, ".2f"), "s")
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
