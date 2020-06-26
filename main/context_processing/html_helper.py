@@ -8,7 +8,7 @@ def clean_html(text):
     text = re.sub('<em>.*?</em>', ' ', text)
     text = re.sub('<p>', '', text)
     text = re.sub('/<p>', '', text)
-    text = re.sub('<.*?>.*?</.*?>', '', text)
+    #text = re.sub('<.*?>.*?</.*?>', '', text)
     text = strip_html(text)
     return text, strong, em
 

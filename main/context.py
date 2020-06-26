@@ -97,7 +97,7 @@ def get_words(text, formulas):
             emphasized.extend(e)
             formula_indices[formulaid] = len(words)
             pos_prev = formulas[formulaid][1] + formula_length
-    w, s, e = tokenize_words(text[pos_prev:formulas[formulaid][1]])
+    w, s, e = tokenize_words(text[pos_prev:])
     words.extend(w)
     strong.extend(s)
     emphasized.extend(e)
@@ -274,7 +274,13 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
         #   save in table in database (option for other table name)
         contexts, docs = posts_context(directory, database, site, x, all)
         t1 = time.time()
-        top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
+        if all:
+            top_n_contexts = {}
+            for postid in contexts:
+                for id, context in contexts[postid].items():
+                    top_n_contexts[id] = " ".join(context)
+        else:
+            top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
         log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
@@ -283,7 +289,13 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
 
         contexts, docs = comments_context(directory, database, site, x, all)
         t1 = time.time()
-        top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
+        if all:
+            top_n_contexts = {}
+            for commentid in contexts:
+                for id, context in contexts[commentid].items():
+                    top_n_contexts[id] = " ".join(context)
+        else:
+            top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
