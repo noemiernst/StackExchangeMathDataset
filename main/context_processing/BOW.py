@@ -56,7 +56,7 @@ class BOW:
     def vectorize_corpus(self):
         corpus = self.unpickle_corpus()
 
-        self.vectorizer = CountVectorizer(max_df = 0.75, min_df = 2, max_features=10000)
+        self.vectorizer = CountVectorizer()
         word_count_vector=self.vectorizer.fit_transform(corpus)
         self.tfidf_transformer=TfidfTransformer(smooth_idf=True,use_idf=True)
         self.tfidf_transformer.fit(word_count_vector)
@@ -91,7 +91,7 @@ class BOW:
         return top_n
 
     #tf-idf over entire post/comment or just formula context
-    def get_top_n_tfidf2(self, dictionary, docs, n, all = False):
+    def get_top_n_tfidf2(self, dictionary, docs, n, tfidf = True, all = False):
         postids = list(docs.keys())
         docs = list(docs.values())
         count_vector=self.vectorizer.transform(docs)
@@ -111,8 +111,12 @@ class BOW:
                 top_n_string = ""
                 if all:
                     n = len(terms)
-                for term, value in terms[:n]:
-                    top_n_string += "<"+term+ ", "+ str(value) + ">"
+                if tfidf:
+                    for term, value in terms[:n]:
+                        top_n_string += "<"+term+ ", "+ str(value) + ">"
+                else:
+                    for term, value in terms[:n]:
+                        top_n_string += "<"+term+">"
                 top_n[formulaid] = top_n_string
 
         print("get top n: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")

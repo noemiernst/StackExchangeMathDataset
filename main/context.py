@@ -231,27 +231,34 @@ def comments_context(directory, database, site_name, x, all):
 
     return context, docs
 
-def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablename, all):
+def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablename, tfidf, all):
     start = time.time()
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
     downloader = DumpDownloader()
     directories = [os.path.join(dump_directory, downloader.get_file_name(site)).replace(".7z", "/") for site in sites]
-    try:
-        if not ((corpus == "all") | (corpus == "individual")):
-            raise ValueError
-    except ValueError:
-        sys.exit("option for --corpus must be 'all' or 'individual'")
-    if corpus == "all":
-        print("Calculating idf values of all sites texts")
-        t1 = time.time()
-        bow = calculate_idf(sites, directories, database)
-        log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
     if all == 'yes':
         all = True
     else:
         all = False
+    if tfidf== 'yes':
+        tfidf = True
+    else:
+        tfidf=False
+
+    if not all:
+        try:
+            if not ((corpus == "all") | (corpus == "individual")):
+                raise ValueError
+        except ValueError:
+            sys.exit("option for --corpus must be 'all' or 'individual'")
+        if corpus == "all":
+            print("Calculating idf values of all sites texts")
+            t1 = time.time()
+            bow = calculate_idf(sites, directories, database)
+            log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+
 
     if_exists = "replace"
     for site, directory in zip(sites, directories):
@@ -261,7 +268,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
         except OSError:
             print(directory + " not found")
 
-        if corpus == "individual":
+        if (corpus == "individual") and not all:
             print("Calculating idf values of texts of site "+ site)
             t1 = time.time()
             bow = calculate_idf([site], directories, database)
@@ -280,7 +287,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
                 for id, context in contexts[postid].items():
                     top_n_contexts[id] = " ".join(context)
         else:
-            top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
+            top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, tfidf, all)
         log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
@@ -295,7 +302,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus,tablenam
                 for id, context in contexts[commentid].items():
                     top_n_contexts[id] = " ".join(context)
         else:
-            top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, all)
+            top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, tfidf, all)
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
@@ -321,6 +328,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
     parser.add_argument("--corpus", default="all", help="options: all or individual. corpus for idf over all sites or individually for each")
     parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
-    parser.add_argument("-a", "--all", default="no", help="get all words")
+    parser.add_argument("--tfidf", default="yes", help="Whether or not to show tf-idf ratings with top context words. Options: yes, no")
+    parser.add_argument("-a", "--all", default="no", help="get all words. Options: yes, no. Option Yes will lead to ignoring options context, topn, corpus, and tfidf.")
     args = parser.parse_args()
-    context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.all)
+    context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.tfidf, args.all)
