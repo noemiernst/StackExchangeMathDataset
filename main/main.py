@@ -16,8 +16,6 @@ import hashlib
 import sqlite3
 import sys
 
-#TODO: update ReadMe
-
 def save_hash(database, site, hash, exists):
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
@@ -138,17 +136,8 @@ def main(dump_directory, filename_dumps, download, extract, database, force_proc
             dump_processing.process_dump.processing_main(site, dir, database, 7)
             save_hash(database,site, hash, exists)
 
-    # calculate the idf scores of the corpus
-    t = time.time()
-    #bag_of_words.vectorize_corpus()
-    log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t)/60)) +"min " + str(int((time.time()-t)%60)) + "sec")
-    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-
 
     # TODO: highlighted, bold etc words
-
-    # delete all pkl files created during dump processing
-    #cleanup(sites, directories)
 
     log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
@@ -160,9 +149,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump *.7z files")
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("--download", default="no", help="yes or no. Whether or not to download the dumps")
-    parser.add_argument("-x" ,"--extract", default="no", help="yes or no. Whether or not to extract the *.7z dump files")
+    parser.add_argument("--download", default="yes", help="yes or no. Whether or not to download the dumps")
+    parser.add_argument("-x" ,"--extract", default="yes", help="yes or no. Whether or not to extract the *.7z dump files")
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
-    parser.add_argument("-a", "--all", default="yes", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
+    parser.add_argument("-a", "--all", default="no", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
     args = parser.parse_args()
     main(args.input, args.dumps, args.download, args.extract, args.output, args.all)
