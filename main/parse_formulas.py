@@ -4,10 +4,31 @@ from formula_parsing.formulas_to_mml import formulas_to_pmml
 from formula_parsing.formulas_to_mml import formulas_to_both_ml
 import sys
 import time
+import sqlite3
+
+def create_mathml_tables(database):
+    DB = sqlite3.connect(database)
+    cursor = DB.cursor()
+
+    cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='FormulasPostsMathML' ")
+
+    #if the count is 1, then table exists
+    if cursor.fetchone()[0]!=1 :
+        cursor.execute('CREATE TABLE "FormulasPostsMathML"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "ContentMathML" TEXT, "PresentationMathML" TEXT)')
+    DB.commit()
+
+    cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='FormulasCommentsMathML' ")
+    if cursor.fetchone()[0]!=1 :
+        cursor.execute('CREATE TABLE "FormulasCommentsMathML"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "ContentMathML" TEXT, "PresentationMathML" TEXT)')
+    DB.commit()
+
+    DB.close()
 
 def main(filename_dumps, database, mode):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
+
+    create_mathml_tables(database)
 
     for site in sites:
         start = time.time()
