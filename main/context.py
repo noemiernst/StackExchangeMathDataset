@@ -108,7 +108,7 @@ def posts_context(directory, database, site_name, x, all):
     DB = sqlite3.connect(database)
     answers = pd.read_sql('select AnswerId, Body from "AnswerText" where Site="'+site_name+'"', DB)
     questions = pd.read_sql('select QuestionId, Title, Body from "QuestionText" where Site="'+site_name+'"', DB)
-    formulas_posts = pd.read_sql('select FormulaId, PostId, Body, StartingPosition, Inline from "FormulasPosts" where Site="'+site_name+'"', DB)
+    formulas_posts = pd.read_sql('select FormulaId, PostId, LaTeXBody, StartingPosition, Inline from "FormulasPosts" where Site="'+site_name+'"', DB)
     DB.close()
 
     question_titles = {}
@@ -132,14 +132,14 @@ def posts_context(directory, database, site_name, x, all):
     # TODO: efficiency
     context = {}
     posts_formulas = {}
-    for formulaid, postid, body, pos, inl in zip(formulas_posts["FormulaId"],formulas_posts["PostId"],formulas_posts["Body"],formulas_posts["StartingPosition"],formulas_posts["Inline"]):
+    for formulaid, postid, body, pos, inl in zip(formulas_posts["FormulaId"],formulas_posts["PostId"],formulas_posts["LaTeXBody"],formulas_posts["StartingPosition"],formulas_posts["Inline"]):
         if postid in posts_formulas:
             posts_formulas[postid].update({formulaid: [body, pos, inl]})
         else:
             posts_formulas[postid] = {formulaid: [body, pos, inl]}
     formulas_posts.pop("FormulaId")
     formulas_posts.pop("PostId")
-    formulas_posts.pop("Body")
+    formulas_posts.pop("LaTeXBody")
     formulas_posts.pop("StartingPosition")
     formulas_posts.pop("Inline")
 
@@ -180,7 +180,7 @@ def posts_context(directory, database, site_name, x, all):
 def comments_context(directory, database, site_name, x, all):
     DB = sqlite3.connect(database)
     comments = pd.read_sql('select CommentId, Text from "Comments" where Site="'+site_name+'"', DB)
-    formulas_comments = pd.read_sql('select FormulaId, CommentId, Body, StartingPosition, Inline from "FormulasComments" where Site="'+site_name+'"', DB)
+    formulas_comments = pd.read_sql('select FormulaId, CommentId, LaTeXBody, StartingPosition, Inline from "FormulasComments" where Site="'+site_name+'"', DB)
     DB.close()
 
     comments_dict = {}
@@ -195,14 +195,14 @@ def comments_context(directory, database, site_name, x, all):
     # TODO: efficiency
     context = {}
     comments_formulas = {}
-    for formulaid, commentid, body, pos, inl in zip(formulas_comments["FormulaId"],formulas_comments["CommentId"],formulas_comments["Body"],formulas_comments["StartingPosition"],formulas_comments["Inline"]):
+    for formulaid, commentid, body, pos, inl in zip(formulas_comments["FormulaId"],formulas_comments["CommentId"],formulas_comments["LaTeXBody"],formulas_comments["StartingPosition"],formulas_comments["Inline"]):
         if commentid in comments_formulas:
             comments_formulas[commentid].update({formulaid: [body, pos, inl]})
         else:
             comments_formulas[commentid] = {formulaid: [body, pos, inl]}
     formulas_comments.pop("FormulaId")
     formulas_comments.pop("CommentId")
-    formulas_comments.pop("Body")
+    formulas_comments.pop("LaTeXBody")
     formulas_comments.pop("StartingPosition")
     formulas_comments.pop("Inline")
 

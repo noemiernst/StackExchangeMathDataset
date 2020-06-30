@@ -275,25 +275,25 @@ def main(filename_dumps, database, directory):
 
 
         DB = sqlite3.connect(database)
-        formulas_posts = pd.read_sql('select Body from "FormulasPosts" where Site="'+site+'"', DB)
-        formulas_comments = pd.read_sql('select Body from "FormulasComments" where Site="'+site+'"', DB)
+        formulas_posts = pd.read_sql('select LaTeXBody from "FormulasPosts" where Site="'+site+'"', DB)
+        formulas_comments = pd.read_sql('select LaTeXBody from "FormulasComments" where Site="'+site+'"', DB)
         DB.close()
 
-        all_formulas = list(formulas_posts["Body"]) + list(formulas_comments["Body"])
-        formulas_posts.pop("Body")
-        formulas_comments.pop("Body")
+        all_formulas = list(formulas_posts["LaTeXBody"]) + list(formulas_comments["LaTeXBody"])
+        formulas_posts.pop("LaTeXBody")
+        formulas_comments.pop("LaTeXBody")
         df_tokens = common_tokens(all_tokens(all_formulas), 100)
         all_formulas = []
 
 
         DB = sqlite3.connect(database)
-        formulas_posts = pd.read_sql('select Body from "FormulasPosts" where Site="'+site+'" and TokenLength>"1"', DB)
-        formulas_comments = pd.read_sql('select Body from "FormulasComments" where Site="'+site+'" and TokenLength>"1"', DB)
+        formulas_posts = pd.read_sql('select LaTeXBody from "FormulasPosts" where Site="'+site+'" and TokenLength>"1"', DB)
+        formulas_comments = pd.read_sql('select LaTeXBody from "FormulasComments" where Site="'+site+'" and TokenLength>"1"', DB)
         DB.close()
 
-        all_formulas = list(formulas_posts["Body"]) + list(formulas_comments["Body"])
-        formulas_posts.pop("Body")
-        formulas_comments.pop("Body")
+        all_formulas = list(formulas_posts["LaTeXBody"]) + list(formulas_comments["LaTeXBody"])
+        formulas_posts.pop("LaTeXBody")
+        formulas_comments.pop("LaTeXBody")
 
         df_duplicates = duplicate_formulas(all_formulas, 100)
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
