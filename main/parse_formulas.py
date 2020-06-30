@@ -23,6 +23,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
     parser.add_argument("--database", default='../output/database.db', help="database")
-    parser.add_argument("-m", "--mode", default='cmml', help="options: cmml, pmml, both (ContentMathML, PresentationMathMl, Both)")
+    parser.add_argument("-m", "--mode", default='pmml', help="options: cmml, pmml, both (ContentMathML, PresentationMathMl, Both)")
     args = parser.parse_args()
     main(args.dumps, args.database, args.mode)
