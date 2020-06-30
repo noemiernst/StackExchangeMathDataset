@@ -38,8 +38,8 @@ def create_tables(database):
     create_table(database, "Badges", 'CREATE TABLE "Badges" ("Site" TEXT, "BadgeId" INTEGER,"UserId" INTEGER, "BadgeName" TEXT, "BadgeClass" TEXT, "BadgeDate" TEXT, PRIMARY KEY(Site, BadgeId))')
     create_table(database, "Comments", 'CREATE TABLE "Comments" ("Site" TEXT, "CommentId" INTEGER, "PostId" INTEGER, "UserId" INTEGER, "Score" INTEGER, "Text" TEXT, "CreationDate" TEXT, PRIMARY KEY(Site, CommentId))')
     #create_table(database, "DuplicateQuestions", 'CREATE TABLE "DuplicateQuestions" ( "QuestionId" INTEGER, "RelatedQuestionId" INTEGER, PRIMARY KEY(QuestionId, RelatedQuestionId) )')
-    create_table(database, "FormulasComments", 'CREATE TABLE "FormulasComments"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "CommentId" INTEGER, "Body" TEXT, "TokenLength" INTEGER, "StartingPosition" INTEGER, "Inline" BOOLEAN)')
-    create_table(database, "FormulasPosts", 'CREATE TABLE "FormulasPosts"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "PostId" INTEGER, "Body" TEXT, "TokenLength" INTEGER, "StartingPosition" INTEGER, "Inline" BOOLEAN)')
+    create_table(database, "FormulasComments", 'CREATE TABLE "FormulasComments"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "CommentId" INTEGER, "LaTeXBody" TEXT, "TokenLength" INTEGER, "StartingPosition" INTEGER, "Inline" BOOLEAN)')
+    create_table(database, "FormulasPosts", 'CREATE TABLE "FormulasPosts"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "PostId" INTEGER, "LaTeXBody" TEXT, "TokenLength" INTEGER, "StartingPosition" INTEGER, "Inline" BOOLEAN)')
     create_table(database, "PostIdRelatedPostId", 'CREATE TABLE "PostIdRelatedPostId" ("Site" TEXT, "PostId" INTEGER, "RelatedPostId" INTEGER, "LinkTypeId" INTEGER, PRIMARY KEY(Site, PostId, RelatedPostId, LinkTypeId))')
     create_table(database, "QuestionAcceptedAnswer", 'CREATE TABLE "QuestionAcceptedAnswer" ("Site" TEXT, "QuestionId" INTEGER, "AcceptedAnswerId" INTEGER, PRIMARY KEY(Site, QuestionId))')
     create_table(database, "QuestionTags", 'CREATE TABLE "QuestionTags" ("Site" TEXT, "QuestionId" INTEGER, "Tags" TEXT, PRIMARY KEY(Site, QuestionId) )')
@@ -49,6 +49,8 @@ def create_tables(database):
     create_table(database, "FormulaContext", 'CREATE TABLE "FormulaContext" ("FormulaId" INTEGER PRIMARY KEY, "Context" STRING)')
     create_table(database, "Users", 'CREATE TABLE "Users" ("Site" TEXT, "UserId" INTEGER, "Reputation" INTEGER, PRIMARY KEY(Site, UserId))')
     create_table(database, "Tags", 'CREATE TABLE "Tags" ("Site" TEXT, "Tag" TEXT, "Count" INTEGER, PRIMARY KEY(Site, Tag))')
+    create_table(database, "FormulasPostsMathML", 'CREATE TABLE "FormulasPostsMathML"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "ContentMathML" TEXT)')
+    create_table(database, "FormulasCommentsMathML", 'CREATE TABLE "FormulasCommentsMathML"("FormulaId" INTEGER PRIMARY KEY, "Site" TEXT, "ContentMathML" TEXT)')
 
 def remove_site(site, database):
     log("../output/statistics.log", "Removing old database entries of site " + site)

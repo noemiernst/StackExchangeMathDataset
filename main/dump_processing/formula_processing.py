@@ -72,7 +72,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
     questions = pd.read_sql('select * from "QuestionText" where Site="'+site_name+'"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
+    Formulas = {"FormulaId": [], "Site": [], "PostId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
     #formula_con={}
     error_count = 0
     starting_formula_index = current_formula_id(database)
@@ -89,7 +89,8 @@ def questions_formula_processing(site_name, database, directory, context_length)
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(question))
-                Formulas["Body"].append(formula)
+                Formulas["LaTeXBody"].append(formula)
+                #Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 # position -1 for formulas in title
                 Formulas["StartingPosition"].append(-1)
@@ -100,7 +101,8 @@ def questions_formula_processing(site_name, database, directory, context_length)
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(question))
-                Formulas["Body"].append(formula)
+                Formulas["LaTeXBody"].append(formula)
+                #Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
                 Formulas["Inline"].append(inl)
@@ -110,12 +112,12 @@ def questions_formula_processing(site_name, database, directory, context_length)
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
             write_table(database, 'FormulasPosts', df)
-            Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
+            Formulas = {"FormulaId": [], "Site": [], "PostId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasPosts', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
@@ -128,7 +130,7 @@ def answers_formula_processing(site_name, database, directory, context_length):
     answers = pd.read_sql('select * from "AnswerText" where Site="'+site_name+'"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
+    Formulas = {"FormulaId": [], "Site": [], "PostId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
     #formula_con = {}
     error_count = 0
     starting_formula_index = current_formula_id(database)
@@ -141,7 +143,8 @@ def answers_formula_processing(site_name, database, directory, context_length):
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
                 Formulas["Site"].append(site_name)
                 Formulas["PostId"].append(int(answer))
-                Formulas["Body"].append(formula)
+                Formulas["LaTeXBody"].append(formula)
+                #Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
                 Formulas["Inline"].append(inl)
@@ -151,12 +154,12 @@ def answers_formula_processing(site_name, database, directory, context_length):
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
             write_table(database, 'FormulasPosts', df, "append")
-            Formulas = {"FormulaId": [], "Site": [], "PostId": [], "Body":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
+            Formulas = {"FormulaId": [], "Site": [], "PostId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasPosts', df, "append")
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
@@ -168,7 +171,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
     comments = pd.read_sql('select CommentId, Text from "Comments" where Site="'+site_name+'"', DB)
     DB.close()
 
-    Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
+    Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
     #formula_con = {}
 
     error_count = 0
@@ -181,7 +184,8 @@ def comments_formula_processing(site_name, database, directory, context_length):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
                 Formulas["Site"].append(site_name)
                 Formulas["CommentId"].append(comment)
-                Formulas["Body"].append(formula)
+                Formulas["LaTeXBody"].append(formula)
+                #Formulas["SLTBody"].append(get_mathml(formula))
                 Formulas["TokenLength"].append(formula_token_length(formula))
                 Formulas["StartingPosition"].append(position)
                 Formulas["Inline"].append(inl)
@@ -193,10 +197,10 @@ def comments_formula_processing(site_name, database, directory, context_length):
         if(len(Formulas["FormulaId"])>1000000):
             df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"],  "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
             write_table(database, 'FormulasComments', df, "append")
-            Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "Body":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
+            Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
             df._clear_item_cache()
 
-    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
+    df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "CommentId":Formulas["CommentId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasComments', df)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
