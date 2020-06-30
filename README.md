@@ -96,6 +96,27 @@ SELECT max(Score) FROM QuestionMeta;
 * The Context of the specified sites formulas will be saved in a database (```*.db```) as specified by the input parameter 'database' inside of the Table specified by the input parameter 'tablename'.
 * Analysis/Statistics will be saved in file ```statistics.log``` in same directory as the database.
 
+## ```parse_formulas.py```
+
+```main.py``` must previously been run for the dumps before running ```parse_formulas.py```.
+
+```parse_formulas.py``` will only parse formulas that have not been parsed due to the long runtime of LaTeXML.
+
+#### Parameters of ```parse_formulas.py```
+
+* dumps: A text file containing a list of stackexchange dump sites names to be processed.
+    * format: file containing a list of dump sites. Viable options can be found in the file /main/mathjax_dumps. The sites must already been processed into the database by running ```main.py``
+    * default="test_dumps" in main directory
+* database: database input and output
+    * default='../output/database.db'
+* mode: parse formulas in ContentMathML (cmml), PresentationMathML (pmml), or both
+  * options: cmml, pmml, both
+
+#### Outputs of ```parse_formulas.py```
+
+* The ContentMathML and/or PresentationMathML of the specified sites formulas will be saved in the database (```*.db```) as specified by the input parameter 'database' inside of the Tables 'FormulasPostsMathML' and 'FormulasCommentsMathML'.
+* Analysis/Statistics will be saved in file ```statistics.log``` in same directory as the database.
+
 ## ```statistics.py```
 
 ```main.py``` must previously been run for the dumps before running ```statistics.py```

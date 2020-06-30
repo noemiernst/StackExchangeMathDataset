@@ -37,10 +37,11 @@ def formulas_to_cmml(database, table, site):
             update_table(database, table+"MathML", df, "FormulaId")
             cmml = {}
             sites = []
-            progress_bar(count, len(formulas["FormulaId"]), "Formulas", 40)
-    df = pd.DataFrame({"FormulaId": list(cmml.keys()), "Site": site, "ContentMathML": list(cmml.values())})
-    update_table(database, table+"MathML", df, "FormulaId")
-    progress_bar(count, len(formulas["FormulaId"]), "Formulas", 40)
+            progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
+    if count != 0:
+        df = pd.DataFrame({"FormulaId": list(cmml.keys()), "Site": site, "ContentMathML": list(cmml.values())})
+        update_table(database, table+"MathML", df, "FormulaId")
+        progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return cmml
 
 
@@ -71,10 +72,11 @@ def formulas_to_pmml(database, table, site):
             update_table(database, table+"MathML", df, "FormulaId")
             pmml = {}
             sites = []
-            progress_bar(count, len(formulas["FormulaId"]), "Formulas", 40)
-    df = pd.DataFrame({"FormulaId": list(pmml.keys()), "Site": site, "PresentationMathML": list(pmml.values())})
-    update_table(database, table+"MathML", df, "FormulaId")
-    progress_bar(count, len(formulas["FormulaId"]), "Formulas", 40)
+            progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
+    if count != 0:
+        df = pd.DataFrame({"FormulaId": list(pmml.keys()), "Site": site, "PresentationMathML": list(pmml.values())})
+        update_table(database, table+"MathML", df, "FormulaId")
+        progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return pmml
 
 def formulas_to_both_ml(database, table, site):
@@ -120,8 +122,9 @@ def formulas_to_both_ml(database, table, site):
             cmml = []
             pmml = []
             sites = []
-            progress_bar(count, len(formulas["FormulaId"]), "Formulas", 40)
-    df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "PresentationMathML": pmml})
-    update_table(database, table+"MathML", df, "FormulaId")
-    progress_bar(count, len(formulas["FormulaId"]), "Formulas", 40)
+            progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
+    if count != 0:
+        df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "PresentationMathML": pmml})
+        update_table(database, table+"MathML", df, "FormulaId")
+        progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return cmml
