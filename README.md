@@ -89,6 +89,12 @@ SELECT max(Score) FROM QuestionMeta;
 * corpus: Whether the corpus for idf ratings should be calculated over all sites or individually for each site.
     * options: all or individual
     * default="all"
+* stopwords: Whether or not to use stopwords and which ones to use
+  * Options: none, english, or filename containing list of stopwords (e.g. stopwords). 'english' is the english stopword list of the nltk toolkit
+  * default="stopwords"
+* tfidf: Whether or not to show tf-idf ratings with top context words
+  * options: yes, no
+  * default="yes"
 * tablename: Name of table to write topn contexts words of formulas in (will be overwritten if it exists)
     * default="FormulaContext"
 * all: Get all words as context. This will lead to ignoring the values of input parameters for context and topn.
