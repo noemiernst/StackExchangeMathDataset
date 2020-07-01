@@ -5,6 +5,9 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 ## Requirements
 
 * **Python 3.7**
+
+##### Python Packages
+Install python packages by running: ```pip install -r requirements.txt```
 * [pandas](http://pandas.pydata.org/)
 * [xml.etree.ElementTree](https://docs.python.org/2/library/xml.etree.elementtree.html)
 * [cPickle or pickle](https://docs.python.org/3/library/pickle.html)
@@ -13,7 +16,8 @@ Processing [stack exchange data dumps](https://archive.org/details/stackexchange
 * [scikit_learn](https://scikit-learn.org/stable/install.html)
 * [libarchive](https://pypi.org/project/libarchive/)
 
-Install packages by running: ```pip install -r requirements.txt```
+##### Other tools
+* [LaTeXML](https://dlmf.nist.gov/LaTeXML/get.html)
 
 ## Dataset
 
