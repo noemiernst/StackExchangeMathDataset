@@ -68,6 +68,8 @@ SELECT max(Score) FROM QuestionMeta;
 * The Dataset will be saved in a database (```*.db```) as specified by the input parameter 'output'.
 * Analysis/Statistics will be saved in file ```statistics.log``` in same directory as the database.
 
+![Alt text](images/Schema_Bezier_noGrid_color.png "Database after running ```main.py```")
+
 ## ```context.py```
 
 ```main.py``` must previously been run for the dumps before running ```context.py```
@@ -105,6 +107,8 @@ SELECT max(Score) FROM QuestionMeta;
 
 * The Context of the specified sites formulas will be saved in a database (```*.db```) as specified by the input parameter 'database' inside of the Table specified by the input parameter 'tablename'.
 * Analysis/Statistics will be saved in file ```statistics.log``` in same directory as the database.
+
+![Alt text](images/Schema_Formulas.png "Table created with ```context.py``` (blue) and tables created with ```parse_formulas.py``` (red)")
 
 ## ```parse_formulas.py```
 
