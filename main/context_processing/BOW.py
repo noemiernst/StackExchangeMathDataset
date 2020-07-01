@@ -12,6 +12,7 @@ import pathlib
 import time
 import string
 import sqlite3
+import re
 
 class BOW:
 
@@ -25,20 +26,41 @@ class BOW:
         questions = pd.read_sql('select Title, Body from "QuestionText" where Site="'+site_name+'"', DB)
         questions = list((t+ " " + b) for t, b in zip(questions["Title"], questions["Body"]))
         for i in range(len(questions)):
-            corpus.append(questions.pop())
+            t = questions.pop()
+            # remove html tags
+            t, _, _ = context_processing.html_helper.clean_html(t)
+            # remove formulas
+            re.sub(r'\$\$.*?\$\$|\$.*?\$', ' ', t)
+            # remove punctuation
+            t = t.translate(str.maketrans('', '', string.punctuation))
+            corpus.append(t)
         #corpus.extend(self.strip_texts(questions))
         questions.clear()
         answers = pd.read_sql('select Body from "AnswerText" where Site="'+site_name+'"', DB)
         answers = list(answers["Body"])
         for i in range(len(answers)):
-            corpus.append(answers.pop())
+            t = answers.pop()
+            # remove html tags
+            t, _, _ = context_processing.html_helper.clean_html(t)
+            # remove formulas
+            re.sub(r'\$\$.*?\$\$|\$.*?\$', ' ', t)
+            # remove punctuation
+            t = t.translate(str.maketrans('', '', string.punctuation))
+            corpus.append(t)
         #corpus.extend(self.strip_texts(answers))
         answers.clear()
         comments = pd.read_sql('select Text from "Comments" where Site="'+site_name+'"', DB)
         DB.close()
         comments = list(comments["Text"])
         for i in range(len(comments)):
-            corpus.append(comments.pop())
+            t = comments.pop()
+            # remove html tags
+            t, _, _ = context_processing.html_helper.clean_html(t)
+            # remove formulas
+            re.sub(r'\$\$.*?\$\$|\$.*?\$', ' ', t)
+            # remove punctuation
+            t = t.translate(str.maketrans('', '', string.punctuation))
+            corpus.append(t)
         #corpus.extend(self.strip_texts(comments))
         comments.clear()
         self.pickle_corpus(corpus)
@@ -53,10 +75,10 @@ class BOW:
             corpus = pickle.load(f)
         return corpus
 
-    def vectorize_corpus(self):
+    def vectorize_corpus(self, stopwords):
         corpus = self.unpickle_corpus()
 
-        self.vectorizer = CountVectorizer()
+        self.vectorizer = CountVectorizer(stop_words=stopwords)
         word_count_vector=self.vectorizer.fit_transform(corpus)
         self.tfidf_transformer=TfidfTransformer(smooth_idf=True,use_idf=True)
         self.tfidf_transformer.fit(word_count_vector)

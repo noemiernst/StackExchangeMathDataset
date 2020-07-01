@@ -40,7 +40,7 @@ def formula_context(formula, position, inline, text, num_context_token):
         # placeholder of formula in the middle
         return " ".join(before[-num_context_token:]) + " ".join(after[:num_context_token]), b_strong + a_strong, b_em + a_em
 
-def calculate_idf(sites, directories, database):
+def calculate_idf(sites, directories, database, stopwords):
     bow = BOW()
     first = True
 
@@ -48,7 +48,7 @@ def calculate_idf(sites, directories, database):
         bow.corpus_from_database(dir, database, site, not first)
         first = False
 
-    bow.vectorize_corpus()
+    bow.vectorize_corpus(stopwords)
     return bow
 
 def write_context_table(site, contexts, database, table_name, if_exists='append', index=False):
@@ -231,7 +231,7 @@ def comments_context(directory, database, site_name, x, all):
 
     return context, docs
 
-def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablename, tfidf, all):
+def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablename, tfidf, all, stopwords):
     start = time.time()
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
@@ -246,6 +246,19 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
         tfidf = True
     else:
         tfidf=False
+    if stopwords == 'none':
+        stopwords = None
+    elif stopwords == 'english':
+        stopwords = 'english'
+    else:
+        try:
+            with open(stopwords) as f:
+                stopwords = [line.rstrip() for line in f if line is not ""]
+            print("Stopwords: " + stopwords.__str__())
+        except Exception as e:
+            print("File " + stopwords + " not found or error while parsing. Using no stopwords")
+            stopwords = None
+
 
     if not all:
         try:
@@ -256,7 +269,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
         if corpus == "all":
             print("Calculating idf values of all sites texts")
             t1 = time.time()
-            bow = calculate_idf(sites, directories, database)
+            bow = calculate_idf(sites, directories, database, stopwords)
             log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
 
@@ -271,7 +284,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
         if (corpus == "individual") and not all:
             print("Calculating idf values of texts of site "+ site)
             t1 = time.time()
-            bow = calculate_idf([site], directories, database)
+            bow = calculate_idf([site], directories, database, stopwords)
             log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
 
@@ -327,8 +340,9 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--context", default='10', help="number of words around formula to be reagarded as possible context")
     parser.add_argument("-n", "--topn", default='3', help="number of top terms in context regarding their tf-idf scores")
     parser.add_argument("--corpus", default="all", help="options: all or individual. corpus for idf over all sites or individually for each")
+    parser.add_argument("-s", "--stopwords", default="stopwords", help="Stopwords. Options: none, english, or filename containing list of stopwords (e.g. stopwords)")
     parser.add_argument("-t", "--tablename", default="FormulaContext", help="name of table to write topn contexts words of formulas in (will be overwritten if it exists)")
     parser.add_argument("--tfidf", default="yes", help="Whether or not to show tf-idf ratings with top context words. Options: yes, no")
     parser.add_argument("-a", "--all", default="no", help="get all words. Options: yes, no. Option Yes will lead to ignoring options context, topn, corpus, and tfidf.")
     args = parser.parse_args()
-    context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.tfidf, args.all)
+    context_main(args.dumps, args.input, args.database, int(args.context), int(args.topn), args.corpus, args.tablename, args.tfidf, args.all, args.stopwords)
