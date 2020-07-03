@@ -20,7 +20,7 @@ def threadFunc(call, body, cmml, id):
     else:
         cmml[id] = ""
 
-def formulas_to_cmml(database, table, site):
+def formulas_to_cmml(database, table, site, threads):
     DB = sqlite3.connect(database)
     formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE ml.ContentMathML IS NULL AND tex.Site="'+site+'"', DB)
     DB.close()
@@ -36,7 +36,7 @@ def formulas_to_cmml(database, table, site):
         threaded.append(formula)
         th[formula].start()
 
-        if(len(threaded) > 19):
+        if(len(threaded) >= threads):
             for formula in threaded:
                 th[formula].join()
                 sites.append(site)
@@ -56,7 +56,7 @@ def formulas_to_cmml(database, table, site):
     return cmml
 
 
-def formulas_to_pmml(database, table, site):
+def formulas_to_pmml(database, table, site, threads):
     DB = sqlite3.connect(database)
     formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE ml.PresentationMathML IS NULL AND tex.Site="'+site+'"', DB)
     DB.close()
@@ -72,7 +72,7 @@ def formulas_to_pmml(database, table, site):
         threaded.append(formula)
         th[formula].start()
 
-        if(len(threaded) > 19):
+        if(len(threaded) >= threads):
             for formula in threaded:
                 th[formula].join()
                 sites.append(site)
@@ -90,7 +90,7 @@ def formulas_to_pmml(database, table, site):
         progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return pmml
 
-def formulas_to_both_ml(database, table, site):
+def formulas_to_both_ml(database, table, site, threads):
     DB = sqlite3.connect(database)
     formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE (ml.ContentMathML IS NULL OR ml.PresentationMathML IS NULL) AND tex.Site="'+site+'"', DB)
     DB.close()
@@ -116,7 +116,7 @@ def formulas_to_both_ml(database, table, site):
         ids.append(formula)
         sites.append(site)
 
-        if(len(threaded) > 9):
+        if(len(threaded) >= (threads/2)):
             for formula in threaded:
                 th_p[formula].join()
                 th_c[formula].join()

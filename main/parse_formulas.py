@@ -24,26 +24,29 @@ def create_mathml_tables(database):
 
     DB.close()
 
-def main(filename_dumps, database, mode):
+def main(filename_dumps, database, mode, threads):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
-
+    try:
+        threads = int(threads)
+    except:
+        print("An Error occured parsing --threads argument " + threads)
     create_mathml_tables(database)
 
     for site in sites:
         start = time.time()
         if mode == "cmml":
-            formulas_to_cmml(database, "FormulasPosts", site)
+            formulas_to_cmml(database, "FormulasPosts", site, threads)
             sys.stdout.write('\n')
-            formulas_to_cmml(database, "FormulasComments", site)
+            formulas_to_cmml(database, "FormulasComments", site, threads)
         if mode == "pmml":
-            formulas_to_pmml(database, "FormulasPosts", site)
+            formulas_to_pmml(database, "FormulasPosts", site, threads)
             sys.stdout.write('\n')
-            formulas_to_pmml(database, "FormulasComments", site)
+            formulas_to_pmml(database, "FormulasComments", site, threads)
         if mode == "both":
-            formulas_to_both_ml(database, "FormulasPosts", site)
+            formulas_to_both_ml(database, "FormulasPosts", site, threads)
             sys.stdout.write('\n')
-            formulas_to_both_ml(database, "FormulasComments", site)
+            formulas_to_both_ml(database, "FormulasComments", site, threads)
         sys.stdout.write('\n' + site + ' finished. Time: ' + str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
 
 
@@ -52,5 +55,6 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
     parser.add_argument("--database", default='../output/database.db', help="database")
     parser.add_argument("-m", "--mode", default='both', help="options: cmml, pmml, both (ContentMathML, PresentationMathMl, Both)")
+    parser.add_argument("-t", "--threads", default="20", help="Number of threads to run parallel. One thread used to convert a single formula in MathML. options: integer")
     args = parser.parse_args()
-    main(args.dumps, args.database, args.mode)
+    main(args.dumps, args.database, args.mode, args.threads)
