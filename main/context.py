@@ -159,7 +159,7 @@ def posts_context(directory, database, site_name, x, all):
                 d[formulaid] = w
             else:
                 if all:
-                    d[formulaid] = words
+                    d[formulaid] = words[:index] + ["<formula>"] +  words[index:]
                 else:
                     beg = index - x
                     end = index + x
@@ -329,7 +329,6 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
 #  n als alle terme
 #  nutzer kann max_df = 0.75, min_df = 2, max_features=5000 ändern in BOW
 #  strong and emphasized text
-#  stem and normalize words? need to stem? or tokenizing enough?
 
 
 if __name__ == "__main__":

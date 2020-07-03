@@ -195,7 +195,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
             error_count += 1
 
         if(len(Formulas["FormulaId"])>1000000):
-            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"],  "CommentId":Formulas["CommentId"],"Body":Formulas["Body"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
+            df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"],  "CommentId":Formulas["CommentId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
             write_table(database, 'FormulasComments', df, "append")
             Formulas = {"FormulaId": [], "Site": [], "CommentId": [], "LaTeXBody":[], "TokenLength": [], "StartingPosition": [], "Inline": []}
             df._clear_item_cache()
