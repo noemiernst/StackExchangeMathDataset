@@ -85,7 +85,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     fig, (ax1, ax2) = plt.subplots(2, 1)
     # make this into a histogram of number of formula distribution in questions, answers, posts and comments
     #plt.subplot(2, 1, 1)
-    fig.subplots_adjust(left=0.15, hspace=0.55, wspace=0.3)
+    #fig.subplots_adjust(left=0.2, hspace=0.55, wspace=0.3)
     o_counts_counter = OrderedDict(sorted(counts_counter.items()))
     labels = [str(k) for k in o_counts_counter.keys()] + ["x"]
     o_counts_counter[len(o_counts_counter)] = removed
@@ -157,9 +157,9 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     plt.xticks(locations, labels)
     plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
 
-
+    fig.tight_layout()
     file = os.path.join(directory,"diagrams", site + "_" + text_type + "_stats.png")
-    fig.savefig(file, dpi=300)
+    fig.savefig(file, dpi=400)
     print("Figure saved to " + file)
     return os.path.join("diagrams", site + "_" + text_type + "_stats.png"), pd.DataFrame({"Title": stats_titles, "Value": stats_values})
 
