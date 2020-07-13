@@ -326,7 +326,6 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
 
 
 # TODO:
-#  n als alle terme
 #  nutzer kann max_df = 0.75, min_df = 2, max_features=5000 ändern in BOW
 #  strong and emphasized text
 

@@ -1,6 +1,3 @@
-# TODO:
-#  wv text pro gleichung
-
 from sklearn.feature_extraction.text import CountVectorizer
 from dump_processing.LatexTokenizer import LatexTokenizer
 from collections import Counter
@@ -15,10 +12,6 @@ import string
 import os.path
 from collections import OrderedDict
 from matplotlib.ticker import StrMethodFormatter
-
-# TODO:
-#  #posts etc stats also in html
-#  comments and comment formulas
 
 def reduce_labels(labels):
     if len(labels) < 5:
@@ -227,7 +220,6 @@ def all_tokens(formulas):
         tokens.extend(t)
     return tokens
 
-# TODO: format occurences: format(x,',d')
 def duplicate_formulas(formulas, n):
     duplicates = Counter(formulas)
     return pd.DataFrame(duplicates.most_common(n), columns=['Formula', 'Occurences'])
