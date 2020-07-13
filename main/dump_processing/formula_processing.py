@@ -122,7 +122,7 @@ def questions_formula_processing(site_name, database, directory, context_length)
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
     log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
-    log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions)*2)*100, ".4f") + " %")
+    log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"]))*100, ".4f") + " %")
 
 
 def answers_formula_processing(site_name, database, directory, context_length):
@@ -164,7 +164,7 @@ def answers_formula_processing(site_name, database, directory, context_length):
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
     log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
-    log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers))*100, ".4f") + " %")
+    log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
 
 def comments_formula_processing(site_name, database, directory, context_length):
     DB = sqlite3.connect(database)
@@ -205,7 +205,7 @@ def comments_formula_processing(site_name, database, directory, context_length):
 
     log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
     log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")
-    log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments))*100, ".4f") + " %")
+    log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(site_name, database, directory, context_length):
     questions_formula_processing(site_name, database, directory, context_length)
