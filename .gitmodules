@@ -1,0 +1,3 @@
+[submodule "main/formula_parsing/TangentCFT"]
+	path = main/formula_parsing/TangentCFT
+	url = https://github.com/BehroozMansouri/TangentCFT.git
