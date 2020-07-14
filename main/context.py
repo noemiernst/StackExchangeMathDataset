@@ -150,8 +150,8 @@ def posts_context(directory, database, site_name, x, all):
 
         words, formula_indices, strong, emphasized = get_words(posts[postid], formulas)
         docs[postid] = " ".join(words)
-        print(strong)
-        print(emphasized)
+        #print(strong)
+        #print(emphasized)
         d = {}
         for formulaid, index in formula_indices.items():
             if index == -1:
@@ -235,6 +235,14 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
     start = time.time()
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
+
+    log("../output/statistics.log", "#################################################")
+    log("../output/statistics.log", "context.py")
+    log("../output/statistics.log", "input: " + dump_directory + ", x - " + str(x) + ", n - "+ str(n) + ", corpus - " + corpus + ", tfidf - " + tfidf + ", all - "+ all)
+    log("../output/statistics.log", "output: "+ database + " - Table " + tablename + ", ../output/statistics.log")
+    log("../output/statistics.log", "dumps: " + str(sites))
+    log("../output/statistics.log", "-------------------------")
+
     downloader = DumpDownloader()
     directories = [os.path.join(dump_directory, downloader.get_file_name(site)).replace(".7z", "/") for site in sites]
 
@@ -319,9 +327,10 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
         log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
+    log("../output/statistics.log", "-------------------------")
     log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
     log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-
+    log("../output/statistics.log", "#################################################")
 
 
 

@@ -145,7 +145,6 @@ class BOW:
         return top_n
 
     def strip_texts(self, texts):
-        #TODO: strong and emphasized text
         temp = []
         for t in texts:
             text, strong, em = context_processing.html_helper.clean_html(t)

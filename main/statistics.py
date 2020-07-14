@@ -12,6 +12,8 @@ import string
 import os.path
 from collections import OrderedDict
 from matplotlib.ticker import StrMethodFormatter
+from dump_processing.helper import log
+import time
 
 def reduce_labels(labels):
     if len(labels) < 5:
@@ -153,7 +155,8 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     fig.tight_layout()
     file = os.path.join(directory,"diagrams", site + "_" + text_type + "_stats.png")
     fig.savefig(file, dpi=400)
-    print("Figure saved to " + file)
+
+    log("../output/statistics.log", "Figure saved to " + file)
     return os.path.join("diagrams", site + "_" + text_type + "_stats.png"), pd.DataFrame({"Title": stats_titles, "Value": stats_values})
 
     # text pro gleichung: avg text of post with formula
@@ -212,6 +215,8 @@ def save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, 
     f.write(text)
     f.close()
 
+    log("../output/statistics.log", "Wrote file " + os.path.join(directory, site+'_stats.html'))
+
 def all_tokens(formulas):
     tokens = []
     tokenizer = LatexTokenizer()
@@ -228,6 +233,14 @@ def main(filename_dumps, database, directory):
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
 
+    start = time.time()
+    log("../output/statistics.log", "#################################################")
+    log("../output/statistics.log", "statistics.py")
+    log("../output/statistics.log", "input: " + database)
+    log("../output/statistics.log", "output: "+ directory + ", ../output/statistics.log")
+    log("../output/statistics.log", "dumps: " + str(sites))
+    log("../output/statistics.log", "-------------------------")
+
     for site in sites:
         DB = sqlite3.connect(database)
         formulas_posts = pd.read_sql('select FormulaId, PostId, TokenLength from "FormulasPosts" where Site="'+site+'"', DB)
@@ -241,7 +254,7 @@ def main(filename_dumps, database, directory):
         figure_file_p, df_stats_p = formulas_per_post(dict(zip(formulas_posts["FormulaId"], formulas_posts["PostId"])), post_ids, list(formulas_posts["TokenLength"]), site, directory, "post")
         formulas_posts.pop("FormulaId")
         formulas_posts.pop("PostId")
-        print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+        #print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
         DB = sqlite3.connect(database)
         question_texts = pd.read_sql('select Title, Body from "QuestionText" where Site="'+site+'"', DB)
@@ -252,7 +265,7 @@ def main(filename_dumps, database, directory):
         question_texts.pop("Title")
         question_texts.pop("Body")
         answer_texts.pop("Body")
-        print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+        #print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
 
         DB = sqlite3.connect(database)
@@ -292,6 +305,11 @@ def main(filename_dumps, database, directory):
 
 
         save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, df_duplicates, directory, site)
+
+    log("../output/statistics.log", "-------------------------")
+    log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    log("../output/statistics.log", "#################################################")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
