@@ -17,7 +17,8 @@ Install python packages by running: ```pip install -r requirements.txt```
 * [libarchive](https://pypi.org/project/libarchive/)
 
 ##### Other tools
-* [LaTeXML](https://dlmf.nist.gov/LaTeXML/get.html)
+* [LaTeXML](https://dlmf.nist.gov/LaTeXML/get.html)#
+* [Tangent-CFT](https://github.com/BehroozMansouri/TangentCFT)
 
 ## Dataset
 
