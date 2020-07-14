@@ -125,6 +125,13 @@ SELECT max(Score) FROM QuestionMeta;
     * default='../output/database.db'
 * mode: parse formulas in ContentMathML (cmml), PresentationMathML (pmml), or both
   * options: cmml, pmml, both
+* tree: Whether or not to calculate slt trees from pmml and opt from cmml.
+   * options: yes, no
+   * default="yes"
+* threads: Number of threads to run parallel. One thread used to convert a single formula in MathML.
+   * options: integer
+   * default="20"
+    
 
 #### Outputs of ```parse_formulas.py```
 
