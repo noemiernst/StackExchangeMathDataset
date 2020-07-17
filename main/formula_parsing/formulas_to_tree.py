@@ -1,5 +1,5 @@
-from formula_parsing.TangentCFT.TangentS.math_tan.symbol_tree import SymbolTree
-from formula_parsing.TangentCFT.TangentS.math_tan.math_extractor import MathExtractor
+from formula_parsing.math_tan.symbol_tree import SymbolTree
+from formula_parsing.math_tan.math_extractor import MathExtractor
 
 
 def slt(pmml):
