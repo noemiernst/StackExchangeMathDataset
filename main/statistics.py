@@ -172,10 +172,11 @@ def common_words(docs, x):
     word_count_vector = vectorizer.fit_transform(temp)
     count_list = word_count_vector.toarray().sum(axis=0)
     word_list = vectorizer.get_feature_names()
-    count_list = [format(c, ',d') for c in count_list]
     words = dict(zip(word_list, count_list))
     words = collections.OrderedDict(sorted(words.items(), key=lambda item: item[1], reverse=True))
-    return pd.DataFrame(words.items(), columns=['Word', 'df'])
+    df = pd.DataFrame(words.items(), columns=['Word', 'df'])
+    df["df"] = [format(c, ',d') for c in df["df"]]
+    return df
 
 def common_tokens(tokens, x):
     token_dict = {}
