@@ -1,5 +1,7 @@
 import sqlite3
 from dump_processing.helper import log
+import os
+from pathlib import Path
 
 def max_column_value(database, table_name, column_name):
     DB = sqlite3.connect(database)
@@ -51,7 +53,8 @@ def create_tables(database):
     create_table(database, "Tags", 'CREATE TABLE "Tags" ("Site" TEXT, "Tag" TEXT, "Count" INTEGER, PRIMARY KEY(Site, Tag))')
 
 def remove_site(site, database):
-    log("../output/statistics.log", "Removing old database entries of site " + site)
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, "Removing old database entries of site " + site)
 
     tables = ["AnswerMeta", "AnswerText", "Badges", "Comments", "FormulasComments", "FormulasPosts", "PostIdRelatedPostId",
               "QuestionAcceptedAnswer", "QuestionTags", "QuestionText", "QuestionMeta", "Users", "Tags"]

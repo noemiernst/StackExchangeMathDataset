@@ -11,6 +11,3 @@ def formulas_to_tex(database, table, site, filename):
     with open(filename, 'w') as f:
         for formula in formulas["Body"]:
             f.write(r"$$" + formula + r"$$" + "\n")
-
-
-formulas_to_tex("../../output/database.db", "FormulasPosts", "ai", "formulas.tex")

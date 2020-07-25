@@ -10,6 +10,7 @@ from dump_processing.helper import log
 import resource
 from dump_processing.database import max_column_value
 from dump_processing.LatexTokenizer import LatexTokenizer
+from pathlib import Path
 
 
 def current_formula_id(database):
@@ -120,9 +121,10 @@ def questions_formula_processing(site_name, database, directory, context_length)
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasPosts', df)
 
-    log("../output/statistics.log", str(formula_index) + " formulas parsed from questions")
-    log("../output/statistics.log", str(error_count) + " errors in parsing question formulas")
-    log("../output/statistics.log", "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"]))*100, ".4f") + " %")
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, str(formula_index) + " formulas parsed from questions")
+    log(statistics_file, str(error_count) + " errors in parsing question formulas")
+    log(statistics_file, "error rate parsing formulas from questions: " + format(error_count/(len(questions["QuestionId"]))*100, ".4f") + " %")
 
 
 def answers_formula_processing(site_name, database, directory, context_length):
@@ -162,9 +164,10 @@ def answers_formula_processing(site_name, database, directory, context_length):
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "PostId":Formulas["PostId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasPosts', df, "append")
 
-    log("../output/statistics.log", str(formula_index) + " formulas parsed from answers")
-    log("../output/statistics.log", str(error_count) + " errors in parsing answer formulas")
-    log("../output/statistics.log", "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, str(formula_index) + " formulas parsed from answers")
+    log(statistics_file, str(error_count) + " errors in parsing answer formulas")
+    log(statistics_file, "error rate parsing formulas from answers: " + format(error_count/(len(answers["AnswerId"]))*100, ".4f") + " %")
 
 def comments_formula_processing(site_name, database, directory, context_length):
     DB = sqlite3.connect(database)
@@ -203,14 +206,16 @@ def comments_formula_processing(site_name, database, directory, context_length):
     df = pd.DataFrame({"FormulaId":Formulas["FormulaId"], "Site": Formulas["Site"], "CommentId":Formulas["CommentId"],"LaTeXBody":Formulas["LaTeXBody"], "TokenLength":Formulas["TokenLength"], "StartingPosition":Formulas["StartingPosition"], "Inline":Formulas["Inline"]})
     write_table(database, 'FormulasComments', df)
 
-    log("../output/statistics.log", str(formula_index) + " formulas parsed from comments")
-    log("../output/statistics.log", str(error_count) + " errors in parsing comment formulas")
-    log("../output/statistics.log", "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, str(formula_index) + " formulas parsed from comments")
+    log(statistics_file, str(error_count) + " errors in parsing comment formulas")
+    log(statistics_file, "error rate parsing formulas from comments: " + format(error_count/(len(comments["CommentId"]))*100, ".4f") + " %")
 
 def formula_processing(site_name, database, directory, context_length):
+    #statistics_file = os.path.join(Path(database).parent, "statistics.log")
     questions_formula_processing(site_name, database, directory, context_length)
-    #log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    #log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
     answers_formula_processing(site_name, database, directory, context_length)
-    #log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    #log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
     comments_formula_processing(site_name, database, directory, context_length)
-    #log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    #log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")

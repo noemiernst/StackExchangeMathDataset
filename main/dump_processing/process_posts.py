@@ -6,6 +6,7 @@ import os.path
 import pandas as pd
 from dump_processing.helper import write_table
 from dump_processing.helper import log
+from pathlib import Path
 
 def process_answer_meta(site_name, answers, database):
     sites = [site_name for i in range(len(answers["AnswerId"]))]
@@ -156,9 +157,10 @@ def posts_processing(site_name, directory, database):
                 pass
             # print("Exception: %s" % e)
 
-    log("../output/statistics.log", "# posts: " + str(len(questions["QuestionId"])+len(answers["AnswerId"])))
-    log("../output/statistics.log", "# questions: " + str(len(questions["QuestionId"])))
-    log("../output/statistics.log", "# answers: " + str(len(answers["AnswerId"])))
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, "# posts: " + str(len(questions["QuestionId"])+len(answers["AnswerId"])))
+    log(statistics_file, "# questions: " + str(len(questions["QuestionId"])))
+    log(statistics_file, "# answers: " + str(len(answers["AnswerId"])))
 
     process_question_text(site_name, questions, database, directory)
     process_question_tags(site_name, questions, database)

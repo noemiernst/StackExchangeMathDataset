@@ -15,6 +15,7 @@ import pathlib
 import hashlib
 import sqlite3
 import sys
+from pathlib import Path
 
 def save_hash(database, site, hash, exists):
     DB = sqlite3.connect(database)
@@ -98,13 +99,14 @@ def cleanup(sites, directories):
             pass
 
 def main(dump_directory, filename_dumps, download, extract, database, force_process):
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
     start = time.time()
-    log("../output/statistics.log", "#################################################")
-    log("../output/statistics.log", "main.py")
-    log("../output/statistics.log", "input: " + dump_directory)
-    log("../output/statistics.log", "output: "+ database + ", ../output/statistics.log")
-    log("../output/statistics.log", "dumps: " + filename_dumps)
-    log("../output/statistics.log", "-------------------------")
+    log(statistics_file, "#################################################")
+    log(statistics_file, "main.py")
+    log(statistics_file, "input: " + dump_directory)
+    log(statistics_file, "output: "+ database + statistics_file)
+    log(statistics_file, "dumps: " + filename_dumps)
+    log(statistics_file, "-------------------------")
 
 
 
@@ -120,7 +122,7 @@ def main(dump_directory, filename_dumps, download, extract, database, force_proc
     first = True
 
     for site, dir, file in zip(sites, directories, files):
-        log("../output/statistics.log", "Processing site " + site)
+        log(statistics_file, "Processing site " + site)
         with open(file, 'rb') as f:
             hasher = hashlib.md5()
             for chunk in iter(lambda: f.read(128*hasher.block_size), b''):
@@ -139,10 +141,10 @@ def main(dump_directory, filename_dumps, download, extract, database, force_proc
 
     # TODO: highlighted, bold etc words
 
-    log("../output/statistics.log", "-------------------------")
-    log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
-    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    log("../output/statistics.log", "#################################################")
+    log(statistics_file, "-------------------------")
+    log(statistics_file, "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+    log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    log(statistics_file, "#################################################")
 
 
 if __name__ == "__main__":

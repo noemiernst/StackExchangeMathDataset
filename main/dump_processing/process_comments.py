@@ -6,6 +6,7 @@ import pandas as pd
 import os.path
 from dump_processing.helper import write_table
 from dump_processing.helper import log
+from pathlib import Path
 
 def comments_processing(site_name, directory, database):
     comments = {"Site": [], "CommentId": [],"PostId":[],"UserId":[],"Score":[],"Text":[],"CreationDate":[]}
@@ -45,4 +46,5 @@ def comments_processing(site_name, directory, database):
     df = pd.DataFrame({"Site": comments["Site"],"CommentId": comments["CommentId"], "PostId": comments["PostId"], "UserId": comments["UserId"],
                "Score": comments["Score"], "Text": comments["Text"], "CreationDate": comments["CreationDate"]})
     write_table(database, 'Comments', df)
-    log("../output/statistics.log", "# comments: " + str(len(df)))
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, "# comments: " + str(len(df)))

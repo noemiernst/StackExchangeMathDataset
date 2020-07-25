@@ -6,17 +6,19 @@ import os.path
 import pandas as pd
 from dump_processing.helper import write_table
 from dump_processing.helper import log
+from pathlib import Path
 
 
 def duplicate_questions(database, df):
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
     result = df.groupby("LinkTypeId")
     for k, v in result:
         d = pd.DataFrame({"QuestionId": v["PostId"], "RelatedQuestionId": v["RelatedPostId"]})
         if k == 3:
-            log("../output/statistics.log", "# duplicate questions: %d" % len(d))
+            log(statistics_file, "# duplicate questions: %d" % len(d))
             file_name = "DuplicateQuestions"
         if k == 1:
-            log("../output/statistics.log", "# related questions: %d" % len(d))
+            log(statistics_file, "# related questions: %d" % len(d))
             file_name = "RelatedQuestionsSource2Target"
         write_table(database, file_name, d)
 

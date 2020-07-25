@@ -7,6 +7,7 @@ import pandas as pd
 from helper import log
 from helper import write_table
 import sqlite3
+from pathlib import Path
 
 def bounty_processing(directory, database):
     d = {"PostId":[],"BountyAmount":[]}
@@ -34,4 +35,5 @@ def bounty_processing(directory, database):
 
     df = pd.DataFrame(question_bounty)
     write_table(database, "Question_Bounty", df)
-    log("../output/statistics.log", "# questions having bounty: " + str(len(df)))
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file, "# questions having bounty: " + str(len(df)))

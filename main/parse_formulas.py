@@ -7,6 +7,8 @@ import sys
 import time
 import sqlite3
 import resource
+import os
+from pathlib import Path
 
 def create_mathml_tables(database):
     DB = sqlite3.connect(database)
@@ -27,18 +29,19 @@ def create_mathml_tables(database):
     DB.close()
 
 def main(filename_dumps, database, mode, threads, tree):
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
     start = time.time()
-    log("../output/statistics.log", "#################################################")
-    log("../output/statistics.log", "parse_formulas.py")
-    log("../output/statistics.log", "input: " + database + ", mode: " + mode + ", " + threads + " threads")
-    log("../output/statistics.log", "output: "+ database + ", ../output/statistics.log")
+    log(statistics_file, "#################################################")
+    log(statistics_file, "parse_formulas.py")
+    log(statistics_file, "input: " + database + ", mode: " + mode + ", " + threads + " threads")
+    log(statistics_file, "output: "+ database + ", " + statistics_file)
 
 
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
 
-    log("../output/statistics.log", "dumps: " + str(sites))
-    log("../output/statistics.log", "-------------------------")
+    log(statistics_file, "dumps: " + str(sites))
+    log(statistics_file, "-------------------------")
 
     try:
         threads = int(threads)
@@ -67,10 +70,10 @@ def main(filename_dumps, database, mode, threads, tree):
             formulas_to_both_ml(database, "FormulasComments", site, threads, tree)
         sys.stdout.write('\n' + site + ' finished. Time: ' + str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
 
-    log("../output/statistics.log", "-------------------------")
-    log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
-    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    log("../output/statistics.log", "#################################################")
+    log(statistics_file, "-------------------------")
+    log(statistics_file, "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+    log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    log(statistics_file, "#################################################")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

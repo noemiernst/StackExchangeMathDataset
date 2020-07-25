@@ -231,16 +231,18 @@ def duplicate_formulas(formulas, n):
     return pd.DataFrame(duplicates.most_common(n), columns=['Formula', 'Occurences'])
 
 def main(filename_dumps, database, directory):
+    statistics_file = os.path.join(directory, "statistics.log")
+
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
 
     start = time.time()
-    log("../output/statistics.log", "#################################################")
-    log("../output/statistics.log", "statistics.py")
-    log("../output/statistics.log", "input: " + database)
-    log("../output/statistics.log", "output: "+ directory + ", ../output/statistics.log")
-    log("../output/statistics.log", "dumps: " + str(sites))
-    log("../output/statistics.log", "-------------------------")
+    log(statistics_file, "#################################################")
+    log(statistics_file, "statistics.py")
+    log(statistics_file, "input: " + database)
+    log(statistics_file, "output: "+ directory + ", " + statistics_file)
+    log(statistics_file, "dumps: " + str(sites))
+    log(statistics_file, "-------------------------")
 
     for site in sites:
         DB = sqlite3.connect(database)
@@ -307,10 +309,10 @@ def main(filename_dumps, database, directory):
 
         save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, df_duplicates, directory, site)
 
-    log("../output/statistics.log", "-------------------------")
-    log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
-    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    log("../output/statistics.log", "#################################################")
+    log(statistics_file, "-------------------------")
+    log(statistics_file, "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+    log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    log(statistics_file, "#################################################")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

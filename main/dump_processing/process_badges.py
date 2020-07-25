@@ -6,6 +6,7 @@ import os.path
 import pandas as pd
 from dump_processing.helper import write_table
 from dump_processing.helper import log
+from pathlib import Path
 
 def badge_processing(site_name, directory, database):
     site = []
@@ -35,4 +36,5 @@ def badge_processing(site_name, directory, database):
 
     df =pd.DataFrame({"Site": site, "BadgeId":index, "UserId":UserId,"BadgeName":BadgeName,"BadgeClass": Class, "BadgeDate":BadgeDate})
     write_table(database, "Badges", df)
-    log("../output/statistics.log","# users having badges: %d" % len(df))
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    log(statistics_file,"# users having badges: %d" % len(df))

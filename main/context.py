@@ -11,6 +11,7 @@ import string
 import sys
 import argparse
 import context_processing.html_helper
+from pathlib import Path
 
 def tokenize_words(text):
     # remove links and formulas
@@ -232,16 +233,17 @@ def comments_context(directory, database, site_name, x, all):
     return context, docs
 
 def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablename, tfidf, all, stopwords):
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
     start = time.time()
     with open(filename_dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
 
-    log("../output/statistics.log", "#################################################")
-    log("../output/statistics.log", "context.py")
-    log("../output/statistics.log", "input: " + dump_directory + ", x - " + str(x) + ", n - "+ str(n) + ", corpus - " + corpus + ", tfidf - " + tfidf + ", all - "+ all)
-    log("../output/statistics.log", "output: "+ database + " - Table " + tablename + ", ../output/statistics.log")
-    log("../output/statistics.log", "dumps: " + str(sites))
-    log("../output/statistics.log", "-------------------------")
+    log(statistics_file, "#################################################")
+    log(statistics_file, "context.py")
+    log(statistics_file, "input: " + dump_directory + ", x - " + str(x) + ", n - "+ str(n) + ", corpus - " + corpus + ", tfidf - " + tfidf + ", all - "+ all)
+    log(statistics_file, "output: "+ database + " - Table " + tablename + ", " + statistics_file)
+    log(statistics_file, "dumps: " + str(sites))
+    log(statistics_file, "-------------------------")
 
     downloader = DumpDownloader()
     directories = [os.path.join(dump_directory, downloader.get_file_name(site)).replace(".7z", "/") for site in sites]
@@ -278,7 +280,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
             print("Calculating idf values of all sites texts")
             t1 = time.time()
             bow = calculate_idf(sites, directories, database, stopwords)
-            log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+            log(statistics_file, "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
 
     if_exists = "replace"
@@ -293,7 +295,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
             print("Calculating idf values of texts of site "+ site)
             t1 = time.time()
             bow = calculate_idf([site], directories, database, stopwords)
-            log("../output/statistics.log", "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+            log(statistics_file, "time calculating idf scores: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
 
         #   for each formula
@@ -309,7 +311,7 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
                     top_n_contexts[id] = " ".join(context)
         else:
             top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, tfidf, all)
-        log("../output/statistics.log", "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+        log(statistics_file, "time for contexts posts: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
 
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
@@ -324,13 +326,13 @@ def context_main(filename_dumps, dump_directory, database, x, n, corpus, tablena
                     top_n_contexts[id] = " ".join(context)
         else:
             top_n_contexts = bow.get_top_n_tfidf2(contexts, docs, n, tfidf, all)
-        log("../output/statistics.log", "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
+        log(statistics_file, "time for contexts comments: "+ str(int((time.time()-t1)/60)) +"min " + str(int((time.time()-t1)%60)) + "sec")
         write_context_table(site, top_n_contexts, database, tablename, if_exists)
 
-    log("../output/statistics.log", "-------------------------")
-    log("../output/statistics.log", "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
-    log("../output/statistics.log", "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
-    log("../output/statistics.log", "#################################################")
+    log(statistics_file, "-------------------------")
+    log(statistics_file, "total execution time: "+ str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
+    log(statistics_file, "max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
+    log(statistics_file, "#################################################")
 
 
 
