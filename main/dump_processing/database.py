@@ -54,14 +54,20 @@ def remove_site(site, database):
     log("../output/statistics.log", "Removing old database entries of site " + site)
 
     tables = ["AnswerMeta", "AnswerText", "Badges", "Comments", "FormulasComments", "FormulasPosts", "PostIdRelatedPostId",
-              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText", "QuestionMeta", "Users", "Tags", "FormulasPostsMathML", "FormulasCommentsMathML"]
+              "QuestionAcceptedAnswer", "QuestionTags", "QuestionText", "QuestionMeta", "Users", "Tags"]
     DB = sqlite3.connect(database)
     cursor = DB.cursor()
 
     for table in tables:
         cursor.execute("DELETE FROM '"+ table + "' WHERE site = '" + site + "'")
 
-    #TODO: delete formula context of formulas that were deleted
+    tables = ["FormulasPostsMathML", "FormulasCommentsMathML"]
+
+    for table in tables:
+        cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='"+ table +"' ")
+        #if the count is 1, then table exists
+        if cursor.fetchone()[0]==1 :
+            cursor.execute("DELETE FROM '"+ table + "' WHERE site = '" + site + "'")
 
     DB.commit()
     DB.close()
