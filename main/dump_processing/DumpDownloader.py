@@ -49,6 +49,14 @@ class DumpDownloader:
                  "space": "space.stackexchange.com.7z",
                  "cstheory": "cstheory.stackexchange.com.7z",
                  "worldbuilding": "worldbuilding.stackexchange.com.7z"}
+    special_delim = {"codegolf": r'\$',
+                     "codereview": r'\$',
+                     "electronics": r'\$',
+                     "gamedev": r'\$',
+                     "rpg": r'\$'}
+    mhchem ={"biology": r'\ce{',
+             "chemistry": r'\ce{',
+             "earthscience": r'\ce{'}
     archive_stackexchange_dumps_url = "https://archive.org/download/stackexchange/"
 
     def download(self, url, file_name):

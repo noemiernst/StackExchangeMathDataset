@@ -11,6 +11,7 @@ import resource
 from dump_processing.database import max_column_value
 from dump_processing.LatexTokenizer import LatexTokenizer
 from pathlib import Path
+from dump_processing.DumpDownloader import DumpDownloader
 
 
 def current_formula_id(database):
@@ -20,7 +21,11 @@ def formula_token_length(formula):
     tokenizer = LatexTokenizer
     return len(tokenizer.tokenize(tokenizer, formula))
 
-def formula_extr(text):
+def formula_extr(text, site):
+    if site in DumpDownloader.mhchem:
+        mhchem = True
+    else:
+        mhchem = False
     formulas = []
     positions = []
     inline = []
@@ -40,9 +45,15 @@ def formula_extr(text):
                     formula = formula + found + formula_temp
                 if formula != '':
                     if found:
-                        formulas.append(formula)
-                        positions.append(position)
-                        inline.append(True)
+                        if mhchem:
+                            if not formula.startswith(DumpDownloader.mhchem[site]):
+                                formulas.append(formula)
+                                positions.append(position)
+                                inline.append(True)
+                        else:
+                            formulas.append(formula)
+                            positions.append(position)
+                            inline.append(True)
                     else:
                         error = True
 
@@ -52,9 +63,15 @@ def formula_extr(text):
                     formula,found,after = after.partition('$$')
                     if formula != '':
                         if found:
-                            formulas.append(formula)
-                            positions.append(position)
-                            inline.append(False)
+                            if mhchem:
+                                if not formula.startswith(DumpDownloader.mhchem[site]):
+                                    formulas.append(formula)
+                                    positions.append(position)
+                                    inline.append(False)
+                            else:
+                                formulas.append(formula)
+                                positions.append(position)
+                                inline.append(False)
                         else:
                             after = formula
                             error = True
@@ -67,6 +84,39 @@ def formula_extr(text):
     return formulas, positions, inline, error
 
 # operatoren: z.B. &amp, &lt, &gt
+
+def formula_extr_special(text, delimiter):
+    formulas = []
+    positions = []
+    inline = []
+
+    error = False
+    postion = 0
+
+    if text.find(delimiter) > -1:
+        before,found,after = text.partition(delimiter)
+        position = len(before)
+        while found:
+            if text.find(delimiter) > -1:
+                formula,found,after = after.partition(delimiter)
+
+                if(formula.endswith('\\')):
+                    formula_temp,found_temp,after = after.partition(delimiter)
+                    formula = formula + found + formula_temp
+                if formula != '':
+                    if found:
+                        formulas.append(formula)
+                        positions.append(position)
+                        inline.append(True)
+                    else:
+                        error = True
+
+                    before,found,after = after.partition(delimiter)
+                    position += len(formula) + len(before) + 2 * len(delimiter)
+
+            if error:
+                break
+    return formulas, positions, inline, error
 
 def questions_formula_processing(site_name, database, directory, context_length):
     DB = sqlite3.connect(database)
@@ -81,8 +131,12 @@ def questions_formula_processing(site_name, database, directory, context_length)
 
     # question processing (title and body)
     for question, title, body in zip(questions["QuestionId"], questions["Title"], questions["Body"]):
-        formulas_title, positions_title, _, error_title = formula_extr(title)
-        formulas_body, positions_body, inline, error_body = formula_extr(body)
+        if site_name not in DumpDownloader.special_delim:
+            formulas_title, positions_title, _, error_title = formula_extr(title, site_name)
+            formulas_body, positions_body, inline, error_body = formula_extr(body, site_name)
+        else:
+            formulas_title, positions_title, _, error_title = formula_extr_special(title, DumpDownloader.special_delim[site_name])
+            formulas_body, positions_body, inline, error_body = formula_extr_special(body, DumpDownloader.special_delim[site_name])
 
         # parsing errors occur (total of ~6500) do not take formulas from "invalid" texts
         if not error_title and not error_body:
@@ -139,7 +193,10 @@ def answers_formula_processing(site_name, database, directory, context_length):
     formula_index = 0
 
     for answer, body in zip(answers["AnswerId"], answers["Body"]):
-        formulas, positions, inline, error = formula_extr(str(body))
+        if site_name not in DumpDownloader.special_delim:
+            formulas, positions, inline, error = formula_extr(str(body), site_name)
+        else:
+            formulas, positions, inline, error = formula_extr_special(body, DumpDownloader.special_delim[site_name])
         if not error:
             for formula, position, inl in zip(formulas, positions, inline):
                 Formulas["FormulaId"].append(int(starting_formula_index+formula_index))
@@ -181,7 +238,10 @@ def comments_formula_processing(site_name, database, directory, context_length):
     starting_formula_index = current_formula_id(database)
     formula_index = 0
     for comment, body in zip(comments["CommentId"], comments["Text"]):
-        formulas, positions, inline, error = formula_extr(body)
+        if site_name not in DumpDownloader.special_delim:
+            formulas, positions, inline, error = formula_extr(body, site_name)
+        else:
+            formulas, positions, inline, error = formula_extr_special(body, DumpDownloader.special_delim[site_name])
         if not error:
             for formula, position, inl in zip(formulas, positions, inline):
                 Formulas["FormulaId"].append(starting_formula_index+formula_index)
