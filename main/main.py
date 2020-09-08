@@ -99,6 +99,8 @@ def cleanup(sites, directories):
             pass
 
 def main(dump_directory, filename_dumps, download, extract, database, force_process):
+    if not os.path.isdir(os.path.dirname(database)):
+        os.mkdir(os.path.dirname(database))
     statistics_file = os.path.join(Path(database).parent, "statistics.log")
     start = time.time()
     log(statistics_file, "#################################################")
@@ -151,7 +153,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump *.7z files")
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("--download", default="yes", help="yes or no. Whether or not to download the dumps")
+    parser.add_argument("--download", default="no", help="yes or no. Whether or not to download the dumps")
     parser.add_argument("-x" ,"--extract", default="yes", help="yes or no. Whether or not to extract the *.7z dump files")
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
     parser.add_argument("-a", "--all", default="no", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
