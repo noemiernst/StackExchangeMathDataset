@@ -47,12 +47,12 @@ def split_save(df, output, mode):
 
     # save data
     Path(output).mkdir(parents=True, exist_ok=True)
-    train.to_csv(os.path.join(output, "train80_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
-    train.to_csv(os.path.join(output, "train80_label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
-    train2.to_csv(os.path.join(output, "train10_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
-    train2.to_csv(os.path.join(output, "train10_label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
-    test.to_csv(os.path.join(output, "test_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
-    test.to_csv(os.path.join(output, "test_label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
+    train.to_csv(os.path.join(output, "train.formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
+    train.to_csv(os.path.join(output, "train.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
+    train2.to_csv(os.path.join(output, "test.formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
+    train2.to_csv(os.path.join(output, "test.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
+    test.to_csv(os.path.join(output, "val.formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
+    test.to_csv(os.path.join(output, "val.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
 
 
 def main(dumps, database, output, separate):
@@ -110,9 +110,9 @@ def main(dumps, database, output, separate):
 
         split_save(df, os.path.join(directory, "multiclass"), mode)
         top_df = top_tag(copy.deepcopy(df), tags_dict)
-        split_save(top_df, os.path.join(directory, "common_tag"), mode)
+        split_save(top_df, os.path.join(directory, "most_frequent_tag"), mode)
         bottom_df = bottom_tag(copy.deepcopy(df), tags_dict)
-        split_save(bottom_df, os.path.join(directory, "rare_tag"), mode)
+        split_save(bottom_df, os.path.join(directory, "least_frequent_tag"), mode)
 
         if separate:
             mode = 'a'
