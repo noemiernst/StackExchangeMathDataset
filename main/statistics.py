@@ -79,7 +79,6 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
             counts_counter[prev] = 0
         prev = k
 
-    sns.set_theme()
     fig, (ax1, ax2) = plt.subplots(2, 1)
     # make this into a histogram of number of formula distribution in questions, answers, posts and comments
     #plt.subplot(2, 1, 1)
@@ -240,7 +239,6 @@ def tags_histo_all(tags, title, file):
     plt.tick_params(axis='x',which='both',bottom=False,top=False,labelbottom=False)
     plt.ylabel('Count')
     plt.title(title)
-    sns.set_theme()
     plt.savefig(file, dpi=400)
 
 def tags_histo(tags, title, file):
@@ -251,7 +249,6 @@ def tags_histo(tags, title, file):
     plt.ylabel('Count')
     plt.title(title)
     plt.subplots_adjust(bottom=0.5)
-    sns.set_theme()
     plt.savefig(file, dpi=400)
 
 
@@ -268,6 +265,9 @@ def main(filename_dumps, database, directory):
     log(statistics_file, "output: "+ directory + ", " + statistics_file)
     log(statistics_file, "dumps: " + str(sites))
     log(statistics_file, "-------------------------")
+
+    # set plot style (seaborn)
+    sns.set_theme(context="paper")
 
     for site in sites:
         DB = sqlite3.connect(database)
