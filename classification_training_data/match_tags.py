@@ -35,7 +35,7 @@ def bottom_tag(df, tags_dict):
         row["Tags"] =  top_tag
     return df
 
-def split_save(df, output):
+def split_save(df, output, mode):
     # shuffle data
     # split data
     #print(len(df))
@@ -47,15 +47,23 @@ def split_save(df, output):
 
     # save data
     Path(output).mkdir(parents=True, exist_ok=True)
-    train.to_csv(os.path.join(output, "train80_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"])
-    train.to_csv(os.path.join(output, "train80_label"), sep=' ', index=False, header=False, columns=["Tags"])
-    train2.to_csv(os.path.join(output, "train10_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"])
-    train2.to_csv(os.path.join(output, "train10_label"), sep=' ', index=False, header=False, columns=["Tags"])
-    test.to_csv(os.path.join(output, "test_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"])
-    test.to_csv(os.path.join(output, "test_label"), sep=' ', index=False, header=False, columns=["Tags"])
+    train.to_csv(os.path.join(output, "train80_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
+    train.to_csv(os.path.join(output, "train80_label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
+    train2.to_csv(os.path.join(output, "train10_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
+    train2.to_csv(os.path.join(output, "train10_label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
+    test.to_csv(os.path.join(output, "test_formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
+    test.to_csv(os.path.join(output, "test_label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
 
 
-def main(dumps, database, output):
+def main(dumps, database, output, separate):
+    mode = 'w'
+    if separate == "yes":
+        separate = True
+    elif separate == "no":
+        separate = False
+    else:
+        raise ValueError("argument -separate invalid")
+    directory = output
 
     # for site in sites
     # get all formulas with post id
@@ -64,6 +72,8 @@ def main(dumps, database, output):
     # get all post ids of comments and math with tags of questions
     with open(dumps) as f:
         sites = [line.rstrip() for line in f if line is not ""]
+
+    print(sites)
 
     for site in sites:
         DB = sqlite3.connect(database)
@@ -83,6 +93,9 @@ def main(dumps, database, output):
 
         tags_dict = dict(zip(tags["Tag"], tags["Count"]))
         df = pd.concat([formulas_tags_questions, formulas_tags_answers])
+        print("number of formulas in " + site + ": " + str(len(df)))
+        if len(df["LaTeXBody"]) == 0:
+            raise ValueError("No Formula Entries in Database for Site "+ site)
 
         # copy once -> all tags
         # only most common tag
@@ -92,16 +105,23 @@ def main(dumps, database, output):
         for index, row in df.iterrows():
             row["LaTeXBody"] = row["LaTeXBody"].replace("\n", "")
 
-        split_save(df, os.path.join(output, "multiclass"))
+        if separate:
+            directory = os.path.join(output, site)
+
+        split_save(df, os.path.join(directory, "multiclass"), mode)
         top_df = top_tag(copy.deepcopy(df), tags_dict)
-        split_save(top_df, os.path.join(output, "common_tag"))
+        split_save(top_df, os.path.join(directory, "common_tag"), mode)
         bottom_df = bottom_tag(copy.deepcopy(df), tags_dict)
-        split_save(bottom_df, os.path.join(output, "rare_tag"))
+        split_save(bottom_df, os.path.join(directory, "rare_tag"), mode)
+
+        if separate:
+            mode = 'a'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
     parser.add_argument("--database", default='../output/database.db', help="database")
     parser.add_argument("-o", "--output", default='../output/classification_data/', help="output directory")
+    parser.add_argument("-s", "--separate", default="no", help="yes or no. Put training data in separate files for each site.")
     args = parser.parse_args()
-    main(args.dumps, args.database, args.output)
+    main(args.dumps, args.database, args.output, args.separate)
