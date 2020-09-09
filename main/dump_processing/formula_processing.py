@@ -31,16 +31,17 @@ def formula_extr(text, site):
     inline = []
 
     error = False
-    postion = 0
-
     if text.find('$') > -1:
         before,found,after = text.partition('$')
         position = len(before)
         while found:
-            if text.find('$') > -1:
+            if after.find('$') > -1:
+                while before.endswith('\\'):
+                    before,found,after = after.partition('$')
+                    position += len(before) + 1
                 formula,found,after = after.partition('$')
 
-                if(formula.endswith('\\')):
+                while formula.endswith('\\'):
                     formula_temp,found_temp,after = after.partition('$')
                     formula = formula + found + formula_temp
                 if formula != '':
@@ -61,6 +62,9 @@ def formula_extr(text, site):
                     position += len(formula) + len(before) + 2
                 else:
                     formula,found,after = after.partition('$$')
+                    while formula.endswith('\\'):
+                        formula_temp,found_temp,after = ('$'+after).partition('$$')
+                        formula = formula + "$" + formula_temp
                     if formula != '':
                         if found:
                             if mhchem:
@@ -78,11 +82,11 @@ def formula_extr(text, site):
 
                     before,found,after = after.partition('$')
                     position += len(formula) + len(before) + 4
-
+            else:
+                found = False
             if error:
                 break
     return formulas, positions, inline, error
-
 # operatoren: z.B. &amp, &lt, &gt
 
 def formula_extr_special(text, delimiter):
