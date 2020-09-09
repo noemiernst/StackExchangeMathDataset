@@ -55,7 +55,7 @@ def split_save(df, output, mode):
     test.to_csv(os.path.join(output, "val.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
 
 
-def main(dumps, database, output, separate):
+def main(dumps, database, output, separate, minlength):
     mode = 'w'
     if separate == "yes":
         separate = True
@@ -64,6 +64,9 @@ def main(dumps, database, output, separate):
     else:
         raise ValueError("argument -separate invalid")
     directory = output
+
+    minlength = int(minlength)
+
 
     # for site in sites
     # get all formulas with post id
@@ -80,13 +83,13 @@ def main(dumps, database, output, separate):
         formulas_tags_questions = pd.read_sql('select LaTeXBody, Tags '
                                               'from "FormulasPosts" join "QuestionTags" '
                                               'on FormulasPosts.PostId = QuestionTags.QuestionId and FormulasPosts.Site = QuestionTags.Site '
-                                              'where FormulasPosts.Site="'+ site +'"' , DB)
+                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength), DB)
         formulas_tags_answers = pd.read_sql('select LaTeXBody, Tags '
                                             'from "FormulasPosts" join "AnswerMeta" '
                                             'on FormulasPosts.PostId = AnswerMeta.AnswerId and FormulasPosts.Site = AnswerMeta.Site '
                                             'join "QuestionTags" '
                                             'on AnswerMeta.QuestionId = QuestionTags.QuestionId and AnswerMeta.Site = QuestionTags.Site '
-                                            'where FormulasPosts.Site="'+ site +'"', DB)
+                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength), DB)
         tags = pd.read_sql('select Tag, Count from "Tags" '
                                             'where Site="'+ site +'"', DB)
         DB.close()
@@ -122,6 +125,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
     parser.add_argument("--database", default='../output/database.db', help="database")
     parser.add_argument("-o", "--output", default='../output/classification_data/', help="output directory")
-    parser.add_argument("-s", "--separate", default="no", help="yes or no. Put training data in separate files for each site.")
+    parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
+    parser.add_argument("-f", "--minlength", default="1", help="integer. minimum token length of formulas")
     args = parser.parse_args()
-    main(args.dumps, args.database, args.output, args.separate)
+    main(args.dumps, args.database, args.output, args.separate, args.minlength)
