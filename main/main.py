@@ -69,13 +69,15 @@ def dumps(dump_directory, filename_dumps, download, extract):
     if download == "yes":
         downloader.download_some(dump_directory, sites)
         extract="yes"
-    elif download == "no":
+    elif download == "no" and extract == "yes":
         for site in sites:
             file = os.path.join(dump_directory, downloader.get_file_name(site))
             if os.path.isfile(file):
                 pass
             else:
                 raise FileNotFoundError(file + " not found in " + dump_directory)
+    elif download == "no":
+        pass
     else:
         raise ValueError("Invalid argument 'download'")
 
@@ -125,20 +127,25 @@ def main(dump_directory, filename_dumps, download, extract, database, force_proc
 
     for site, dir, file in zip(sites, directories, files):
         log(statistics_file, "Processing site " + site)
-        with open(file, 'rb') as f:
-            hasher = hashlib.md5()
-            for chunk in iter(lambda: f.read(128*hasher.block_size), b''):
-                hasher.update(chunk)
-            hash = hasher.hexdigest()
-        exists = sites_hashs[sites_hashs["Site"] == site].any()[0]
-        if exists:
-            old_hash = sites_hashs["MD5Hash"][sites_hashs[sites_hashs["Site"] == site].index.values[0]]
+        if extract == "yes":
+            with open(file, 'rb') as f:
+                hasher = hashlib.md5()
+                for chunk in iter(lambda: f.read(128*hasher.block_size), b''):
+                    hasher.update(chunk)
+                hash = hasher.hexdigest()
+            exists = sites_hashs[sites_hashs["Site"] == site].any()[0]
+            if exists:
+                old_hash = sites_hashs["MD5Hash"][sites_hashs[sites_hashs["Site"] == site].index.values[0]]
+            else:
+                old_hash = ""
+            if (hash != old_hash) | (force_process == "yes"):
+                dump_processing.database.remove_site(site, database)
+                dump_processing.process_dump.processing_main(site, dir, database, 7)
+                save_hash(database,site, hash, exists)
         else:
-            old_hash = ""
-        if (hash != old_hash) | (force_process == "yes"):
             dump_processing.database.remove_site(site, database)
             dump_processing.process_dump.processing_main(site, dir, database, 7)
-            save_hash(database,site, hash, exists)
+
 
 
     # TODO: highlighted, bold etc words
@@ -153,7 +160,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--input",default= "../input/", help = "input directory of stackexchange dump *.7z files")
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("--download", default="no", help="yes or no. Whether or not to download the dumps")
+    parser.add_argument("--download", default="yes", help="yes or no. Whether or not to download the dumps")
     parser.add_argument("-x" ,"--extract", default="yes", help="yes or no. Whether or not to extract the *.7z dump files")
     parser.add_argument("-o", "--output", default='../output/database.db', help="database output")
     parser.add_argument("-a", "--all", default="no", help="yes or no. Force to process all dumps, even if they have previously been processed and already exist in the database")
