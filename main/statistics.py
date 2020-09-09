@@ -14,6 +14,8 @@ from collections import OrderedDict
 from matplotlib.ticker import StrMethodFormatter
 from dump_processing.helper import log
 import time
+import numpy as np
+import seaborn as sns
 
 def reduce_labels(labels):
     if len(labels) < 5:
@@ -77,6 +79,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
             counts_counter[prev] = 0
         prev = k
 
+    sns.set_theme()
     fig, (ax1, ax2) = plt.subplots(2, 1)
     # make this into a histogram of number of formula distribution in questions, answers, posts and comments
     #plt.subplot(2, 1, 1)
@@ -230,6 +233,28 @@ def duplicate_formulas(formulas, n):
     duplicates = Counter(formulas)
     return pd.DataFrame(duplicates.most_common(n), columns=['Formula', 'Occurences'])
 
+
+def tags_histo_all(tags, title, file):
+    plt.figure()
+    plt.bar(tags["Tag"], tags["Count"], color='black')
+    plt.tick_params(axis='x',which='both',bottom=False,top=False,labelbottom=False)
+    plt.ylabel('Count')
+    plt.title(title)
+    sns.set_theme()
+    plt.savefig(file, dpi=400)
+
+def tags_histo(tags, title, file):
+    plt.figure()
+    y_pos = np.arange(len(tags["Tag"]))
+    plt.bar(tags["Tag"], tags["Count"], color='g',edgecolor='black', linewidth=1)
+    plt.xticks(y_pos, tags["Tag"], rotation='vertical')
+    plt.ylabel('Count')
+    plt.title(title)
+    plt.subplots_adjust(bottom=0.5)
+    sns.set_theme()
+    plt.savefig(file, dpi=400)
+
+
 def main(filename_dumps, database, directory):
     statistics_file = os.path.join(directory, "statistics.log")
 
@@ -306,6 +331,21 @@ def main(filename_dumps, database, directory):
         df_duplicates = duplicate_formulas(all_formulas, 100)
         print("max memory usage: " + format((resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/pow(2,30), ".3f")+ " GigaByte")
 
+
+        DB = sqlite3.connect(database)
+        tags = pd.read_sql('select Tag, Count from "Tags" where Site="'+site+'" ORDER BY Count DESC limit 100', DB)
+        DB.close()
+        tags_histo_all(tags, "Top 200 Tag Count Distribution in '" + site + "'", os.path.join(directory,"diagrams", site + "_tags_desc.png"))
+
+        DB = sqlite3.connect(database)
+        top_tags = pd.read_sql('select Tag, Count from "Tags" where Site="'+site+'" ORDER BY Count DESC limit 20', DB)
+        DB.close()
+        tags_histo(top_tags, "Top 20 Tags in '" + site + "'", os.path.join(directory,"diagrams", site + "_top_tags.png"))
+
+        DB = sqlite3.connect(database)
+        bottom_tags = pd.read_sql('select Tag, Count from "Tags" where Site="'+site+'" AND Count > 3 ORDER BY Count ASC limit 20', DB)
+        DB.close()
+        tags_histo(bottom_tags, "Rarest 20 Tags in '" + site + "'", os.path.join(directory,"diagrams", site + "_bottom_tags.png"))
 
         save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, df_duplicates, directory, site)
 
