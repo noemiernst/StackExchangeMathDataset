@@ -87,7 +87,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     labels = [str(k) for k in o_counts_counter.keys()] + ["x"]
     o_counts_counter[len(o_counts_counter)] = removed
 
-    ax1.bar(labels, o_counts_counter.values(), color='g',edgecolor='black', linewidth=1)
+    ax1.bar(labels, o_counts_counter.values(), color='darkgreen',edgecolor='black', linewidth=1)
     ax1.set_title("Formula Distribution of '"+ site + "' in " + text_type.title() + "s")
     ax1.set_xlabel("Number of Formulas per " + text_type.title())
     ax1.set_ylabel("Number of " + text_type.title() + "s")
@@ -137,7 +137,7 @@ def formulas_per_post(formulaid_postid, all_postids, token_lengths, site, direct
     labels = [str(k) for k in ordered_counter.keys()] + ["x"]
 
     ordered_counter[max(ordered_counter.keys())+1] = removed
-    ax2.bar(labels, ordered_counter.values(), color='g',edgecolor='black', linewidth=1)
+    ax2.bar(labels, ordered_counter.values(), color='darkgreen',edgecolor='black', linewidth=1)
     ax2.set_title("Formula Length Distribution of " + text_type.title() + "s in '"+ site + "'")
     ax2.set_xlabel("Number of Tokens per Formula")
     ax2.set_ylabel("Number of Formulas")
@@ -235,7 +235,7 @@ def duplicate_formulas(formulas, n):
 
 def tags_histo_all(tags, title, file):
     plt.figure()
-    plt.bar(tags["Tag"], tags["Count"], color='black')
+    plt.bar(tags["Tag"], tags["Count"], color='darkgreen',edgecolor='black')
     plt.tick_params(axis='x',which='both',bottom=False,top=False,labelbottom=False)
     plt.ylabel('Count')
     plt.title(title)
@@ -244,7 +244,7 @@ def tags_histo_all(tags, title, file):
 def tags_histo(tags, title, file):
     plt.figure()
     y_pos = np.arange(len(tags["Tag"]))
-    plt.bar(tags["Tag"], tags["Count"], color='g',edgecolor='black', linewidth=1)
+    plt.bar(tags["Tag"], tags["Count"], color='darkgreen',edgecolor='black', linewidth=1)
     plt.xticks(y_pos, tags["Tag"], rotation='vertical')
     plt.ylabel('Count')
     plt.title(title)
@@ -335,17 +335,17 @@ def main(filename_dumps, database, directory):
         DB = sqlite3.connect(database)
         tags = pd.read_sql('select Tag, Count from "Tags" where Site="'+site+'" ORDER BY Count DESC limit 100', DB)
         DB.close()
-        tags_histo_all(tags, "Top 200 Tag Count Distribution in '" + site + "'", os.path.join(directory,"diagrams", site + "_tags_desc.png"))
+        tags_histo_all(tags, "200 Most Frequent Tags Distribution in '" + site + "'", os.path.join(directory,"diagrams", site + "_tags_desc.png"))
 
         DB = sqlite3.connect(database)
         top_tags = pd.read_sql('select Tag, Count from "Tags" where Site="'+site+'" ORDER BY Count DESC limit 20', DB)
         DB.close()
-        tags_histo(top_tags, "Top 20 Tags in '" + site + "'", os.path.join(directory,"diagrams", site + "_top_tags.png"))
+        tags_histo(top_tags, "20 Most Frequent Tags in '" + site + "'", os.path.join(directory,"diagrams", site + "_top_tags.png"))
 
         DB = sqlite3.connect(database)
         bottom_tags = pd.read_sql('select Tag, Count from "Tags" where Site="'+site+'" AND Count > 3 ORDER BY Count ASC limit 20', DB)
         DB.close()
-        tags_histo(bottom_tags, "Rarest 20 Tags in '" + site + "'", os.path.join(directory,"diagrams", site + "_bottom_tags.png"))
+        tags_histo(bottom_tags, "20 Least Frequent Tags in '" + site + "'", os.path.join(directory,"diagrams", site + "_bottom_tags.png"))
 
         save_to_html(figure_file_p, figure_file_c, df_tokens, df_words, df_stats_p, df_stats_c, df_duplicates, directory, site)
 
