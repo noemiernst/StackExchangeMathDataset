@@ -1,7 +1,7 @@
 import argparse
 import sqlite3
 import pandas as pd
-from main.formula_parsing.math_tan.math_extractor import MathExtractor
+from math_tan.math_extractor import MathExtractor
 from sklearn.model_selection import train_test_split
 import os
 
@@ -36,7 +36,7 @@ def split_save(df, output, max_context):
 
 
 def tuple_to_context(tuple):
-    return tuple[0] + "," + tuple[2] + "|" + tuple[3] + "," + tuple[1]
+    return tuple[0] + "," + tuple[2] + "#" + tuple[3] + "," + tuple[1]
 
 # processes example and writes to file. shuffle before !
 def example_processing(latex, tags, max_context, file):
@@ -95,6 +95,8 @@ def main(dumps, database, output, minlength, max_context):
         if len(df["LaTeXBody"]) == 0:
             raise ValueError("No Formula Entries in Database for Site "+ site)
 
+        if not os.path.isdir(output):
+            os.mkdir(output)
         split_save(df, output, max_context)
 
 if __name__ == "__main__":
