@@ -23,14 +23,20 @@ def split_save(df, output, max_context):
 
 
     open(os.path.join(output, "train"), 'w').close()
+    print("Writing train file")
+    print(train)
     for index, row in train.iterrows():
         example_processing(row["LaTeXBody"], row["Tags"], max_context, os.path.join(output, "train"))
 
     open(os.path.join(output, "test"), 'w').close()
+    print("Writing test file")
+    print(test)
     for index, row in test.iterrows():
         example_processing(row["LaTeXBody"], row["Tags"], max_context, os.path.join(output, "test"))
 
     open(os.path.join(output, "val"), 'w').close()
+    print("Writing val file")
+    print(val)
     for index, row in val.iterrows():
         example_processing(row["LaTeXBody"], row["Tags"], max_context, os.path.join(output, "val"))
 
