@@ -2,3 +2,4 @@ pandas
 matplotlib
 scikit-learn
 libarchive
+bs4
