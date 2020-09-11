@@ -62,8 +62,8 @@ def example_processing(latex, tags, max_context, file):
         example += " " * (max_context-count) + "\n"
         with open(file, 'a') as f:
             f.write(example)
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
 def main(dumps, database, output, minlength, max_context):
     directory = output
