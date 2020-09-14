@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from pathlib import Path
 import os
 import copy
+import csv
 
 def top_tag(df, tags_dict):
     for index, row in df.iterrows():
@@ -18,41 +19,50 @@ def top_tag(df, tags_dict):
                 top_tag = tag
                 top_val = tags_dict[tag]
 
-        row["Tags"] =  top_tag
+        row["Tags"] =  "__label__" + top_tag + " "
     return df
 
 def bottom_tag(df, tags_dict):
     for index, row in df.iterrows():
         tags = [tag[1:] for tag in row["Tags"].split(">") if len(tag) > 0]
         # get top tag
-        top_tag = tags[0]
-        top_val = max(tags_dict.values())
+        bottom_tag = tags[0]
+        bottom_val = max(tags_dict.values())
         for tag in tags:
-            if tags_dict[tag] < top_val:
-                top_tag = tag
-                top_val = tags_dict[tag]
+            if tags_dict[tag] < bottom_val:
+                bottom_tag = tag
+                bottom_val = tags_dict[tag]
 
-        row["Tags"] =  top_tag
+        row["Tags"] =  "__label__" + bottom_tag + " "
     return df
 
-def split_save(df, output, mode):
+def all_tags(df, tags_dict):
+    for index, row in df.iterrows():
+        tags = [tag[1:] for tag in row["Tags"].split(">") if len(tag) > 0]
+        t = ""
+        for tag in tags:
+            t += "__label__" + tag + " "
+
+        row["Tags"] =  t
+    return df
+
+def df_to_file(df, output, mode):
+    with open(output, mode) as f:
+        for index, row in df.iterrows():
+            f.write(row["Tags"] + row["LaTeXBody"] + "\n")
+
+def split_save(df, output, mode, site):
     # shuffle data
     # split data
-    #print(len(df))
     train, test = train_test_split(df, test_size=0.2)
-    #print(len(train))
-    train2, test = train_test_split(test, test_size=0.5)
-    #print(len(train2))
-    #print(len(test))
+    test, val = train_test_split(test, test_size=0.5)
 
     # save data
-    Path(output).mkdir(parents=True, exist_ok=True)
-    train.to_csv(os.path.join(output, "train.formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
-    train.to_csv(os.path.join(output, "train.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
-    train2.to_csv(os.path.join(output, "test.formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
-    train2.to_csv(os.path.join(output, "test.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
-    test.to_csv(os.path.join(output, "val.formula"), sep=' ', index=False, header=False, columns=["LaTeXBody"],  mode=mode)
-    test.to_csv(os.path.join(output, "val.label"), sep=' ', index=False, header=False, columns=["Tags"],  mode=mode)
+    Path(output).parent.mkdir(parents=True, exist_ok=True)
+
+    df_to_file(train, output + ".train", mode)
+    df_to_file(test, output + ".test", mode)
+    df_to_file(val, output + ".val", mode)
 
 
 def main(dumps, database, output, separate, minlength):
@@ -110,12 +120,19 @@ def main(dumps, database, output, separate, minlength):
 
         if separate:
             directory = os.path.join(output, site)
-
-        split_save(df, os.path.join(directory, "multiclass"), mode)
-        top_df = top_tag(copy.deepcopy(df), tags_dict)
-        split_save(top_df, os.path.join(directory, "most_frequent_tag"), mode)
-        bottom_df = bottom_tag(copy.deepcopy(df), tags_dict)
-        split_save(bottom_df, os.path.join(directory, "least_frequent_tag"), mode)
+            multi_df = all_tags(copy.deepcopy(df), tags_dict)
+            split_save(multi_df, os.path.join(directory, "multiclass", site), mode, site)
+            top_df = top_tag(copy.deepcopy(df), tags_dict)
+            split_save(top_df, os.path.join(directory, "most_frequent_tag", site), mode, site)
+            bottom_df = bottom_tag(copy.deepcopy(df), tags_dict)
+            split_save(bottom_df, os.path.join(directory, "least_frequent_tag", site), mode, site)
+        else:
+            multi_df = all_tags(copy.deepcopy(df), tags_dict)
+            split_save(multi_df, os.path.join(directory, "multiclass"), mode, site)
+            top_df = top_tag(copy.deepcopy(df), tags_dict)
+            split_save(top_df, os.path.join(directory, "most_frequent_tag"), mode, site)
+            bottom_df = bottom_tag(copy.deepcopy(df), tags_dict)
+            split_save(bottom_df, os.path.join(directory, "least_frequent_tag"), mode, site)
 
         if separate:
             mode = 'a'
@@ -126,6 +143,6 @@ if __name__ == "__main__":
     parser.add_argument("--database", default='../output/database.db', help="database")
     parser.add_argument("-o", "--output", default='../output/classification_data/', help="output directory")
     parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
-    parser.add_argument("-f", "--minlength", default="1", help="integer. minimum token length of formulas")
+    parser.add_argument("-f", "--minlength", default="2", help="integer. minimum token length of formulas")
     args = parser.parse_args()
     main(args.dumps, args.database, args.output, args.separate, args.minlength)
