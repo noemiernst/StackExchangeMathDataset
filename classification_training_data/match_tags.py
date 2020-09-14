@@ -1,12 +1,11 @@
 import argparse
 import sqlite3
 import pandas as pd
-import random
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 import os
 import copy
-import csv
+from classification_training_data.LatexTokenizer import LatexTokenizer
 
 def top_tag(df, tags_dict):
     for index, row in df.iterrows():
@@ -46,10 +45,16 @@ def all_tags(df, tags_dict):
         row["Tags"] =  t
     return df
 
+def latex_to_tokenstring(latex):
+    tokens = LatexTokenizer.tokenize(latex)
+    string = " ".join(tokens)
+    # remove duplicated spaces
+    return " ".join(string.split())
+
 def df_to_file(df, output, mode):
     with open(output, mode) as f:
         for index, row in df.iterrows():
-            f.write(row["Tags"] + row["LaTeXBody"] + "\n")
+            f.write(row["Tags"] + latex_to_tokenstring(row["LaTeXBody"]) + "\n")
 
 def split_save(df, output, mode, site):
     # shuffle data
