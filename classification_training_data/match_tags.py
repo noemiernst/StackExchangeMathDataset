@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from pathlib import Path
 import os
 import copy
-from classification_training_data.LatexTokenizer import LatexTokenizer
+from LatexTokenizer import LatexTokenizer
 
 def top_tag(df, tags_dict):
     for index, row in df.iterrows():
