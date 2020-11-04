@@ -178,10 +178,10 @@ def formulas_to_both_ml(database, table, site, threads, tree):
         if tree:
             slts = []
             for ml in pmml:
-                slts.append(slt(pmml))
+                slts.append(slt(ml))
             opts = []
             for ml in cmml:
-                opts.append(opt(cmml))
+                opts.append(opt(ml))
             df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "OPT": opts, "PresentationMathML": pmml, "SLT": slts})
         else:
             df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "PresentationMathML": pmml})
