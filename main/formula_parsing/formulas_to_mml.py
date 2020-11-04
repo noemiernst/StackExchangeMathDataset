@@ -29,7 +29,6 @@ def formulas_to_cmml(database, table, site, threads, tree):
 
     threaded = []
     cmml = {}
-    sites = []
     count = 0
     th = {}
     for formula, body in zip(formulas["FormulaId"], formulas["LaTeXBody"]):
@@ -41,7 +40,6 @@ def formulas_to_cmml(database, table, site, threads, tree):
         if(len(threaded) >= threads):
             for formula in threaded:
                 th[formula].join()
-                sites.append(site)
             threaded = []
             keys = [i[0] for i in sorted(cmml.items(), key=lambda item: item[0])]
             values = [i[1] for i in sorted(cmml.items(), key=lambda item: item[0])]
@@ -54,7 +52,6 @@ def formulas_to_cmml(database, table, site, threads, tree):
                 df = pd.DataFrame({"FormulaId": keys, "Site": site, "ContentMathML": values})
             update_table(database, table+"MathML", df, "FormulaId")
             cmml = {}
-            sites = []
             progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
 
     if count != 0:
@@ -79,7 +76,6 @@ def formulas_to_pmml(database, table, site, threads, tree):
 
     threaded = []
     pmml = {}
-    sites = []
     count = 0
     th = {}
     for formula, body in zip(formulas["FormulaId"], formulas["LaTeXBody"]):
@@ -91,7 +87,6 @@ def formulas_to_pmml(database, table, site, threads, tree):
         if(len(threaded) >= threads):
             for formula in threaded:
                 th[formula].join()
-                sites.append(site)
             threaded = []
             keys = [i[0] for i in sorted(pmml.items(), key=lambda item: item[0])]
             values = [i[1] for i in sorted(pmml.items(), key=lambda item: item[0])]
@@ -104,7 +99,6 @@ def formulas_to_pmml(database, table, site, threads, tree):
                 df = pd.DataFrame({"FormulaId": keys, "Site": site, "PresentationMathML": values})
             update_table(database, table+"MathML", df, "FormulaId")
             pmml = {}
-            sites = []
             progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     if count != 0:
         keys = [i[0] for i in sorted(pmml.items(), key=lambda item: item[0])]
@@ -129,7 +123,6 @@ def formulas_to_both_ml(database, table, site, threads, tree):
     threaded = []
     pmml = {}
     cmml = {}
-    sites = []
     count = 0
     th_p = {}
     th_c = {}
@@ -144,13 +137,11 @@ def formulas_to_both_ml(database, table, site, threads, tree):
 
         threaded.append(formula)
         ids.append(formula)
-        sites.append(site)
 
         if(len(threaded) >= (threads/2)):
             for formula in threaded:
                 th_p[formula].join()
                 th_c[formula].join()
-                sites.append(site)
             threaded = []
             cmml = [i[1] for i in sorted(cmml.items(), key=lambda item: item[0])]
             pmml = [i[1] for i in sorted(pmml.items(), key=lambda item: item[0])]
@@ -169,9 +160,11 @@ def formulas_to_both_ml(database, table, site, threads, tree):
             ids = []
             pmml = {}
             cmml = {}
-            sites = []
             progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     if count != 0:
+        for formula in threaded:
+            th_p[formula].join()
+            th_c[formula].join()
         cmml = [i[1] for i in sorted(cmml.items(), key=lambda item: item[0])]
         pmml = [i[1] for i in sorted(pmml.items(), key=lambda item: item[0])]
         ids = sorted(ids)
