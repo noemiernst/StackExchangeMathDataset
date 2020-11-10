@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 def create_mathml_tables(database):
-    DB = sqlite3.connect(database)
+    DB = sqlite3.connect(database, timeout=60000)
     cursor = DB.cursor()
 
     cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='FormulasPostsMathML' ")
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--threads", default="20", help="Number of threads to run parallel. One thread used to convert a single formula in MathML. options: integer")
     parser.add_argument("-c", "--comments", default="no", help="options: yes, no. Whether or not to parse comment formulas in addition to the post formulas.")
     parser.add_argument("--offset", default=0, help="Offset of start formula")
-    parser.add_argument("--totalformulas", default=1000, help="Number of total formulas (limit)")
+    parser.add_argument("--totalformulas", default=100, help="Number of total formulas (limit)")
 
     args = parser.parse_args()
     main(args.dumps, args.database, args.mode, args.threads, args.tree, args.comments, args.offset, args.totalformulas)
