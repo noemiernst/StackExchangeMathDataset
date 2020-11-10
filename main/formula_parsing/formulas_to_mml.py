@@ -24,7 +24,7 @@ def threadFunc(call, body, cmml, id):
 
 def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas):
     DB = sqlite3.connect(database, timeout=60000)
-    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE tex.Site="'+site+'"'
+    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex WHERE tex.Site="'+site+'"'
                               'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
     DB.close()
 
@@ -72,7 +72,7 @@ def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas
 
 def formulas_to_pmml(database, table, site, threads, tree, start, total_formulas):
     DB = sqlite3.connect(database, timeout=60000)
-    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE tex.Site="'+site+'"'
+    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex WHERE tex.Site="'+site+'"'
                              'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
     DB.close()
 
@@ -120,7 +120,7 @@ def formulas_to_both_ml(database, table, site, threads, tree, start, total_formu
     DB = sqlite3.connect(database, timeout=60000)
     #formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE (ml.ContentMathML IS NULL OR ml.PresentationMathML IS NULL) AND tex.Site="'+site+'" ', DB)
 
-    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE tex.Site="'+site+'" '
+    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex WHERE tex.Site="'+site+'" '
                                         'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
     DB.close()
 
