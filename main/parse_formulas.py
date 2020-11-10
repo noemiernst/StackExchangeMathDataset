@@ -28,7 +28,7 @@ def create_mathml_tables(database):
 
     DB.close()
 
-def main(filename_dumps, database, mode, threads, tree, comments):
+def main(filename_dumps, database, mode, threads, tree, comments, offset, total_formulas):
     statistics_file = os.path.join(Path(database).parent, "statistics.log")
     start = time.time()
     log(statistics_file, "#################################################")
@@ -62,20 +62,20 @@ def main(filename_dumps, database, mode, threads, tree, comments):
     for site in sites:
         start = time.time()
         if mode == "cmml":
-            formulas_to_cmml(database, "FormulasPosts", site, threads, tree)
+            formulas_to_cmml(database, "FormulasPosts", site, threads, tree, offset, total_formulas)
             sys.stdout.write('\n')
             if(comments):
-                formulas_to_cmml(database, "FormulasComments", site, threads, tree)
+                formulas_to_cmml(database, "FormulasComments", site, threads, tree, offset, total_formulas)
         if mode == "pmml":
-            formulas_to_pmml(database, "FormulasPosts", site, threads, tree)
+            formulas_to_pmml(database, "FormulasPosts", site, threads, tree, offset, total_formulas)
             sys.stdout.write('\n')
             if(comments):
-                formulas_to_pmml(database, "FormulasComments", site, threads, tree)
+                formulas_to_pmml(database, "FormulasComments", site, threads, tree, offset, total_formulas)
         if mode == "both":
-            formulas_to_both_ml(database, "FormulasPosts", site, threads, tree)
+            formulas_to_both_ml(database, "FormulasPosts", site, threads, tree, offset, total_formulas)
             sys.stdout.write('\n')
             if(comments):
-                formulas_to_both_ml(database, "FormulasComments", site, threads, tree)
+                formulas_to_both_ml(database, "FormulasComments", site, threads, tree, offset, total_formulas)
         sys.stdout.write('\n' + site + ' finished. Time: ' + str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
 
     log(statistics_file, "\n-------------------------")
@@ -91,5 +91,8 @@ if __name__ == "__main__":
     parser.add_argument("--tree", default="yes", help="options: yes, no. Whether or not to calculate slt trees from pmml and opt from cmml ")
     parser.add_argument("-t", "--threads", default="20", help="Number of threads to run parallel. One thread used to convert a single formula in MathML. options: integer")
     parser.add_argument("-c", "--comments", default="no", help="options: yes, no. Whether or not to parse comment formulas in addition to the post formulas.")
+    parser.add_argument("--offset", default=0, help="Offset of start formula")
+    parser.add_argument("--totalformulas", default=1000, help="Number of total formulas (limit)")
+
     args = parser.parse_args()
-    main(args.dumps, args.database, args.mode, args.threads, args.tree, args.comments)
+    main(args.dumps, args.database, args.mode, args.threads, args.tree, args.comments, args.offset, args.totalformulas)

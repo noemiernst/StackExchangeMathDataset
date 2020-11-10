@@ -22,9 +22,10 @@ def threadFunc(call, body, cmml, id):
     else:
         cmml[id] = ""
 
-def formulas_to_cmml(database, table, site, threads, tree):
+def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas):
     DB = sqlite3.connect(database)
-    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE ml.ContentMathML IS NULL AND tex.Site="'+site+'"', DB)
+    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE tex.Site="'+site+'"'
+                              'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
     DB.close()
 
     threaded = []
@@ -69,9 +70,10 @@ def formulas_to_cmml(database, table, site, threads, tree):
     return cmml
 
 
-def formulas_to_pmml(database, table, site, threads, tree):
+def formulas_to_pmml(database, table, site, threads, tree, start, total_formulas):
     DB = sqlite3.connect(database)
-    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE ml.PresentationMathML IS NULL AND tex.Site="'+site+'"', DB)
+    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE tex.Site="'+site+'"'
+                             'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
     DB.close()
 
     threaded = []
@@ -114,9 +116,12 @@ def formulas_to_pmml(database, table, site, threads, tree):
         progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return pmml
 
-def formulas_to_both_ml(database, table, site, threads, tree):
+def formulas_to_both_ml(database, table, site, threads, tree, start, total_formulas):
     DB = sqlite3.connect(database)
-    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE (ml.ContentMathML IS NULL OR ml.PresentationMathML IS NULL) AND tex.Site="'+site+'"', DB)
+    #formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE (ml.ContentMathML IS NULL OR ml.PresentationMathML IS NULL) AND tex.Site="'+site+'" ', DB)
+
+    formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE tex.Site="'+site+'" '
+                                        'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
     DB.close()
 
     ids = []
