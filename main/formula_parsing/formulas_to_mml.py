@@ -22,7 +22,7 @@ def threadFunc(call, body, cmml, id):
     else:
         cmml[id] = ""
 
-def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas):
+def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas, output_database):
     DB = sqlite3.connect(database, timeout=60000)
     formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex WHERE tex.Site="'+site+'"'
                               'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
@@ -51,7 +51,7 @@ def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas
                 df = pd.DataFrame({"FormulaId": keys, "Site": site, "ContentMathML": values, "OPT": opts})
             else:
                 df = pd.DataFrame({"FormulaId": keys, "Site": site, "ContentMathML": values})
-            update_table(database, table+"MathML", df, "FormulaId")
+            update_table(output_database, table+"MathML", df, "FormulaId")
             cmml = {}
             progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
 
@@ -65,12 +65,12 @@ def formulas_to_cmml(database, table, site, threads, tree, start, total_formulas
             df = pd.DataFrame({"FormulaId": keys, "Site": site, "ContentMathML": values, "OPT": opts})
         else:
             df = pd.DataFrame({"FormulaId": keys, "Site": site, "ContentMathML": values})
-        update_table(database, table+"MathML", df, "FormulaId")
+        update_table(output_database, table+"MathML", df, "FormulaId")
         progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return cmml
 
 
-def formulas_to_pmml(database, table, site, threads, tree, start, total_formulas):
+def formulas_to_pmml(database, table, site, threads, tree, start, total_formulas, output_database):
     DB = sqlite3.connect(database, timeout=60000)
     formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex WHERE tex.Site="'+site+'"'
                              'LIMIT '+ str(total_formulas) +' OFFSET ' + str(start), DB)
@@ -99,7 +99,7 @@ def formulas_to_pmml(database, table, site, threads, tree, start, total_formulas
                 df = pd.DataFrame({"FormulaId": keys, "Site": site, "PresentationMathML": values, "SLT": slts})
             else:
                 df = pd.DataFrame({"FormulaId": keys, "Site": site, "PresentationMathML": values})
-            update_table(database, table+"MathML", df, "FormulaId")
+            update_table(output_database, table+"MathML", df, "FormulaId")
             pmml = {}
             progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     if count != 0:
@@ -112,11 +112,11 @@ def formulas_to_pmml(database, table, site, threads, tree, start, total_formulas
             df = pd.DataFrame({"FormulaId": keys, "Site": site, "PresentationMathML": values, "SLT": slts})
         else:
             df = pd.DataFrame({"FormulaId": keys, "Site": site, "PresentationMathML": values})
-        update_table(database, table+"MathML", df, "FormulaId")
+        update_table(output_database, table+"MathML", df, "FormulaId")
         progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)
     return pmml
 
-def formulas_to_both_ml(database, table, site, threads, tree, start, total_formulas):
+def formulas_to_both_ml(database, table, site, threads, tree, start, total_formulas, output_database):
     DB = sqlite3.connect(database, timeout=60000)
     #formulas = pd.read_sql('select tex.FormulaId, tex.LaTeXBody from "'+ table +'" tex LEFT JOIN "' + table + 'MathML" ml ON ml.FormulaId = tex.FormulaId WHERE (ml.ContentMathML IS NULL OR ml.PresentationMathML IS NULL) AND tex.Site="'+site+'" ', DB)
 
@@ -161,7 +161,7 @@ def formulas_to_both_ml(database, table, site, threads, tree, start, total_formu
                 df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "OPT": opts, "PresentationMathML": pmml, "SLT": slts})
             else:
                 df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "PresentationMathML": pmml})
-            update_table(database, table+"MathML", df, "FormulaId")
+            update_table(output_database, table+"MathML", df, "FormulaId")
             ids = []
             pmml = {}
             cmml = {}
@@ -183,5 +183,5 @@ def formulas_to_both_ml(database, table, site, threads, tree, start, total_formu
             df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "OPT": opts, "PresentationMathML": pmml, "SLT": slts})
         else:
             df = pd.DataFrame({"FormulaId": ids, "Site": site, "ContentMathML": cmml, "PresentationMathML": pmml})
-        update_table(database, table+"MathML", df, "FormulaId")
+        update_table(output_database, table+"MathML", df, "FormulaId")
         progress_bar(count, len(formulas["FormulaId"]), "Formulas of " + table + " in " + site, 40)

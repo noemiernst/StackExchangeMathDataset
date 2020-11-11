@@ -28,13 +28,13 @@ def create_mathml_tables(database):
 
     DB.close()
 
-def main(filename_dumps, database, mode, threads, tree, comments, offset, total_formulas):
+def main(filename_dumps, database, mode, threads, tree, comments, offset, total_formulas, output_database):
     statistics_file = os.path.join(Path(database).parent, "statistics.log")
     start = time.time()
     log(statistics_file, "#################################################")
     log(statistics_file, "parse_formulas.py")
     log(statistics_file, "input: " + database + ", mode: " + mode + ", " + threads + " threads")
-    log(statistics_file, "output: "+ database + ", " + statistics_file)
+    log(statistics_file, "output: "+ output_database + ", " + statistics_file)
 
 
     with open(filename_dumps) as f:
@@ -47,7 +47,7 @@ def main(filename_dumps, database, mode, threads, tree, comments, offset, total_
         threads = int(threads)
     except:
         print("An Error occured parsing --threads argument " + threads)
-    create_mathml_tables(database)
+    create_mathml_tables(output_database)
 
     if tree == "yes":
         tree = True
@@ -62,20 +62,20 @@ def main(filename_dumps, database, mode, threads, tree, comments, offset, total_
     for site in sites:
         start = time.time()
         if mode == "cmml":
-            formulas_to_cmml(database, "FormulasPosts", site, threads, tree, offset, total_formulas)
+            formulas_to_cmml(database, "FormulasPosts", site, threads, tree, offset, total_formulas, output_database)
             sys.stdout.write('\n')
             if(comments):
-                formulas_to_cmml(database, "FormulasComments", site, threads, tree, offset, total_formulas)
+                formulas_to_cmml(database, "FormulasComments", site, threads, tree, offset, total_formulas, output_database)
         if mode == "pmml":
-            formulas_to_pmml(database, "FormulasPosts", site, threads, tree, offset, total_formulas)
+            formulas_to_pmml(database, "FormulasPosts", site, threads, tree, offset, total_formulas, output_database)
             sys.stdout.write('\n')
             if(comments):
-                formulas_to_pmml(database, "FormulasComments", site, threads, tree, offset, total_formulas)
+                formulas_to_pmml(database, "FormulasComments", site, threads, tree, offset, total_formulas, output_database)
         if mode == "both":
-            formulas_to_both_ml(database, "FormulasPosts", site, threads, tree, offset, total_formulas)
+            formulas_to_both_ml(database, "FormulasPosts", site, threads, tree, offset, total_formulas, output_database)
             sys.stdout.write('\n')
             if(comments):
-                formulas_to_both_ml(database, "FormulasComments", site, threads, tree, offset, total_formulas)
+                formulas_to_both_ml(database, "FormulasComments", site, threads, tree, offset, total_formulas, output_database)
         sys.stdout.write('\n' + site + ' finished. Time: ' + str(int((time.time()-start)/60)) +"min " + str(int((time.time()-start)%60)) + "sec")
 
     log(statistics_file, "\n-------------------------")
@@ -92,7 +92,8 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--threads", default="20", help="Number of threads to run parallel. One thread used to convert a single formula in MathML. options: integer")
     parser.add_argument("-c", "--comments", default="no", help="options: yes, no. Whether or not to parse comment formulas in addition to the post formulas.")
     parser.add_argument("--offset", default=0, help="Offset of start formula")
-    parser.add_argument("--totalformulas", default=100, help="Number of total formulas (limit)")
+    parser.add_argument("--totalformulas", default=1000000, help="Number of total formulas (limit)")
+    parser.add_argument("--output", default='../output/database.db', help="database to write to")
 
     args = parser.parse_args()
-    main(args.dumps, args.database, args.mode, args.threads, args.tree, args.comments, args.offset, args.totalformulas)
+    main(args.dumps, args.database, args.mode, args.threads, args.tree, args.comments, args.offset, args.totalformulas, args.output)
