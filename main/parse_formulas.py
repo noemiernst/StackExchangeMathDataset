@@ -29,7 +29,7 @@ def create_mathml_tables(database):
     DB.close()
 
 def main(filename_dumps, database, mode, threads, tree, comments, offset, total_formulas, output_database):
-    statistics_file = os.path.join(Path(database).parent, "parse_formulas.log")
+    statistics_file = os.path.join(Path(output_database).parent, "parse_formulas.log")
     if not os.path.exists(statistics_file):
         with open(statistics_file, 'w'): pass
     start = time.time()
