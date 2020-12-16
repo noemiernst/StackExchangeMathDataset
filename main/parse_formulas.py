@@ -29,7 +29,7 @@ def create_mathml_tables(database):
     DB.close()
 
 def main(filename_dumps, database, mode, threads, tree, comments, offset, total_formulas, output_database):
-    statistics_file = os.path.join(Path(database).parent, "statistics.log")
+    statistics_file = os.path.join(Path(database).parent, "parse_formulas.log")
     start = time.time()
     log(statistics_file, "#################################################")
     log(statistics_file, "parse_formulas.py")
