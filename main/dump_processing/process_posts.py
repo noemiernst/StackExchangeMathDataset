@@ -28,6 +28,7 @@ def process_question_meta(site_name, questions, database):
     write_table(database, "QuestionMeta", df)
 
 def process_question_acceptedanswer(site_name, questions, database):
+    statistics_file = os.path.join(Path(database).parent, "statistics.log")
     sites = []
     questionId = []
     acceptedAnswerId = []
@@ -39,7 +40,7 @@ def process_question_acceptedanswer(site_name, questions, database):
     df = pd.DataFrame({"Site": sites, "QuestionId": questionId, "AcceptedAnswerId": acceptedAnswerId})
 
     write_table(database, "QuestionAcceptedAnswer", df)
-    log("../output/statistics.log", "# question-acceptedAnswer pairs: %d" % len(df))
+    log(statistics_file, "# question-acceptedAnswer pairs: %d" % len(df))
 
 
 def process_question_tags(site_name, questions, database):
