@@ -5,6 +5,7 @@ from math_tan.math_extractor import MathExtractor
 from math_tan.symbol_tree import SymbolTree
 from sklearn.model_selection import train_test_split
 import os
+import random
 
 
 def to_slt_tuples(slt_string):
@@ -62,6 +63,7 @@ def example_processing(opt, tags, max_context, file, pad_length):
         tags.sort()
         example = "|".join(tags)
         count = 0
+        random.shuffle(tuples)
         for t in tuples:
             t = t.split("\t")
             count += 1
