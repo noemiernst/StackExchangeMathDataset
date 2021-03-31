@@ -7,6 +7,19 @@ import os
 import copy
 from LatexTokenizer import LatexTokenizer
 
+'''
+1. Read Formulas and respective Tags (for Question Formulas from Questions and for Answer Formulas from the Question) 
+   from the Database (min. Formula Length is 2 Tokens)
+2. Duplicate to 3 DataFrames
+3. Read the Table of all Tags and their Count from the Database
+4. For multiclass: change format of tags from <tag1><tag2>...<tagn> to __label__tag1 __label__tag2 ... __label__tagn
+   For least common tag: determine least common label from Count Tag Table and save as __label__least-common-tag
+   For most common label: determine most common label from Count Tag Table and save as __label__most-common-tag
+5. Transform the LaTeX Formulas in Tokenized strings (LaTeX Tokens) separated by a space (' ') character
+6. Write the three Dataframes to three files with one line per formula. Each line starts with the labels and is followed
+   by the tokenized LaTeX formula
+'''
+
 def top_tag(df, tags_dict):
     for index, row in df.iterrows():
         tags = [tag[1:] for tag in row["Tags"].split(">") if len(tag) > 0]
@@ -89,7 +102,7 @@ def main(dumps, database, output, separate, minlength):
     # get all post ids for answers and match with tags of questions
     # get all post ids of comments and math with tags of questions
     with open(dumps) as f:
-        sites = [line.rstrip() for line in f if line is not ""]
+        sites = [line.rstrip() for line in f if line != ""]
 
     print(sites)
 
