@@ -1,10 +1,11 @@
 import argparse
 import sqlite3
 import pandas as pd
-from math_tan.math_extractor import MathExtractor
+#from math_tan.math_extractor import MathExtractor
 from math_tan.symbol_tree import SymbolTree
 from sklearn.model_selection import train_test_split
 import os
+import random
 
 
 def to_slt_tuples(slt_string):
@@ -62,6 +63,7 @@ def example_processing(opt, tags, max_context, file, pad_length):
         tags.sort()
         example = "|".join(tags)
         count = 0
+        random.shuffle(tuples)
         for t in tuples:
             t = t.split("\t")
             count += 1
@@ -87,7 +89,7 @@ def main(dumps, database, output, minlength, max_context, pad_length):
     # get all post ids for answers and match with tags of questions
     # get all post ids of comments and math with tags of questions
     with open(dumps) as f:
-        sites = [line.rstrip() for line in f if line is not ""]
+        sites = [line.rstrip() for line in f if line != ""]
 
     print(sites)
 
