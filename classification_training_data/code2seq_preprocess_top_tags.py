@@ -24,6 +24,7 @@ def to_opt_tuples(opt_string):
 def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
     return_tree = []
     return_tags = []
+    return_num_tags = []
     for index, row in df.iterrows():
         tags = [tag[1:] for tag in row["Tags"].split(">") if len(tag) > 0]
         if any(item in tags for item in top_tags):
@@ -33,7 +34,8 @@ def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
                 tag_string += '<' + tag + ">"
             return_tree.append(row[tree_type])
             return_tags.append(tag_string)
-    return pd.DataFrame({tree_type: return_tree, 'Tags': return_tags}, columns=[tree_type, 'Tags'])
+            return_num_tags.append(len(tags))
+    return pd.DataFrame({tree_type: return_tree, 'Tags': return_tags, "NumTags": return_num_tags}, columns=[tree_type, 'Tags', "NumTags"])
 
 def split_save(df, output, max_context, pad_length, tree_type):
     train, test = train_test_split(df, test_size=0.2)
@@ -142,7 +144,7 @@ def main(dumps, database, output, minlength, max_context, pad_length, top_tags, 
 
         df = remove_non_top_tag_formulas_and_tags(df, list(tags_dict.keys()), tree_type)
         print("number of formulas in " + site + " tagged with top " + str(top_tags) + " tag: " + str(len(df)))
-        print("TODO average tags per formula")
+        print("average tags per formula: "+ str(df["NumTags"].mean()))
 
         if not os.path.isdir(output):
             os.mkdir(output)
