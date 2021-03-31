@@ -19,7 +19,7 @@ def to_opt_tuples(opt_string):
     aaa = temp.get_pairs(window=2, eob=True)
     return aaa
 
-def split_save(df, output, max_context, pad_length):
+def split_save(df, output, max_context, pad_length, tree_type):
     train, test = train_test_split(df, test_size=0.2)
     val, test = train_test_split(test, test_size=0.5)
 
@@ -27,17 +27,17 @@ def split_save(df, output, max_context, pad_length):
     open(os.path.join(output, "train"), 'w').close()
     print("Writing train file")
     for index, row in train.iterrows():
-        example_processing(row["OPT"], row["Tags"], max_context, os.path.join(output, "train"), pad_length)
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "train"), pad_length, tree_type)
 
     open(os.path.join(output, "test"), 'w').close()
     print("Writing test file")
     for index, row in test.iterrows():
-        example_processing(row["OPT"], row["Tags"], max_context, os.path.join(output, "test"), pad_length)
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "test"), pad_length, tree_type)
 
     open(os.path.join(output, "val"), 'w').close()
     print("Writing val file")
     for index, row in val.iterrows():
-        example_processing(row["OPT"], row["Tags"], max_context, os.path.join(output, "val"), pad_length)
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "val"), pad_length, tree_type)
 
 def pad_path(path, length):
     path = list(path)
@@ -52,13 +52,17 @@ def pad_path(path, length):
 
     return string
 
+# TODO: bucket some !N numeric values (tuple pos 0 and 1)
 def tuple_to_context(tuple, pad_length):
     return tuple[0] + "," + pad_path(tuple[2] + "#" + tuple[3], pad_length) + "," + tuple[1]
 
 # processes example and writes to file. shuffle before !
-def example_processing(opt, tags, max_context, file, pad_length):
+def example_processing(tree, tags, max_context, file, pad_length, tree_type):
     try:
-        tuples = to_opt_tuples(opt)
+        if tree_type == 'OPT':
+            tuples = to_opt_tuples(tree)
+        else:
+            tuples = to_slt_tuples(tree)
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
         tags.sort()
         example = "|".join(tags)
@@ -76,7 +80,7 @@ def example_processing(opt, tags, max_context, file, pad_length):
     except Exception as e:
         print(e)
 
-def main(dumps, database, output, minlength, max_context, pad_length):
+def main(dumps, database, output, minlength, max_context, pad_length, tree_type):
     directory = output
     pad_length = int(pad_length)
     minlength = int(minlength)
@@ -95,30 +99,30 @@ def main(dumps, database, output, minlength, max_context, pad_length):
 
     for site in sites:
         DB = sqlite3.connect(database)
-        formulas_tags_questions = pd.read_sql('select OPT, Tags '
+        formulas_tags_questions = pd.read_sql('select '+ tree_type +', Tags '
                                               'from "FormulasPosts" join FormulasPostsMathML '
                                               'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
                                               'join "QuestionTags" '
                                               'on FormulasPosts.PostId = QuestionTags.QuestionId and FormulasPosts.Site = QuestionTags.Site '
-                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != ''", DB)
-        formulas_tags_answers = pd.read_sql('select OPT, Tags '
+                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and "+ tree_type +" != ''", DB)
+        formulas_tags_answers = pd.read_sql('select '+ tree_type +', Tags '
                                             'from "FormulasPosts" join FormulasPostsMathML '
                                             'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
                                             'join "AnswerMeta" '
                                             'on FormulasPosts.PostId = AnswerMeta.AnswerId and FormulasPosts.Site = AnswerMeta.Site '
                                             'join "QuestionTags" '
                                             'on AnswerMeta.QuestionId = QuestionTags.QuestionId and AnswerMeta.Site = QuestionTags.Site '
-                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != ''", DB)
+                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and "+ tree_type +" != ''", DB)
         DB.close()
 
         df = pd.concat([formulas_tags_questions, formulas_tags_answers])
         print("number of formulas in " + site + ": " + str(len(df)))
-        if len(df["OPT"]) == 0:
+        if len(df[tree_type]) == 0:
             raise ValueError("No Formula Entries in Database for Site "+ site)
 
         if not os.path.isdir(output):
             os.mkdir(output)
-        split_save(df, output, max_context, pad_length)
+        split_save(df, output, max_context, pad_length, tree_type)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -129,5 +133,13 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--minlength", default="5", help="integer. minimum token length of formulas")
     parser.add_argument("-c", "--context", default="20", help="max number of context fields")
     parser.add_argument("-p", "--padding", default="6", help="length of padding in path")
+    parser.add_argument("--opt", dest='opt', action='store_true')
+    parser.add_argument("--slt", dest='opt', action='store_false')
+    parser.set_defaults(opt=True)
+
     args = parser.parse_args()
-    main(args.dumps, args.database, args.output, args.minlength, args.context, args.padding)
+    tree_type = 'OPT'
+    if not args.opt:
+        tree_type = 'SLT'
+
+    main(args.dumps, args.database, args.output, args.minlength, args.context, args.padding, tree_type)
