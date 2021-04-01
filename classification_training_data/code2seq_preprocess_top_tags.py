@@ -19,6 +19,18 @@ def to_opt_tuples(opt_string):
     aaa = temp.get_pairs(window=2, eob=True)
     return aaa
 
+def select_random_numbers(seed, n, r):
+    random.seed(seed)
+    numbers = random.sample(range(1, r), n)
+    return numbers
+
+def select_random_formulas(df, seed, n):
+    range = len(df)
+    if range < n:
+        return df
+    rows = select_random_numbers(seed, n, range)
+    return df.iloc[rows]
+
 # remove all formulas that do not contain one of the top tags
 # and also remove all other tags from the formulas
 def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
@@ -98,7 +110,7 @@ def example_processing(tree, tags, max_context, file, pad_length, tree_type):
     except Exception as e:
         print(e)
 
-def main(dumps, database, output, minlength, max_context, pad_length, top_tags, tree_type):
+def main(dumps, database, output, minlength, max_context, pad_length, top_tags, tree_type, seed, num_formulas):
     pad_length = int(pad_length)
     minlength = int(minlength)
     max_context = int(max_context)
@@ -146,6 +158,10 @@ def main(dumps, database, output, minlength, max_context, pad_length, top_tags, 
         print("number of formulas in " + site + " tagged with top " + str(top_tags) + " tag: " + str(len(df)))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
 
+        df = select_random_formulas(df, int(seed), int(num_formulas))
+        print("number of formulas selected with seed "+str(seed)+": " + str(len(df)))
+        print("average tags per formula: "+ str(df["NumTags"].mean()))
+
         if not os.path.isdir(output):
             os.mkdir(output)
         split_save(df, output, max_context, pad_length, tree_type)
@@ -156,10 +172,12 @@ if __name__ == "__main__":
     parser.add_argument("--database", default='../output/database.db', help="database")
     parser.add_argument("-o", "--output", default='../output/classification_data/', help="output directory")
     #parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
-    parser.add_argument("-f", "--minlength", default="5", help="integer. minimum token length of formulas")
+    parser.add_argument("-f", "--minlength", default="3", help="integer. minimum token length of formulas")
     parser.add_argument("-c", "--context", default="20", help="max number of context fields")
     parser.add_argument("-p", "--padding", default="6", help="length of padding in path")
     parser.add_argument("--top_tags", default=50, help="number of top tags")
+    parser.add_argument("--seed", default=1234, help="seed for selecting random formulas")
+    parser.add_argument("--num_formulas", default=10, help="number of formulas to select")
     parser.add_argument("--opt", dest='opt', action='store_true')
     parser.add_argument("--slt", dest='opt', action='store_false')
     parser.set_defaults(opt=True)
@@ -169,4 +187,5 @@ if __name__ == "__main__":
     if not args.opt:
         tree_type = 'SLT'
 
-    main(args.dumps, args.database, args.output, args.minlength, args.context, args.padding, args.top_tags, tree_type)
+    main(args.dumps, args.database, args.output, args.minlength, args.context, args.padding, args.top_tags,
+         tree_type, args.seed, args.num_formulas)

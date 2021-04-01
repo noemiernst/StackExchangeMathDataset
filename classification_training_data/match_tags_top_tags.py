@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 import copy
 from LatexTokenizer import LatexTokenizer
+import random
 
 '''
 1. Read Formulas and respective Tags (for Question Formulas from Questions and for Answer Formulas from the Question) 
@@ -20,6 +21,19 @@ from LatexTokenizer import LatexTokenizer
 7. Write the three Dataframes to three files with one line per formula. Each line starts with the labels and is followed
    by the tokenized LaTeX formula
 '''
+
+def select_random_numbers(seed, n, r):
+    random.seed(seed)
+    numbers = random.sample(range(1, r), n)
+    return numbers
+
+def select_random_formulas(df, seed, n):
+    range = len(df)
+    if range < n:
+        return df
+    rows = select_random_numbers(seed, n, range)
+    return df.iloc[rows]
+
 
 # remove all formulas that do not contain one of the top tags
 # and also remove all other tags from the formulas
@@ -102,7 +116,7 @@ def split_save(df, output, mode, site):
     df_to_file(val, output + ".val", mode)
 
 
-def main(dumps, database, output, separate, minlength, top_tags):
+def main(dumps, database, output, separate, minlength, top_tags, seed, num_formulas):
     mode = 'w'
     if separate == "yes":
         separate = True
@@ -128,15 +142,19 @@ def main(dumps, database, output, separate, minlength, top_tags):
     for site in sites:
         DB = sqlite3.connect(database)
         formulas_tags_questions = pd.read_sql('select LaTeXBody, Tags '
-                                              'from "FormulasPosts" join "QuestionTags" '
+                                              'from "FormulasPosts" join FormulasPostsMathML '
+                                              'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
+                                              'join "QuestionTags" '
                                               'on FormulasPosts.PostId = QuestionTags.QuestionId and FormulasPosts.Site = QuestionTags.Site '
-                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength), DB)
+                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != ''", DB)
         formulas_tags_answers = pd.read_sql('select LaTeXBody, Tags '
-                                            'from "FormulasPosts" join "AnswerMeta" '
+                                            'from "FormulasPosts" join FormulasPostsMathML '
+                                            'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
+                                            'join "AnswerMeta" '
                                             'on FormulasPosts.PostId = AnswerMeta.AnswerId and FormulasPosts.Site = AnswerMeta.Site '
                                             'join "QuestionTags" '
                                             'on AnswerMeta.QuestionId = QuestionTags.QuestionId and AnswerMeta.Site = QuestionTags.Site '
-                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength), DB)
+                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != ''", DB)
         tags = pd.read_sql('select Tag, Count from "Tags" '
                                             'where Site="'+ site +'"', DB)
         DB.close()
@@ -151,6 +169,10 @@ def main(dumps, database, output, separate, minlength, top_tags):
 
         df = remove_non_top_tag_formulas_and_tags(df, list(top_tags_dict.keys()))
         print("number of formulas in " + site + " tagged with top " + str(top_tags) + " tag: " + str(len(df)))
+        print("average tags per formula: "+ str(df["NumTags"].mean()))
+
+        df = select_random_formulas(df, int(seed), int(num_formulas))
+        print("number of formulas selected with seed "+str(seed)+": " + str(len(df)))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
 
         # copy once -> all tags
@@ -186,7 +208,9 @@ if __name__ == "__main__":
     parser.add_argument("--database", default='../output/database.db', help="database")
     parser.add_argument("-o", "--output", default='../output/classification_data/', help="output directory")
     parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
-    parser.add_argument("-f", "--minlength", default="2", help="integer. minimum token length of formulas")
+    parser.add_argument("-f", "--minlength", default="3", help="integer. minimum token length of formulas")
     parser.add_argument("--top_tags", default=50, help="number of top tags")
+    parser.add_argument("--seed", default=1234, help="seed for selecting random formulas")
+    parser.add_argument("--num_formulas", default=10, help="number of formulas to select")
     args = parser.parse_args()
-    main(args.dumps, args.database, args.output, args.separate, args.minlength, args.top_tags)
+    main(args.dumps, args.database, args.output, args.separate, args.minlength, args.top_tags, args.seed, args.num_formulas)
