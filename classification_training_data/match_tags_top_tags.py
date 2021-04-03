@@ -64,7 +64,7 @@ def top_tag(df, tags_dict):
                 top_tag = tag
                 top_val = tags_dict[tag]
 
-        row["Tags"] =  "__label__" + top_tag + " "
+        df.at[index, "Tags"] = "__label__" + top_tag + " "
     return df
 
 def bottom_tag(df, tags_dict):
@@ -78,7 +78,7 @@ def bottom_tag(df, tags_dict):
                 bottom_tag = tag
                 bottom_val = tags_dict[tag]
 
-        row["Tags"] =  "__label__" + bottom_tag + " "
+        df.at[index, "Tags"] =  "__label__" + bottom_tag + " "
     return df
 
 def all_tags(df, tags_dict):
@@ -88,7 +88,7 @@ def all_tags(df, tags_dict):
         for tag in tags:
             t += "__label__" + tag + " "
 
-        row["Tags"] =  t
+        df.at[index, "Tags"] = t
     return df
 
 def latex_to_tokenstring(latex):
@@ -181,7 +181,7 @@ def main(dumps, database, output, separate, minlength, top_tags, seed, num_formu
 
         # remove newlines from LaTeX Formulas
         for index, row in df.iterrows():
-            row["LaTeXBody"] = row["LaTeXBody"].replace("\n", "")
+            df.at[index, "LaTeXBody"] = df.at[index, "LaTeXBody"].replace("\n", "")
 
         if separate:
             directory = os.path.join(output, site)
