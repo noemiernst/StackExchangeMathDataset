@@ -70,6 +70,7 @@ def split_save(df, output, max_context, tree_type):
         example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "val"), tree_type)
 
 def tuple_to_context(tuple):
+    tuple = [t.replace(' ', '').replace(',', '') for t in tuple]
     return tuple[0] + "," + tuple[2] + "#" + tuple[3] + "," + tuple[1]
 
 # processes example and writes to file. shuffle before !
