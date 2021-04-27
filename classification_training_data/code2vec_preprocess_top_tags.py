@@ -82,6 +82,7 @@ def example_processing(tree, tags, max_context, file, tree_type):
             tuples = to_slt_tuples(tree)
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
         tags.sort()
+        tags = [t.replace(' ', '').replace(',', '') for t in tags]
         example = "|".join(tags)
         count = 0
         random.shuffle(tuples)
