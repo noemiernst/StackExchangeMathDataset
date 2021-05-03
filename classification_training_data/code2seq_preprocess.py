@@ -19,7 +19,7 @@ def to_opt_tuples(opt_string):
     aaa = temp.get_pairs(window=2, eob=True)
     return aaa
 
-def split_save(df, output, max_context, pad_length, tree_type):
+def split_save(df, output, max_context, path_length, tree_type):
     train, test = train_test_split(df, test_size=0.2)
     val, test = train_test_split(test, test_size=0.5)
 
@@ -27,37 +27,35 @@ def split_save(df, output, max_context, pad_length, tree_type):
     open(os.path.join(output, "train"), 'w').close()
     print("Writing train file")
     for index, row in train.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "train"), pad_length, tree_type)
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "train"), path_length, tree_type)
 
     open(os.path.join(output, "test"), 'w').close()
     print("Writing test file")
     for index, row in test.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "test"), pad_length, tree_type)
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "test"), path_length, tree_type)
 
     open(os.path.join(output, "val"), 'w').close()
     print("Writing val file")
     for index, row in val.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "val"), pad_length, tree_type)
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "val"), path_length, tree_type)
 
-def pad_path(path, length):
-    path = list(path)
+def path(path, length):
+    if len(path) < length:
+        length = len(path)
     string = ""
     for i in range(length):
-        if len(path) <= i:
-            string += "<pad>"
-        else:
-            string += path[i]
+        string += path[i]
         if i != length-1:
             string += "|"
 
     return string
 
 # TODO: bucket some !N numeric values (tuple pos 0 and 1)
-def tuple_to_context(tuple, pad_length):
-    return tuple[0] + "," + pad_path(tuple[2] + "#" + tuple[3], pad_length) + "," + tuple[1]
+def tuple_to_context(tuple, path_length):
+    return tuple[0] + "," + path(tuple[2] + "#" + tuple[3], path_length) + "," + tuple[1]
 
 # processes example and writes to file. shuffle before !
-def example_processing(tree, tags, max_context, file, pad_length, tree_type):
+def example_processing(tree, tags, max_context, file, path_length, tree_type):
     try:
         if tree_type == 'OPT':
             tuples = to_opt_tuples(tree)
@@ -73,16 +71,16 @@ def example_processing(tree, tags, max_context, file, pad_length, tree_type):
             count += 1
             if count > max_context:
                 break
-            example += " " + tuple_to_context(t, pad_length)
+            example += " " + tuple_to_context(t, path_length)
         example += " " * (max_context-count) + "\n"
         with open(file, 'a') as f:
             f.write(example)
     except Exception as e:
         print(e)
 
-def main(dumps, database, output, minlength, max_context, pad_length, tree_type):
+def main(dumps, database, output, minlength, max_context, path_length, tree_type):
     directory = output
-    pad_length = int(pad_length)
+    path_length = int(path_length)
     minlength = int(minlength)
     max_context = int(max_context)
 
@@ -122,7 +120,7 @@ def main(dumps, database, output, minlength, max_context, pad_length, tree_type)
 
         if not os.path.isdir(output):
             os.mkdir(output)
-        split_save(df, output, max_context, pad_length, tree_type)
+        split_save(df, output, max_context, path_length, tree_type)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -131,8 +129,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", default='../output/classification_data/', help="output directory")
     #parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
     parser.add_argument("-f", "--minlength", default="5", help="integer. minimum token length of formulas")
-    parser.add_argument("-c", "--context", default="20", help="max number of context fields")
-    parser.add_argument("-p", "--padding", default="6", help="length of padding in path")
+    parser.add_argument("-c", "--context", default="200", help="max number of context fields")
+    parser.add_argument("-p", "--path", default="6", help="max path length")
     parser.add_argument("--opt", dest='opt', action='store_true')
     parser.add_argument("--slt", dest='opt', action='store_false')
     parser.set_defaults(opt=True)
@@ -142,4 +140,4 @@ if __name__ == "__main__":
     if not args.opt:
         tree_type = 'SLT'
 
-    main(args.dumps, args.database, args.output, args.minlength, args.context, args.padding, tree_type)
+    main(args.dumps, args.database, args.output, args.minlength, args.context, args.path, tree_type)
