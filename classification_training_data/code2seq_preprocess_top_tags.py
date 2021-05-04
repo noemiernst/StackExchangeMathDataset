@@ -99,10 +99,11 @@ def example_processing(tree, tags, max_context, file, path_length, tree_type):
         random.shuffle(tuples)
         for t in tuples:
             t = t.split("\t")
-            count += 1
-            if count > max_context:
-                break
-            example += " " + tuple_to_context(t, path_length)
+            if(len(t[2] + "#" + t[3]) <= path_length):
+                count += 1
+                if count > max_context:
+                    break
+                example += " " + tuple_to_context(t, path_length)
         example += " " * (max_context-count) + "\n"
         with open(file, 'a') as f:
             f.write(example)
