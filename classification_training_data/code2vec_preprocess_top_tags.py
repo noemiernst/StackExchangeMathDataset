@@ -123,7 +123,7 @@ def main(dumps, database, output, minlength, max_context, top_tags, tree_type, s
                                               'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
                                               'join "QuestionTags" '
                                               'on FormulasPosts.PostId = QuestionTags.QuestionId and FormulasPosts.Site = QuestionTags.Site '
-                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and "+ tree_type +" != ''", DB)
+                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != '' and SLT != ''", DB)
         formulas_tags_answers = pd.read_sql('select '+ tree_type +', Tags '
                                             'from "FormulasPosts" join FormulasPostsMathML '
                                             'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
@@ -131,7 +131,7 @@ def main(dumps, database, output, minlength, max_context, top_tags, tree_type, s
                                             'on FormulasPosts.PostId = AnswerMeta.AnswerId and FormulasPosts.Site = AnswerMeta.Site '
                                             'join "QuestionTags" '
                                             'on AnswerMeta.QuestionId = QuestionTags.QuestionId and AnswerMeta.Site = QuestionTags.Site '
-                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and "+ tree_type +" != ''", DB)
+                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != '' and SLT != ''", DB)
         DB.close()
         sorted_tags = tags.sort_values(by=['Count'], ascending=False)
         tags_dict = dict(zip(sorted_tags["Tag"][:int(top_tags)], sorted_tags["Count"][:int(top_tags)]))
