@@ -14,10 +14,13 @@ def paths_td(start, path, current, start_nodes, all_nodes):
         p.append((start.tag, path, current.tag))
     for child in current.children:
         # for all children, keep walking down
+        position = []
+        if current.tag[0] != "U":
+            position = [current.children.index(child)]
         all_nodes = update_dict(all_nodes, child)
-        p.extend(paths_td(start, path + [current.tag], child, start_nodes, all_nodes))
+        p.extend(paths_td(start, path + [current.tag] + position, child, start_nodes, all_nodes))
         # use current node to start newly and walk down
-        p.extend(paths_td(current, [], child, start_nodes, all_nodes))
+        p.extend(paths_td(current,[] + position, child, start_nodes, all_nodes))
     if not current.children:
         # if there is no children, use current node to start walking up
         if current not in start_nodes:
@@ -33,27 +36,39 @@ def paths_up(start, path, current, prev, start_nodes, all_nodes):
             p.append((start.tag, path, current.tag))
         if current.parent:
             # if there is a parent, keep walking up
+            position = []
+            if current.parent.tag[0] != "U":
+                position = [current.parent.children.index(current)]
             all_nodes = update_dict(all_nodes, current.parent)
-            p.extend(paths_up(start, path + [current.tag], current.parent, current, start_nodes, all_nodes))
+            p.extend(paths_up(current, path + [current.tag] + position, current.parent, current, start_nodes, all_nodes))
         for child in current.children:
             # for all children (except previous where we just walked up from), walk down
+            position = []
+            if current.tag[0] != "U":
+                position = [current.children.index(child)]
             all_nodes = update_dict(all_nodes, child)
             if child is not prev:
-                p.extend(paths_td(start, path + [current.tag], child, start_nodes, all_nodes))
+                p.extend(paths_td(start, path + [current.tag] + position, child, start_nodes, all_nodes))
     else:
         # for starting node
         if start.parent:
             # if there is a parent node, walk up
+            position = []
+            if start.parent.tag[0] != "U":
+                position = [start.parent.children.index(start)]
             all_nodes = update_dict(all_nodes, current.parent)
-            p.extend(paths_up(start, path, start.parent, start, start_nodes, all_nodes))
+            p.extend(paths_up(start, path + position, start.parent, start, start_nodes, all_nodes))
             # and use parent node as starting node
             if start.parent not in start_nodes:
                 start_nodes.append(start.parent)
                 p.extend(paths_up(start.parent, [], start.parent, None, start_nodes, all_nodes))
         # for all children walk down
         for child in start.children:
+            position = []
+            if start.tag[0] != "U":
+                position = [start.children.index(child)]
             all_nodes = update_dict(all_nodes, child)
-            p.extend(paths_td(start, path, child, start_nodes, all_nodes))
+            p.extend(paths_td(start, path + position, child, start_nodes, all_nodes))
     return p
 
 def remove_duplicates(tuples):
@@ -97,18 +112,8 @@ def to_opt_tuples(opt_string):
     return paths
 
 
-'''
-if self.commutative_pairs and elem.tag[0] == "U":
-    # use un-ordered label ....
-    label = SemanticSymbol.idx_rel_type(0)
-else:
-    # use ordered label
-    label = SemanticSymbol.idx_rel_type(child_idx)
-'''
-
-
-to_opt_tuples('[U!eq,0[V!𝑙],1[O!divide,0[O!SUB,0[V!𝑉],1[V!𝑚]],1[O!SUB,0[V!𝐴],1[V!𝑑]]]]')
-to_opt_tuples('[U!eq,0[V!𝑙],1[O!SUB,0[V!𝑉],1[V!𝑚]]]')
+#to_opt_tuples('[U!eq,0[V!𝑙],1[O!divide,0[O!SUB,0[V!𝑉],1[V!𝑚]],1[O!SUB,0[V!𝐴],1[V!𝑑]]]]')
+#to_opt_tuples('[U!eq,0[V!𝑙],1[O!SUB,0[V!𝑉],1[V!𝑚]]]')
 
 
 '''
