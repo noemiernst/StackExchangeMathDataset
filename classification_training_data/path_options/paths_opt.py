@@ -40,7 +40,8 @@ def paths_up(start, path, current, prev, start_nodes, all_nodes):
             if current.parent.tag[0] != "U":
                 position = [current.parent.children.index(current)]
             all_nodes = update_dict(all_nodes, current.parent)
-            p.extend(paths_up(current, path + [current.tag] + position, current.parent, current, start_nodes, all_nodes))
+            #p.extend(paths_up(current, path + [current.tag] + position, current.parent, current, start_nodes, all_nodes))
+            p.extend(paths_up(start, path + [current.tag] + position, current.parent, current, start_nodes, all_nodes))
         for child in current.children:
             # for all children (except previous where we just walked up from), walk down
             position = []
