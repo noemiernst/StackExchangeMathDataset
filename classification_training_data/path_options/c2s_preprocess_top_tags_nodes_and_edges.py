@@ -33,7 +33,6 @@ def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
     return pd.DataFrame({tree_type: return_tree, 'Tags': return_tags, "NumTags": return_num_tags, "LaTeXBody": return_latex}, columns=[tree_type, 'Tags', "NumTags", "LaTeXBody"])
 
 def split_save(df, output, max_context, path_length, tree_type):
-    '''
     train, test = train_test_split(df, test_size=0.2)
     val, test = train_test_split(test, test_size=0.5)
 
@@ -41,26 +40,16 @@ def split_save(df, output, max_context, path_length, tree_type):
     print("Writing train file")
     for index, row in train.iterrows():
         example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "train"), path_length, tree_type)
-        with open(os.path.join(output, "train_latex"), 'a') as f:
-            f.write(row["LaTeX"])
 
     open(os.path.join(output, "test"), 'w').close()
     print("Writing test file")
     for index, row in test.iterrows():
         example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "test"), path_length, tree_type)
-        with open(os.path.join(output, "test_latex"), 'a') as f:
-            f.write(row["LaTeX"])
-    '''
 
-    val = df
-
-    open(os.path.join(output, "validation"), 'w').close()
-    open(os.path.join(output, "val_latex"), 'w').close()
+    open(os.path.join(output, "val"), 'w').close()
     print("Writing val file")
     for index, row in val.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "validation"), path_length, tree_type)
-        with open(os.path.join(output, "val_latex"), 'a') as f:
-            f.write(row["LaTeXBody"].strip("\n") + "\n")
+        example_processing(row[tree_type], row["Tags"], max_context, os.path.join(output, "val"), path_length, tree_type)
 
 def path(path, length):
     if len(path) < length:
@@ -90,6 +79,10 @@ def example_processing(tree, tags, max_context, file, path_length, tree_type):
         count = 0
         random.shuffle(tuples)
         for t in tuples:
+            if len(t[1]) == 0:
+                pass
+            else:
+                example += " " + tuple_to_context(t, path_length)
             example += " " + tuple_to_context(t, path_length)
         example += " " * (max_context-count) + "\n"
         with open(file, 'a') as f:
@@ -156,8 +149,8 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dumps",default="test_dumps", help="File containing stackexchange dump sites names to be processed")
-    parser.add_argument("--database", default='../../output/database.db', help="database")  #/Users/noemiernst/SE_math_only_mathml.db  ../output/database.db
-    parser.add_argument("-o", "--output", default='../../output/classification_data/c2s_noFRP_slt50_2/', help="output directory")
+    parser.add_argument("--database", default='../../output/database.db', help="database")
+    parser.add_argument("-o", "--output", default='../../output/classification_data/', help="output directory")
     #parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
     parser.add_argument("-f", "--minlength", default="3", help="integer. minimum token length of formulas")
     parser.add_argument("-c", "--context", default="200", help="max number of context fields")
