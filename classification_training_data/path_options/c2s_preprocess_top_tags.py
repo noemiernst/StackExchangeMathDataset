@@ -34,7 +34,7 @@ def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
             return_latex.append(row["LaTeXBody"])
     return pd.DataFrame({tree_type: return_tree, 'Tags': return_tags, "NumTags": return_num_tags, "LaTeXBody": return_latex}, columns=[tree_type, 'Tags', "NumTags", "LaTeXBody"])
 
-def split_save(df, output, max_context, path_length, tree_type):
+def split_save(df, output, max_context, path_length, tree_type, subtoken):
     train, test = train_test_split(df, test_size=0.2)
     val, test = train_test_split(test, test_size=0.5)
 
@@ -54,21 +54,21 @@ def split_save(df, output, max_context, path_length, tree_type):
         open(output, 'w').close()
     print("Writing train file")
     for index, row in train.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, outputs_train, path_length, tree_type)
+        example_processing(row[tree_type], row["Tags"], max_context, outputs_train, path_length, tree_type, subtoken)
 
     outputs_test = [os.path.join(output, "test") for output in outputs]
     for output in outputs_test:
         open(output, 'w').close()
     print("Writing test file")
     for index, row in test.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, outputs_test, path_length, tree_type)
+        example_processing(row[tree_type], row["Tags"], max_context, outputs_test, path_length, tree_type, subtoken)
 
     outputs_val = [os.path.join(output, "val") for output in outputs]
     for output in outputs_val:
         open(output, 'w').close()
     print("Writing val file")
     for index, row in val.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, outputs_val, path_length, tree_type)
+        example_processing(row[tree_type], row["Tags"], max_context, outputs_val, path_length, tree_type, subtoken)
 
 def path(path, length):
     if len(path) < length:
@@ -90,38 +90,70 @@ def remove_edge_labels(path):
     return p
 
 
-def tuple_to_context_nodes_and_edges(tuple, path_length):
-    return tuple[0] + "," + path(tuple[1], path_length) + "," + tuple[2]
+"""
+N! - Number
+C! - Constant
+V! - Variable
+F! - Function
+T! - Text
+M! - Group Element (M!V-)/Matrix(M!M-)/Set(M!S-)/List(M!L-)/Delimited(M!D-)/MatrixRow(M!R!)/ Case (M!C!)
+O! - Ordered operator (not commutative)
+U! - Unordered operator (commutative)
++! - Compound operator (uses a subtree to define the operation)
+E! - Error!
+-! - Unknown type
+$! - Temporary nodes
+"""
+def split_token(token):
+    front = token[:2]
+    back = token[2:]
 
-def tuple_to_context_nodes(tuple, path_length):
-    return tuple[0] + "," + path(remove_edge_labels(tuple[1]), path_length) + "," + tuple[2]
+    return front + "|" + back
+
+def tuple_to_context_nodes_and_edges(tuple, path_length, subtoken):
+    if subtoken:
+        start = split_token(tuple[0])
+        target = split_token(tuple[2])
+    else:
+        start = tuple[0]
+        target = tuple[2]
+    return start + "," + path(tuple[1], path_length) + "," + target
+
+def tuple_to_context_nodes(tuple, path_length, subtoken):
+    if subtoken:
+        start = split_token(tuple[0])
+        target = split_token(tuple[2])
+    else:
+        start = tuple[0]
+        target = tuple[2]
+    return start + "," + path(remove_edge_labels(tuple[1]), path_length) + "," + target
 
 
-def all_contexts(tuples, path_length, tree_type):
+def all_contexts(tuples, path_length, tree_type, subtoken):
     examples = [""] * NUM_MODES
 
     if tree_type == 'OPT':
         for t in tuples:
             if len(t[1]) == 1:
-                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length)
+                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
                 if (t[1][0] != 0) and (t[1][0] != 1):
-                    examples[1] += " " + tuple_to_context_nodes(t, path_length)
+                    examples[1] += " " + tuple_to_context_nodes(t, path_length, subtoken)
             elif len(t[1]) == 0:
                 pass
             else:
-                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length)
-                examples[1] += " " + tuple_to_context_nodes(t, path_length)
+                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+                examples[1] += " " + tuple_to_context_nodes(t, path_length, subtoken)
     else:
         for t in tuples:
             if len(t[1]) == 0:
                 pass
             else:
-                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length)
+                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
 
     return examples
 
 # processes example and writes to file. shuffle before !
-def example_processing(tree, tags, max_context, files, path_length, tree_type):
+def example_processing(tree, tags, max_context, files, path_length, tree_type, subtoken):
     try:
         if tree_type == 'OPT':
             tuples = to_opt_tuples(tree)
@@ -134,7 +166,7 @@ def example_processing(tree, tags, max_context, files, path_length, tree_type):
         random.shuffle(tuples)
 
         examples = [example] * NUM_MODES
-        contexts = all_contexts(tuples, path_length, tree_type)
+        contexts = all_contexts(tuples, path_length, tree_type, subtoken)
 
 
         for i in range(NUM_MODES):
@@ -149,7 +181,7 @@ def example_processing(tree, tags, max_context, files, path_length, tree_type):
     except Exception as e:
         print(e)
 
-def main(dumps, database, output, minlength, max_context, path_length, top_tags, tree_type, seed, num_formulas):
+def main(dumps, database, output, minlength, max_context, path_length, top_tags, tree_type, seed, num_formulas, subtoken):
     path_length = int(path_length)
     minlength = int(minlength)
     max_context = int(max_context)
@@ -201,10 +233,13 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         print("number of formulas selected with seed "+str(seed)+": " + str(len(df)))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
 
-        output = os.path.join(output, tree_type.lower() + "_" + str(seed) + "_top" + str(top_tags))
+        sub = ""
+        if subtoken:
+            sub = "_subtoken"
+        output = os.path.join(output, tree_type.lower() + "_" + str(seed) + "_top" + str(top_tags) + sub)
         if not os.path.isdir(output):
             os.mkdir(output)
-        split_save(df, output, max_context, path_length, tree_type)
+        split_save(df, output, max_context, path_length, tree_type, subtoken)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -218,8 +253,9 @@ if __name__ == "__main__":
     parser.add_argument("--top_tags", default=50, help="number of top tags")
     parser.add_argument("--seed", default=5678, help="seed for selecting random formulas")
     parser.add_argument("--num_formulas", default=50000, help="number of formulas to select")
-    parser.add_argument("--opt", dest='opt', action='store_false')
-    parser.add_argument("--slt", dest='opt', action='store_true')
+    parser.add_argument("--opt", dest='opt', action='store_true')
+    parser.add_argument("--slt", dest='opt', action='store_false')
+    parser.add_argument("--subtoken_encoding", dest='subtoken', action='store_true')
     parser.set_defaults(opt=True)
 
     args = parser.parse_args()
@@ -228,4 +264,4 @@ if __name__ == "__main__":
         tree_type = 'SLT'
 
     main(args.dumps, args.database, args.output, args.minlength, args.context, args.path, args.top_tags,
-         tree_type, args.seed, args.num_formulas)
+         tree_type, args.seed, args.num_formulas, args.subtoken)
