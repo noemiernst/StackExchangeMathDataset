@@ -83,7 +83,6 @@ def example_processing(tree, tags, max_context, file, path_length, tree_type):
                 pass
             else:
                 example += " " + tuple_to_context(t, path_length)
-            example += " " + tuple_to_context(t, path_length)
         example += " " * (max_context-count) + "\n"
         with open(file, 'a') as f:
             f.write(example)
