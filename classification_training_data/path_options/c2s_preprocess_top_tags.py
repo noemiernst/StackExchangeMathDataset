@@ -10,6 +10,8 @@ from paths_opt import to_opt_tuples
 from paths_slt import to_slt_tuples
 
 NUM_MODES = 2
+# index 0: nodes and edges
+# index 1: nodes only (only OPTs)
 
 
 # remove all formulas that do not contain one of the top tags
@@ -138,7 +140,7 @@ def example_processing(tree, tags, max_context, files, path_length, tree_type):
         for i in range(NUM_MODES):
             if not ((tree_type == 'SLT') and (i == 1)):
                 examples[i] += contexts[i]
-                examples[i] += " " + tree + " " * (max_context-count) + "\n"
+                examples[i] += " " * (max_context-count) + "\n"
 
                 with open(files[i], 'a') as f:
                     f.write(examples[i])
@@ -210,7 +212,7 @@ if __name__ == "__main__":
     parser.add_argument("--database", default='../../output/database.db', help="database")
     parser.add_argument("-o", "--output", default='../../output/classification_data/', help="output directory")
     #parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
-    parser.add_argument("-f", "--minlength", default="4", help="integer. minimum token length of formulas")
+    parser.add_argument("-f", "--minlength", default="3", help="integer. minimum token length of formulas")
     parser.add_argument("-c", "--context", default="200", help="max number of context fields")
     parser.add_argument("-p", "--path", default="5", help="max path length")
     parser.add_argument("--top_tags", default=50, help="number of top tags")
