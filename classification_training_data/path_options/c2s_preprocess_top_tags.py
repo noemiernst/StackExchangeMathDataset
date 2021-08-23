@@ -42,9 +42,9 @@ def remove_non_top_tag_formulas_and_tags(df, top_tags):
             return_latex.append(row["LaTeXBody"])
     return pd.DataFrame({"OPT": return_opt,"SLT": return_slt, 'Tags': return_tags, "NumTags": return_num_tags, "LaTeXBody": return_latex}, columns=['OPT', 'SLT', 'Tags', "NumTags", "LaTeXBody"])
 
-def split_save(df, output, max_context, path_length, subtoken):
-    train, test = train_test_split(df, test_size=0.2)
-    val, test = train_test_split(test, test_size=0.5)
+def split_save(df, output, max_context, path_length, subtoken, seed):
+    train, test = train_test_split(df, test_size=0.2, random_state=seed)
+    val, test = train_test_split(test, test_size=0.5, random_state=seed)
 
     s_mixed = "mixed_slt_opt"
     s_opt_only_nodes = "opt_nodes_only"
@@ -260,10 +260,10 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         sub = ""
         if subtoken:
             sub = "_subtoken"
-        output = os.path.join(output, "top" + str(top_tags) + "_" + str(seed) + sub)
+        output = os.path.join(output, site + "_top" + str(top_tags) + "_" + str(seed) + sub)
         if not os.path.isdir(output):
             os.mkdir(output)
-        split_save(df, output, max_context, path_length, subtoken)
+        split_save(df, output, max_context, path_length, subtoken, seed)
 
         global opt_total_paths
         global slt_total_paths
@@ -285,7 +285,6 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=5678, help="seed for selecting random formulas")
     parser.add_argument("--num_formulas", default=50000, help="number of formulas to select")
     parser.add_argument("--subtoken_encoding", dest='subtoken', action='store_true')
-    parser.set_defaults(opt=True)
 
     args = parser.parse_args()
 
