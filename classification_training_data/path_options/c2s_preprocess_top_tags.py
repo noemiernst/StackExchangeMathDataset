@@ -9,15 +9,18 @@ from helper import select_random_formulas
 from paths_opt import to_opt_tuples
 from paths_slt import to_slt_tuples
 
-NUM_MODES = 2
-# index 0: nodes and edges
-# index 1: nodes only (only OPTs)
+NUM_MODES = 4
+# index 0: SLT and OPT segments mixed
+# index 1: OPT nodes and edges
+# index 2: OPT nodes only
+# index 3: SLT nodes and edges
 
 
 # remove all formulas that do not contain one of the top tags
 # and also remove all other tags from the formulas
-def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
-    return_tree = []
+def remove_non_top_tag_formulas_and_tags(df, top_tags):
+    return_opt = []
+    return_slt = []
     return_tags = []
     return_num_tags = []
     return_latex = []
@@ -28,22 +31,27 @@ def remove_non_top_tag_formulas_and_tags(df, top_tags, tree_type):
             tag_string = ''
             for tag in tags:
                 tag_string += '<' + tag + ">"
-            return_tree.append(row[tree_type])
+            return_opt.append(row["OPT"])
+            return_slt.append(row["SLT"])
             return_tags.append(tag_string)
             return_num_tags.append(len(tags))
             return_latex.append(row["LaTeXBody"])
-    return pd.DataFrame({tree_type: return_tree, 'Tags': return_tags, "NumTags": return_num_tags, "LaTeXBody": return_latex}, columns=[tree_type, 'Tags', "NumTags", "LaTeXBody"])
+    return pd.DataFrame({"OPT": return_opt,"SLT": return_slt, 'Tags': return_tags, "NumTags": return_num_tags, "LaTeXBody": return_latex}, columns=['OPT', 'SLT', 'Tags', "NumTags", "LaTeXBody"])
 
-def split_save(df, output, max_context, path_length, tree_type, subtoken):
+def split_save(df, output, max_context, path_length, subtoken):
     train, test = train_test_split(df, test_size=0.2)
     val, test = train_test_split(test, test_size=0.5)
 
-    s_only_nodes = "nodes_only"
-    s_nodes_and_edges = "nodes_and_edges"
+    s_mixed = "mixed_slt_opt"
+    s_opt_only_nodes = "opt_nodes_only"
+    s_opt_nodes_and_edges = "opt_nodes_and_edges"
+    s_slt_nodes_and_edges = "slt_nodes_and_edges"
 
     outputs = [output] * NUM_MODES
-    outputs[0] = os.path.join(output, s_nodes_and_edges)
-    outputs[1] = os.path.join(output, s_only_nodes)
+    outputs[0] = os.path.join(output, s_mixed)
+    outputs[1] = os.path.join(output, s_opt_nodes_and_edges)
+    outputs[2] = os.path.join(output, s_opt_only_nodes)
+    outputs[3] = os.path.join(output, s_slt_nodes_and_edges)
 
     for output in outputs:
         if not os.path.isdir(output):
@@ -54,21 +62,21 @@ def split_save(df, output, max_context, path_length, tree_type, subtoken):
         open(output, 'w').close()
     print("Writing train file")
     for index, row in train.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, outputs_train, path_length, tree_type, subtoken)
+        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_train, path_length, subtoken)
 
     outputs_test = [os.path.join(output, "test") for output in outputs]
     for output in outputs_test:
         open(output, 'w').close()
     print("Writing test file")
     for index, row in test.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, outputs_test, path_length, tree_type, subtoken)
+        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_test, path_length, subtoken)
 
     outputs_val = [os.path.join(output, "val") for output in outputs]
     for output in outputs_val:
         open(output, 'w').close()
     print("Writing val file")
     for index, row in val.iterrows():
-        example_processing(row[tree_type], row["Tags"], max_context, outputs_val, path_length, tree_type, subtoken)
+        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_val, path_length, subtoken)
 
 def path(path, length):
     if len(path) < length:
@@ -129,59 +137,64 @@ def tuple_to_context_nodes(tuple, path_length, subtoken):
     return start + "," + path(remove_edge_labels(tuple[1]), path_length) + "," + target
 
 
-def all_contexts(tuples, path_length, tree_type, subtoken):
+def all_contexts(opt_tuples, slt_tuples, path_length, subtoken):
     examples = [""] * NUM_MODES
 
-    if tree_type == 'OPT':
-        for t in tuples:
-            if len(t[1]) == 1:
-                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
-                if (t[1][0] != 0) and (t[1][0] != 1):
-                    examples[1] += " " + tuple_to_context_nodes(t, path_length, subtoken)
-            elif len(t[1]) == 0:
-                pass
-            else:
-                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
-                examples[1] += " " + tuple_to_context_nodes(t, path_length, subtoken)
-    else:
-        for t in tuples:
-            if len(t[1]) == 0:
-                pass
-            else:
-                examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+
+    mixed = opt_tuples + slt_tuples
+    random.shuffle(mixed)
+    for t in mixed:
+        if len(t[1]) == 0:
+            pass
+        else:
+            examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+    for t in opt_tuples:
+        if len(t[1]) == 1:
+            examples[1] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+            if (t[1][0] != 0) and (t[1][0] != 1):
+                examples[2] += " " + tuple_to_context_nodes(t, path_length, subtoken)
+        elif len(t[1]) == 0:
+            pass
+        else:
+            examples[1] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+            examples[2] += " " + tuple_to_context_nodes(t, path_length, subtoken)
+    for t in slt_tuples:
+        if len(t[1]) == 0:
+            pass
+        else:
+            examples[3] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+
 
     return examples
 
 # processes example and writes to file. shuffle before !
-def example_processing(tree, tags, max_context, files, path_length, tree_type, subtoken):
+def example_processing(opt, slt, tags, max_context, files, path_length, subtoken):
     try:
-        if tree_type == 'OPT':
-            tuples = to_opt_tuples(tree)
-        else:
-            tuples = to_slt_tuples(tree)
+        opt_tuples = to_opt_tuples(opt)
+        slt_tuples = to_slt_tuples(slt)
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
         tags.sort()
         example = "|".join(tags)
         count = 0
-        random.shuffle(tuples)
+        random.shuffle(opt_tuples)
+        random.shuffle(slt_tuples)
 
         examples = [example] * NUM_MODES
-        contexts = all_contexts(tuples, path_length, tree_type, subtoken)
+        contexts = all_contexts(opt_tuples, slt_tuples, path_length, subtoken)
 
 
         for i in range(NUM_MODES):
-            if not ((tree_type == 'SLT') and (i == 1)):
-                examples[i] += contexts[i]
-                examples[i] += " " * (max_context-count) + "\n"
+            examples[i] += contexts[i]
+            examples[i] += " " * (max_context-count) + "\n"
 
-                with open(files[i], 'a') as f:
-                    f.write(examples[i])
+            with open(files[i], 'a') as f:
+                f.write(examples[i])
 
 
     except Exception as e:
         print(e)
 
-def main(dumps, database, output, minlength, max_context, path_length, top_tags, tree_type, seed, num_formulas, subtoken):
+def main(dumps, database, output, minlength, max_context, path_length, top_tags, seed, num_formulas, subtoken):
     path_length = int(path_length)
     minlength = int(minlength)
     max_context = int(max_context)
@@ -202,13 +215,13 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         tags = pd.read_sql('select Tag, Count from "Tags" '
                                     'where Site="'+ site +'"', DB)
 
-        formulas_tags_questions = pd.read_sql('select '+ tree_type +', Tags, LaTeXBody  '
+        formulas_tags_questions = pd.read_sql('select OPT, SLT, Tags, LaTeXBody  '
                                               'from "FormulasPosts" join FormulasPostsMathML '
                                               'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
                                               'join "QuestionTags" '
                                               'on FormulasPosts.PostId = QuestionTags.QuestionId and FormulasPosts.Site = QuestionTags.Site '
                                               'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != '' and SLT != ''", DB)
-        formulas_tags_answers = pd.read_sql('select '+ tree_type +', Tags, LaTeXBody  '
+        formulas_tags_answers = pd.read_sql('select OPT, SLT, Tags, LaTeXBody  '
                                             'from "FormulasPosts" join FormulasPostsMathML '
                                             'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
                                             'join "AnswerMeta" '
@@ -222,10 +235,10 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
 
         df = pd.concat([formulas_tags_questions, formulas_tags_answers])
         print("number of formulas in " + site + ": " + str(len(df)))
-        if len(df[tree_type]) == 0:
+        if len(df["OPT"]) == 0:
             raise ValueError("No Formula Entries in Database for Site "+ site)
 
-        df = remove_non_top_tag_formulas_and_tags(df, list(tags_dict.keys()), tree_type)
+        df = remove_non_top_tag_formulas_and_tags(df, list(tags_dict.keys()))
         print("number of formulas in " + site + " tagged with top " + str(top_tags) + " tag: " + str(len(df)))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
 
@@ -236,10 +249,10 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         sub = ""
         if subtoken:
             sub = "_subtoken"
-        output = os.path.join(output, tree_type.lower() + "_" + str(seed) + "_top" + str(top_tags) + sub)
+        output = os.path.join(output, "top" + str(top_tags) + "_" + str(seed) + sub)
         if not os.path.isdir(output):
             os.mkdir(output)
-        split_save(df, output, max_context, path_length, tree_type, subtoken)
+        split_save(df, output, max_context, path_length, subtoken)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -253,15 +266,10 @@ if __name__ == "__main__":
     parser.add_argument("--top_tags", default=50, help="number of top tags")
     parser.add_argument("--seed", default=5678, help="seed for selecting random formulas")
     parser.add_argument("--num_formulas", default=50000, help="number of formulas to select")
-    parser.add_argument("--opt", dest='opt', action='store_true')
-    parser.add_argument("--slt", dest='opt', action='store_false')
     parser.add_argument("--subtoken_encoding", dest='subtoken', action='store_true')
     parser.set_defaults(opt=True)
 
     args = parser.parse_args()
-    tree_type = 'OPT'
-    if not args.opt:
-        tree_type = 'SLT'
 
     main(args.dumps, args.database, args.output, args.minlength, args.context, args.path, args.top_tags,
-         tree_type, args.seed, args.num_formulas, args.subtoken)
+         args.seed, args.num_formulas, args.subtoken)
