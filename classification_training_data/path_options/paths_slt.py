@@ -1,5 +1,5 @@
-from classification_training_data.math_tan.symbol_tree import SymbolTree
-from classification_training_data.math_tan.symbol_tree import SemanticSymbol
+from math_tan.symbol_tree import SymbolTree
+from math_tan.symbol_tree import SemanticSymbol
 
 def update_dict(dict, new_key):
     if new_key not in dict.keys():
