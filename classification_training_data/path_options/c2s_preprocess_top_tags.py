@@ -8,12 +8,16 @@ import random
 from helper import select_random_formulas
 from paths_opt import to_opt_tuples
 from paths_slt import to_slt_tuples
+import statistics
 
 NUM_MODES = 4
 # index 0: SLT and OPT segments mixed
 # index 1: OPT nodes and edges
 # index 2: OPT nodes only
 # index 3: SLT nodes and edges
+
+opt_total_paths = []
+slt_total_paths = []
 
 
 # remove all formulas that do not contain one of the top tags
@@ -139,6 +143,8 @@ def tuple_to_context_nodes(tuple, path_length, subtoken):
 
 def all_contexts(opt_tuples, slt_tuples, path_length, subtoken):
     examples = [""] * NUM_MODES
+    global opt_total_paths
+    global slt_total_paths
 
 
     mixed = opt_tuples + slt_tuples
@@ -154,12 +160,14 @@ def all_contexts(opt_tuples, slt_tuples, path_length, subtoken):
             if (t[1][0] != 0) and (t[1][0] != 1):
                 examples[2] += " " + tuple_to_context_nodes(t, path_length, subtoken)
         elif len(t[1]) == 0:
+            opt_total_paths[-1] -= 1
             pass
         else:
             examples[1] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
             examples[2] += " " + tuple_to_context_nodes(t, path_length, subtoken)
     for t in slt_tuples:
         if len(t[1]) == 0:
+            slt_total_paths[-1] -= 1
             pass
         else:
             examples[3] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
@@ -170,6 +178,8 @@ def all_contexts(opt_tuples, slt_tuples, path_length, subtoken):
 # processes example and writes to file. shuffle before !
 def example_processing(opt, slt, tags, max_context, files, path_length, subtoken):
     try:
+        global opt_total_paths
+        global slt_total_paths
         opt_tuples = to_opt_tuples(opt)
         slt_tuples = to_slt_tuples(slt)
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
@@ -178,10 +188,11 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
         count = 0
         random.shuffle(opt_tuples)
         random.shuffle(slt_tuples)
+        opt_total_paths.append(len(opt_tuples))
+        slt_total_paths.append(len(slt_tuples))
 
         examples = [example] * NUM_MODES
         contexts = all_contexts(opt_tuples, slt_tuples, path_length, subtoken)
-
 
         for i in range(NUM_MODES):
             examples[i] += contexts[i]
@@ -253,6 +264,13 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         if not os.path.isdir(output):
             os.mkdir(output)
         split_save(df, output, max_context, path_length, subtoken)
+
+        global opt_total_paths
+        global slt_total_paths
+        print("Mean number of paths per opt formula: " + str(statistics.mean(opt_total_paths)))
+        print("Mean number of paths per slt formula: " + str(statistics.mean(slt_total_paths)))
+        print("Median of number of paths in opt formula: " + str(statistics.median(opt_total_paths)))
+        print("Median of number of paths in slt formula: " + str(statistics.median(slt_total_paths)))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
