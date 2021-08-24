@@ -209,6 +209,7 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
     path_length = int(path_length)
     minlength = int(minlength)
     max_context = int(max_context)
+    seed = int(seed)
 
 
     # for site in sites
