@@ -9,6 +9,7 @@ from helper import select_random_formulas
 from paths_opt import to_opt_tuples
 from paths_slt import to_slt_tuples
 import statistics
+import tracemalloc
 
 NUM_MODES = 4
 # index 0: SLT and OPT segments mixed
@@ -46,6 +47,8 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
     train, test = train_test_split(df, test_size=0.2, random_state=seed)
     val, test = train_test_split(test, test_size=0.5, random_state=seed)
 
+    print("Split Data\nMemory: " + str(tracemalloc.get_traced_memory()))
+
     s_mixed = "mixed_slt_opt"
     s_opt_only_nodes = "opt_nodes_only"
     s_opt_nodes_and_edges = "opt_nodes_and_edges"
@@ -57,6 +60,8 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
     outputs[2] = os.path.join(output, s_opt_only_nodes)
     outputs[3] = os.path.join(output, s_slt_nodes_and_edges)
 
+    print("Create Output Array\nMemory: " + str(tracemalloc.get_traced_memory()))
+
     for output in outputs:
         if not os.path.isdir(output):
             os.mkdir(output)
@@ -67,6 +72,9 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
     print("Writing train file")
     for index, row in train.iterrows():
         example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_train, path_length, subtoken)
+    del outputs_train
+
+    print("Train file written\nMemory: " + str(tracemalloc.get_traced_memory()))
 
     outputs_test = [os.path.join(output, "test") for output in outputs]
     for output in outputs_test:
@@ -74,6 +82,9 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
     print("Writing test file")
     for index, row in test.iterrows():
         example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_test, path_length, subtoken)
+    del outputs_test
+
+    print("Test file written\nMemory: " + str(tracemalloc.get_traced_memory()))
 
     outputs_val = [os.path.join(output, "val") for output in outputs]
     for output in outputs_val:
@@ -81,6 +92,10 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
     print("Writing val file")
     for index, row in val.iterrows():
         example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_val, path_length, subtoken)
+    del outputs_val
+
+
+    print("Files written\nMemory: " + str(tracemalloc.get_traced_memory()))
 
 def path(path, length):
     if len(path) < length:
@@ -206,6 +221,9 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
         print(e)
 
 def main(dumps, database, output, minlength, max_context, path_length, top_tags, seed, num_formulas, subtoken):
+
+    tracemalloc.start()
+
     path_length = int(path_length)
     minlength = int(minlength)
     max_context = int(max_context)
@@ -243,9 +261,15 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
                                             'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != '' and SLT != ''", DB)
         DB.close()
         sorted_tags = tags.sort_values(by=['Count'], ascending=False)
+        del tags
         tags_dict = dict(zip(sorted_tags["Tag"][:int(top_tags)], sorted_tags["Count"][:int(top_tags)]))
+        del sorted_tags
+
+        print("Formulas Retrieved from DB\nMemory: " + str(tracemalloc.get_traced_memory()))
 
         df = pd.concat([formulas_tags_questions, formulas_tags_answers])
+        del formulas_tags_questions
+        del formulas_tags_answers
         print("number of formulas in " + site + ": " + str(len(df)))
         if len(df["OPT"]) == 0:
             raise ValueError("No Formula Entries in Database for Site "+ site)
@@ -254,9 +278,13 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         print("number of formulas in " + site + " tagged with top " + str(top_tags) + " tag: " + str(len(df)))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
 
+        print("Removed non top tag Formulas and Tags\nMemory: " + str(tracemalloc.get_traced_memory()))
+
         df = select_random_formulas(df, int(seed), int(num_formulas))
         print("number of formulas selected with seed "+str(seed)+": " + str(len(df)))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
+
+        print("Selected Random Formulas\nMemory: " + str(tracemalloc.get_traced_memory()))
 
         sub = ""
         if subtoken:
@@ -272,6 +300,9 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
         print("Mean number of paths per slt formula: " + str(statistics.mean(slt_total_paths)))
         print("Median of number of paths in opt formula: " + str(statistics.median(opt_total_paths)))
         print("Median of number of paths in slt formula: " + str(statistics.median(slt_total_paths)))
+
+        print("Memory: " + str(tracemalloc.get_traced_memory()))
+        tracemalloc.stop()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
