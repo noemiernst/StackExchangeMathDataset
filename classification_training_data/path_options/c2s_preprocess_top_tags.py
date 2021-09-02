@@ -220,12 +220,13 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
     except Exception as e:
         print(e)
 
-def main(dumps, database, output, minlength, max_context, path_length, top_tags, seed, num_formulas, subtoken):
+def main(dumps, database, output, minlength, maxlength, max_context, path_length, top_tags, seed, num_formulas, subtoken):
 
     tracemalloc.start()
 
     path_length = int(path_length)
     minlength = int(minlength)
+    maxlength = int(maxlength)
     max_context = int(max_context)
     seed = int(seed)
 
@@ -250,7 +251,7 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
                                               'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
                                               'join "QuestionTags" '
                                               'on FormulasPosts.PostId = QuestionTags.QuestionId and FormulasPosts.Site = QuestionTags.Site '
-                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != '' and SLT != ''", DB)
+                                              'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + ' and TokenLength<='+str(maxlength) + " and OPT != '' and SLT != ''", DB)
         formulas_tags_answers = pd.read_sql('select OPT, SLT, Tags, LaTeXBody  '
                                             'from "FormulasPosts" join FormulasPostsMathML '
                                             'on FormulasPosts.FormulaId = FormulasPostsMathML.FormulaId '
@@ -258,7 +259,7 @@ def main(dumps, database, output, minlength, max_context, path_length, top_tags,
                                             'on FormulasPosts.PostId = AnswerMeta.AnswerId and FormulasPosts.Site = AnswerMeta.Site '
                                             'join "QuestionTags" '
                                             'on AnswerMeta.QuestionId = QuestionTags.QuestionId and AnswerMeta.Site = QuestionTags.Site '
-                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + " and OPT != '' and SLT != ''", DB)
+                                            'where FormulasPosts.Site="'+ site +'" and TokenLength>='+str(minlength) + ' and TokenLength<='+str(maxlength) + " and OPT != '' and SLT != ''", DB)
         DB.close()
         sorted_tags = tags.sort_values(by=['Count'], ascending=False)
         del tags
@@ -311,6 +312,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", default='../../output/classification_data/', help="output directory")
     #parser.add_argument("-s", "--separate", default="yes", help="yes or no. Put training data in separate files for each site.")
     parser.add_argument("-f", "--minlength", default="3", help="integer. minimum token length of formulas")
+    parser.add_argument("--maxlength", default=50, help="integer. maximum token length of formulas")
     parser.add_argument("-c", "--context", default="200", help="max number of context fields")
     parser.add_argument("-p", "--path", default="5", help="max path length")
     parser.add_argument("--top_tags", default=50, help="number of top tags")
@@ -320,5 +322,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args.dumps, args.database, args.output, args.minlength, args.context, args.path, args.top_tags,
+    main(args.dumps, args.database, args.output, args.minlength, args.maxlength, args.context, args.path, args.top_tags,
          args.seed, args.num_formulas, args.subtoken)
