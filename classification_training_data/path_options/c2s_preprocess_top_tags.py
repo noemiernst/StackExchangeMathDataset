@@ -10,6 +10,10 @@ from paths_opt import to_opt_tuples
 from paths_slt import to_slt_tuples
 import statistics
 import tracemalloc
+import signal
+
+# Timeout in seconds for Tuple Extraction of Formulas
+TUPLE_TIMEOUT = 10
 
 NUM_MODES = 4
 # index 0: SLT and OPT segments mixed
@@ -190,8 +194,19 @@ def all_contexts(opt_tuples, slt_tuples, path_length, subtoken):
 
     return examples
 
+class TimeoutException(Exception):   # Custom exception class
+    pass
+
+def timeout_handler(signum, frame):   # Custom signal handler
+    raise TimeoutException
+
+signal.signal(signal.SIGALRM, timeout_handler)
+timeout_count = 0
+
 # processes example and writes to file. shuffle before !
 def example_processing(opt, slt, tags, max_context, files, path_length, subtoken):
+    global timeout_count
+    signal.alarm(TUPLE_TIMEOUT)
     try:
         global opt_total_paths
         global slt_total_paths
@@ -216,9 +231,11 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
             with open(files[i], 'a') as f:
                 f.write(examples[i])
 
-
-    except Exception as e:
-        print(e)
+    except Exception:
+        timeout_count += 1
+        print("Tuple Extraction Timeout (" + str(TUPLE_TIMEOUT) + "s). Timeout Count: " + str(timeout_count))
+    else:
+        signal.alarm(0)
 
 def main(dumps, database, output, minlength, maxlength, max_context, path_length, top_tags, seed, num_formulas, subtoken):
 
@@ -282,7 +299,8 @@ def main(dumps, database, output, minlength, maxlength, max_context, path_length
         print("Removed non top tag Formulas and Tags\nMemory: " + str(tracemalloc.get_traced_memory()))
 
         df = select_random_formulas(df, int(seed), int(num_formulas))
-        print("number of formulas selected with seed "+str(seed)+": " + str(len(df)))
+        num_selected_formulas = len(df)
+        print("number of formulas selected with seed "+str(seed)+": " + str(num_selected_formulas))
         print("average tags per formula: "+ str(df["NumTags"].mean()))
 
         print("Selected Random Formulas\nMemory: " + str(tracemalloc.get_traced_memory()))
@@ -302,6 +320,7 @@ def main(dumps, database, output, minlength, maxlength, max_context, path_length
         print("Median of number of paths in opt formula: " + str(statistics.median(opt_total_paths)))
         print("Median of number of paths in slt formula: " + str(statistics.median(slt_total_paths)))
 
+        print("Tuple Extraction Timeouts: " + str(timeout_count) + (", Total Formulas in Dataset: " + str(num_selected_formulas-timeout_count)))
         print("Memory: " + str(tracemalloc.get_traced_memory()))
         tracemalloc.stop()
 
