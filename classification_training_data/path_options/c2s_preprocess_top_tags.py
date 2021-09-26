@@ -160,37 +160,47 @@ def tuple_to_context_nodes(tuple, path_length, subtoken):
     return start + "," + path(remove_edge_labels(tuple[1]), path_length) + "," + target
 
 
-def all_contexts(opt_tuples, slt_tuples, path_length, subtoken):
-    examples = [""] * NUM_MODES
+def all_contexts(opt_tuples, slt_tuples, path_length, subtoken, max_context):
+    examples = [[]] * NUM_MODES
     global opt_total_paths
     global slt_total_paths
 
 
     mixed = opt_tuples + slt_tuples
     random.shuffle(mixed)
+    random.shuffle(opt_tuples)
+    random.shuffle(slt_tuples)
     for t in mixed:
         if len(t[1]) == 0:
             pass
         else:
-            examples[0] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
+            examples[0].append(tuple_to_context_nodes_and_edges(t, path_length, subtoken))
+            if len(examples[0]) >= max_context:
+                break
     for t in opt_tuples:
         if len(t[1]) == 1:
-            examples[1] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
-            if (t[1][0] != 0) and (t[1][0] != 1):
-                examples[2] += " " + tuple_to_context_nodes(t, path_length, subtoken)
+            if len(examples[1]) < max_context:
+                examples[1].append(tuple_to_context_nodes_and_edges(t, path_length, subtoken))
+            if (t[1][0] != 0) and (t[1][0] != 1) and len(examples[2]) < max_context:
+                examples[2].append(tuple_to_context_nodes(t, path_length, subtoken))
         elif len(t[1]) == 0:
             opt_total_paths[-1] -= 1
             pass
         else:
-            examples[1] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
-            examples[2] += " " + tuple_to_context_nodes(t, path_length, subtoken)
+            if len(examples[1]) < max_context:
+                examples[1].append(tuple_to_context_nodes_and_edges(t, path_length, subtoken))
+            if len(examples[2]) < max_context:
+                examples[2].append(tuple_to_context_nodes(t, path_length, subtoken))
+        if len(examples[1]) >= max_context and len(examples[2]) >= max_context:
+            break
     for t in slt_tuples:
         if len(t[1]) == 0:
             slt_total_paths[-1] -= 1
             pass
         else:
-            examples[3] += " " + tuple_to_context_nodes_and_edges(t, path_length, subtoken)
-
+            examples[3].append(tuple_to_context_nodes_and_edges(t, path_length, subtoken))
+            if len(examples[3]) >= max_context:
+                break
 
     return examples
 
@@ -202,10 +212,12 @@ def timeout_handler(signum, frame):   # Custom signal handler
 
 signal.signal(signal.SIGALRM, timeout_handler)
 timeout_count = 0
+no_contexts_count = 0
 
 # processes example and writes to file. shuffle before !
 def example_processing(opt, slt, tags, max_context, files, path_length, subtoken):
     global timeout_count
+    global no_contexts_count
     signal.alarm(TUPLE_TIMEOUT)
     try:
         global opt_total_paths
@@ -215,25 +227,29 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
         tags.sort()
         example = "|".join(tags)
-        count = 0
         random.shuffle(opt_tuples)
         random.shuffle(slt_tuples)
         opt_total_paths.append(len(opt_tuples))
         slt_total_paths.append(len(slt_tuples))
 
         examples = [example] * NUM_MODES
-        contexts = all_contexts(opt_tuples, slt_tuples, path_length, subtoken)
+        contexts = all_contexts(opt_tuples, slt_tuples, path_length, subtoken, max_context)
 
-        for i in range(NUM_MODES):
-            examples[i] += contexts[i]
-            examples[i] += " " * (max_context-count) + "\n"
 
-            with open(files[i], 'a') as f:
-                f.write(examples[i])
+        if (len(contexts[0]) > 0) and (len(contexts[1]) > 0) and (len(contexts[2]) > 0) and (len(contexts[3]) > 0):
+            for i in range(NUM_MODES):
+                cons = contexts[i][:max_context]
+                examples[i] += " ".join(cons)
+                examples[i] += " " * (max_context-len(cons)) + "\n"
+
+                with open(files[i], 'a') as f:
+                    f.write(examples[i])
+        else:
+            no_contexts_count += 1
 
     except Exception:
         timeout_count += 1
-        print("Tuple Extraction Timeout (" + str(TUPLE_TIMEOUT) + "s). Timeout Count: " + str(timeout_count))
+        #print("Tuple Extraction Timeout (" + str(TUPLE_TIMEOUT) + "s). Timeout Count: " + str(timeout_count))
     else:
         signal.alarm(0)
 
@@ -320,7 +336,9 @@ def main(dumps, database, output, minlength, maxlength, max_context, path_length
         print("Median of number of paths in opt formula: " + str(statistics.median(opt_total_paths)))
         print("Median of number of paths in slt formula: " + str(statistics.median(slt_total_paths)))
 
-        print("Tuple Extraction Timeouts: " + str(timeout_count) + (", Total Formulas in Dataset: " + str(num_selected_formulas-timeout_count)))
+        print("Tuple Extraction Timeouts: " + str(timeout_count))
+        print("Empty Context Extractions: " + str(no_contexts_count))
+        print("Total Formulas in Dataset: " + str(num_selected_formulas-timeout_count-no_contexts_count))
         print("Memory: " + str(tracemalloc.get_traced_memory()))
         tracemalloc.stop()
 
