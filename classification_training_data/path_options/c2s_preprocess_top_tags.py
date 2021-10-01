@@ -226,7 +226,7 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
         slt_tuples = to_slt_tuples(slt)
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
         tags.sort()
-        example = "|".join(tags)
+        example = "|".join(tags) + " "
         random.shuffle(opt_tuples)
         random.shuffle(slt_tuples)
         opt_total_paths.append(len(opt_tuples))
