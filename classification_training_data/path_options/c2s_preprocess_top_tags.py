@@ -11,6 +11,7 @@ from paths_slt import to_slt_tuples
 import statistics
 import tracemalloc
 import signal
+from check_files import check
 
 # Timeout in seconds for Tuple Extraction of Formulas
 TUPLE_TIMEOUT = 10
@@ -213,11 +214,13 @@ def timeout_handler(signum, frame):   # Custom signal handler
 signal.signal(signal.SIGALRM, timeout_handler)
 timeout_count = 0
 no_contexts_count = 0
+invalid_lines = 0
 
 # processes example and writes to file. shuffle before !
 def example_processing(opt, slt, tags, max_context, files, path_length, subtoken):
     global timeout_count
     global no_contexts_count
+    global invalid_lines
     signal.alarm(TUPLE_TIMEOUT)
     try:
         global opt_total_paths
@@ -243,7 +246,12 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
                 examples[i] += " " * (max_context-len(cons)) + "\n"
 
                 with open(files[i], 'a') as f:
-                    f.write(examples[i])
+                    valid = check(examples[i])
+                    if valid:
+                        f.write(examples[i])
+                    else:
+                        invalid_lines += 1
+                        break
         else:
             no_contexts_count += 1
 
@@ -338,7 +346,8 @@ def main(dumps, database, output, minlength, maxlength, max_context, path_length
 
         print("Tuple Extraction Timeouts: " + str(timeout_count))
         print("Empty Context Extractions: " + str(no_contexts_count))
-        print("Total Formulas in Dataset: " + str(num_selected_formulas-timeout_count-no_contexts_count))
+        print("Invalid Strings: " + str(invalid_lines))
+        print("Total Formulas in Dataset: " + str(num_selected_formulas-timeout_count-no_contexts_count-invalid_lines))
         print("Memory: " + str(tracemalloc.get_traced_memory()))
         tracemalloc.stop()
 
