@@ -12,6 +12,7 @@ import statistics
 import tracemalloc
 import signal
 from check_files import check
+import copy
 
 # Timeout in seconds for Tuple Extraction of Formulas
 TUPLE_TIMEOUT = 10
@@ -48,7 +49,7 @@ def remove_non_top_tag_formulas_and_tags(df, top_tags):
             return_latex.append(row["LaTeXBody"])
     return pd.DataFrame({"OPT": return_opt,"SLT": return_slt, 'Tags': return_tags, "NumTags": return_num_tags, "LaTeXBody": return_latex}, columns=['OPT', 'SLT', 'Tags', "NumTags", "LaTeXBody"])
 
-def split_save(df, output, max_context, path_length, subtoken, seed):
+def split_save(df, output, output_most_freq_tag, output_least_freq_tag, max_context, path_length, subtoken, seed, tags_dict):
     train, test = train_test_split(df, test_size=0.2, random_state=seed)
     val, test = train_test_split(test, test_size=0.5, random_state=seed)
 
@@ -59,11 +60,21 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
     s_opt_nodes_and_edges = "opt_nodes_and_edges"
     s_slt_nodes_and_edges = "slt_nodes_and_edges"
 
-    outputs = [output] * NUM_MODES
+    outputs = [output] * (3*NUM_MODES)
     outputs[0] = os.path.join(output, s_mixed)
     outputs[1] = os.path.join(output, s_opt_nodes_and_edges)
     outputs[2] = os.path.join(output, s_opt_only_nodes)
     outputs[3] = os.path.join(output, s_slt_nodes_and_edges)
+
+    outputs[4] = os.path.join(output_most_freq_tag, s_mixed)
+    outputs[5] = os.path.join(output_most_freq_tag, s_opt_nodes_and_edges)
+    outputs[6] = os.path.join(output_most_freq_tag, s_opt_only_nodes)
+    outputs[7] = os.path.join(output_most_freq_tag, s_slt_nodes_and_edges)
+
+    outputs[8] = os.path.join(output_least_freq_tag, s_mixed)
+    outputs[9] = os.path.join(output_least_freq_tag, s_opt_nodes_and_edges)
+    outputs[10] = os.path.join(output_least_freq_tag, s_opt_only_nodes)
+    outputs[11] = os.path.join(output_least_freq_tag, s_slt_nodes_and_edges)
 
     print("Create Output Array\nMemory: " + str(tracemalloc.get_traced_memory()))
 
@@ -76,7 +87,7 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
         open(output, 'w').close()
     print("Writing train file")
     for index, row in train.iterrows():
-        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_train, path_length, subtoken)
+        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_train, path_length, subtoken, tags_dict)
     del outputs_train
 
     print("Train file written\nMemory: " + str(tracemalloc.get_traced_memory()))
@@ -86,7 +97,7 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
         open(output, 'w').close()
     print("Writing test file")
     for index, row in test.iterrows():
-        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_test, path_length, subtoken)
+        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_test, path_length, subtoken, tags_dict)
     del outputs_test
 
     print("Test file written\nMemory: " + str(tracemalloc.get_traced_memory()))
@@ -96,7 +107,7 @@ def split_save(df, output, max_context, path_length, subtoken, seed):
         open(output, 'w').close()
     print("Writing val file")
     for index, row in val.iterrows():
-        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_val, path_length, subtoken)
+        example_processing(row["OPT"], row["SLT"], row["Tags"], max_context, outputs_val, path_length, subtoken, tags_dict)
     del outputs_val
 
 
@@ -162,7 +173,7 @@ def tuple_to_context_nodes(tuple, path_length, subtoken):
 
 
 def all_contexts(opt_tuples, slt_tuples, path_length, subtoken, max_context):
-    examples = [[]] * NUM_MODES
+    examples = [[], [], [], []]
     global opt_total_paths
     global slt_total_paths
 
@@ -205,6 +216,25 @@ def all_contexts(opt_tuples, slt_tuples, path_length, subtoken, max_context):
 
     return examples
 
+def top_tag(tags, tags_dict):
+    # get top tag
+    top_tag = tags[0]
+    top_val = 0
+    for tag in tags:
+        if tags_dict[tag] > top_val:
+            top_tag = tag
+            top_val = tags_dict[tag]
+    return top_tag + " "
+
+def bottom_tag(tags, tags_dict):
+    bottom_tag = tags[0]
+    bottom_val = max(tags_dict.values())
+    for tag in tags:
+        if tags_dict[tag] < bottom_val:
+            bottom_tag = tag
+            bottom_val = tags_dict[tag]
+    return bottom_tag + " "
+
 class TimeoutException(Exception):   # Custom exception class
     pass
 
@@ -217,7 +247,7 @@ no_contexts_count = 0
 invalid_lines = 0
 
 # processes example and writes to file. shuffle before !
-def example_processing(opt, slt, tags, max_context, files, path_length, subtoken):
+def example_processing(opt, slt, tags, max_context, files, path_length, subtoken, tags_dict):
     global timeout_count
     global no_contexts_count
     global invalid_lines
@@ -230,17 +260,23 @@ def example_processing(opt, slt, tags, max_context, files, path_length, subtoken
         tags = [tag[1:] for tag in tags.split(">") if len(tag) > 0]
         tags.sort()
         example = "|".join(tags) + " "
+        most_freq_tag_example = str(top_tag(tags, tags_dict))
+        least_freq_tag_example = str(bottom_tag(tags, tags_dict))
         random.shuffle(opt_tuples)
         random.shuffle(slt_tuples)
         opt_total_paths.append(len(opt_tuples))
         slt_total_paths.append(len(slt_tuples))
 
-        examples = [example] * NUM_MODES
+        examples = [example, example, example, example,
+                    most_freq_tag_example, most_freq_tag_example, most_freq_tag_example, most_freq_tag_example,
+                    least_freq_tag_example, least_freq_tag_example, least_freq_tag_example, least_freq_tag_example]
+
         contexts = all_contexts(opt_tuples, slt_tuples, path_length, subtoken, max_context)
+        contexts = contexts + contexts + contexts
 
 
         if (len(contexts[0]) > 0) and (len(contexts[1]) > 0) and (len(contexts[2]) > 0) and (len(contexts[3]) > 0):
-            for i in range(NUM_MODES):
+            for i in range(3*NUM_MODES):
                 cons = contexts[i][:max_context]
                 examples[i] += " ".join(cons)
                 examples[i] += " " * (max_context-len(cons)) + "\n"
@@ -332,10 +368,17 @@ def main(dumps, database, output, minlength, maxlength, max_context, path_length
         sub = ""
         if subtoken:
             sub = "_subtoken"
-        output = os.path.join(output, site + "_top" + str(top_tags) + "_" + str(seed) + sub)
+        directory = output
+        output = os.path.join(directory, site + "_top" + str(top_tags) + "_" + str(seed) + sub)
         if not os.path.isdir(output):
             os.mkdir(output)
-        split_save(df, output, max_context, path_length, subtoken, seed)
+        output_most_freq_tag = os.path.join(directory, site + "_top" + str(top_tags) + "_" + str(seed) + sub, "most_freq_tag")
+        if not os.path.isdir(output_most_freq_tag):
+            os.mkdir(output_most_freq_tag)
+        output_least_freq_tag = os.path.join(directory, site + "_top" + str(top_tags) + "_" + str(seed) + sub, "least_freq_tag")
+        if not os.path.isdir(output_least_freq_tag):
+            os.mkdir(output_least_freq_tag)
+        split_save(df, output, output_most_freq_tag, output_least_freq_tag, max_context, path_length, subtoken, seed, tags_dict)
 
         global opt_total_paths
         global slt_total_paths
